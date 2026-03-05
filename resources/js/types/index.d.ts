@@ -15,6 +15,8 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
     isActive?: boolean;
+    badge?: string | number;
+    children?: NavItem[];
 }
 
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
@@ -28,6 +30,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    phone: phone;
     avatar?: string;
     email_verified_at: string | null;
     created_at: string;

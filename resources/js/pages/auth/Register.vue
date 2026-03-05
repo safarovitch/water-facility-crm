@@ -35,6 +35,12 @@ import { LoaderCircle } from 'lucide-vue-next';
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="phone">Phone number</Label>
+                    <Input id="phone" type="string" required :tabindex="2" autocomplete="phone" name="phone" placeholder="123 456 789" />
+                    <InputError :message="errors.phone" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input id="password" type="password" required :tabindex="3" autocomplete="new-password" name="password" placeholder="Password" />
                     <InputError :message="errors.password" />

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,12 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $user = $request->validateCredentials();
+
+        if (! $user->status->is(UserStatus::Active())) {
+            $request->session()->flash('status', __('Sorry. Your account is not active.'));
+
+            return redirect()->back();
+        }
 
         if (Features::enabled(Features::twoFactorAuthentication()) && $user->hasEnabledTwoFactorAuthentication()) {
             $request->session()->put([
