@@ -54,9 +54,8 @@ class HandleInertiaRequests extends Middleware
       'auth' => [
         'user' => $request->user() ? [
           ...$request->user()->toArray(),
-          'sip_extension' => $request->user()->sip_extension ?? '1001',
-          'sip_password' => $request->user()->sip_password ?? '08230a0d9912bbdb',
-          'debug_sip_source' => $request->user()->sip_extension ? 'database' : 'hardcoded_fallback',
+          'sip_extension' => $request->user()->sip_extension,
+          'sip_password' => $request->user()->sip_password,
         ] : null,
       ],
       'asterisk' => [
