@@ -15,7 +15,7 @@ import { index, update } from '@/routes/users';
 const props = defineProps<{
   user: UserObject,
   statuses: [],
-  roles: roleObject
+  roles: roleObject[]
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [

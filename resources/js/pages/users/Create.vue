@@ -25,7 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
   statuses: [],
-  roles: roleObject
+  roles: roleObject[]
 }>();
 
 interface roleObject {

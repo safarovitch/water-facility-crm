@@ -416,9 +416,9 @@ onMounted(() => {
           </ul>
         </div>
 
-        <div v-if="isCallActive" class="px-6 pb-8 pt-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+        <div v-if="isCallActive || connectionStatus === 'Originating...'" class="px-6 pb-8 pt-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
           <div class="flex justify-center space-x-6">
-            <button @click="toggleMute" class="h-14 w-14 rounded-full flex items-center justify-center transition-colors shadow-sm" :class="isMuted ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            <button v-if="isCallActive" @click="toggleMute" class="h-14 w-14 rounded-full flex items-center justify-center transition-colors shadow-sm" :class="isMuted ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
               <MicOff v-if="isMuted" class="h-6 w-6" />
               <Mic v-else class="h-6 w-6" />
             </button>
@@ -427,9 +427,13 @@ onMounted(() => {
               <Phone class="h-6 w-6 fill-current" />
             </button>
 
-            <button @click="endCall" class="h-14 w-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 translate-y-2">
-              <PhoneOff class="h-6 w-6" />
+            <button @click="endCall" class="h-14 w-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95" :class="{ 'translate-y-2': !isCallActive && connectionStatus === 'Originating...' }">
+              <PhoneOff v-if="connectionStatus !== 'Originating...'" class="h-6 w-6" />
+              <X v-else class="h-6 w-6" />
             </button>
+          </div>
+          <div v-if="connectionStatus === 'Originating...'" class="text-center mt-3 text-xs text-gray-400 animate-pulse">
+            Calling your phone first...
           </div>
         </div>
       </div>
