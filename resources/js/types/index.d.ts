@@ -16,6 +16,7 @@ export interface NavItem {
     icon?: LucideIcon;
     isActive?: boolean;
     badge?: string | number;
+    action?: () => void;
     children?: NavItem[];
 }
 

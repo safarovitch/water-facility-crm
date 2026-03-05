@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList } from 'lucide-vue-next';
+import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { index as usersIndex } from '@/routes/users';
 import { index as rolesIndex } from '@/routes/roles';

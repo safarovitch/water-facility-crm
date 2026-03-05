@@ -32,7 +32,9 @@ class User extends Authenticatable
     'phone',
     'password',
     'avatar',
-    'status'
+    'status',
+    'sip_extension',
+    'sip_password'
   ];
 
   /**

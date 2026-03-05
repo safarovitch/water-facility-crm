@@ -1,0 +1,1939 @@
+0 verbose cli /Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/bin/node /Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.19.5
+3 silly config load:file:/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/rasulsafarovitch/Development/water/crm/.npmrc
+5 silly config load:file:/Users/rasulsafarovitch/.npmrc
+6 silly config load:file:/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/etc/npmrc
+7 verbose title npm install sip.js
+8 verbose argv "install" "sip.js" "--cache" "./.npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/rasulsafarovitch/Development/water/crm/.npm-cache/_logs/2026-03-05T20_12_59_078Z-
+10 verbose logfile /Users/rasulsafarovitch/Development/water/crm/.npm-cache/_logs/2026-03-05T20_12_59_078Z-debug-0.log
+11 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+12 silly logfile done cleaning log files
+13 silly idealTree buildDeps
+14 silly fetch manifest sip.js@*
+15 silly packumentCache full:https://registry.npmjs.org/sip.js cache-miss
+16 verbose shrinkwrap failed to load node_modules/.package-lock.json EPERM: operation not permitted, stat '/Users/rasulsafarovitch/Development/water/crm/node_modules'
+17 http fetch GET 200 https://registry.npmjs.org/sip.js 353ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/sip.js set size:undefined disposed:false
+19 silly placeDep ROOT sip.js@0.21.2 OK for:  want: *
+20 silly reify moves {}
+21 silly audit bulk request {
+21 silly audit   '@babel/helper-string-parser': [ '7.27.1' ],
+21 silly audit   '@babel/helper-validator-identifier': [ '7.27.1' ],
+21 silly audit   '@babel/parser': [ '7.28.3' ],
+21 silly audit   '@babel/types': [ '7.28.2' ],
+21 silly audit   '@esbuild/darwin-arm64': [ '0.25.9' ],
+21 silly audit   '@eslint-community/eslint-utils': [ '4.7.0' ],
+21 silly audit   '@eslint-community/regexpp': [ '4.12.1' ],
+21 silly audit   '@eslint/config-array': [ '0.21.0' ],
+21 silly audit   'brace-expansion': [ '1.1.12', '2.0.2' ],
+21 silly audit   minimatch: [ '3.1.2', '9.0.5' ],
+21 silly audit   '@eslint/config-helpers': [ '0.3.1' ],
+21 silly audit   '@eslint/core': [ '0.15.2' ],
+21 silly audit   '@eslint/eslintrc': [ '3.3.1' ],
+21 silly audit   '@eslint/js': [ '9.33.0' ],
+21 silly audit   '@eslint/object-schema': [ '2.1.6' ],
+21 silly audit   '@eslint/plugin-kit': [ '0.3.5' ],
+21 silly audit   '@floating-ui/core': [ '1.7.3' ],
+21 silly audit   '@floating-ui/dom': [ '1.7.3' ],
+21 silly audit   '@floating-ui/utils': [ '0.2.10' ],
+21 silly audit   '@floating-ui/vue': [ '1.1.8' ],
+21 silly audit   'vue-demi': [ '0.14.10' ],
+21 silly audit   '@humanfs/core': [ '0.19.1' ],
+21 silly audit   '@humanfs/node': [ '0.16.6' ],
+21 silly audit   '@humanwhocodes/retry': [ '0.3.1', '0.4.3' ],
+21 silly audit   '@humanwhocodes/module-importer': [ '1.0.1' ],
+21 silly audit   '@inertiajs/core': [ '2.1.2' ],
+21 silly audit   '@inertiajs/vue3': [ '2.1.2' ],
+21 silly audit   '@internationalized/date': [ '3.8.2' ],
+21 silly audit   '@internationalized/number': [ '3.6.4' ],
+21 silly audit   '@isaacs/fs-minipass': [ '4.0.1' ],
+21 silly audit   '@jridgewell/gen-mapping': [ '0.3.13' ],
+21 silly audit   '@jridgewell/remapping': [ '2.3.5' ],
+21 silly audit   '@jridgewell/resolve-uri': [ '3.1.2' ],
+21 silly audit   '@jridgewell/sourcemap-codec': [ '1.5.5' ],
+21 silly audit   '@jridgewell/trace-mapping': [ '0.3.30' ],
+21 silly audit   '@laravel/vite-plugin-wayfinder': [ '0.1.3' ],
+21 silly audit   '@nodelib/fs.scandir': [ '2.1.5' ],
+21 silly audit   '@nodelib/fs.stat': [ '2.0.5' ],
+21 silly audit   '@nodelib/fs.walk': [ '1.2.8' ],
+21 silly audit   '@rolldown/pluginutils': [ '1.0.0-beta.29' ],
+21 silly audit   '@rollup/rollup-android-arm-eabi': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-android-arm64': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-darwin-arm64': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-darwin-x64': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-freebsd-arm64': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-freebsd-x64': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-arm-gnueabihf': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-arm-musleabihf': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-arm64-gnu': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-arm64-musl': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-loongarch64-gnu': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-ppc64-gnu': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-riscv64-gnu': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-riscv64-musl': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-s390x-gnu': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-x64-gnu': [ '4.9.5', '4.46.3' ],
+21 silly audit   '@rollup/rollup-linux-x64-musl': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-win32-arm64-msvc': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-win32-ia32-msvc': [ '4.46.3' ],
+21 silly audit   '@rollup/rollup-win32-x64-msvc': [ '4.46.3' ],
+21 silly audit   '@swc/helpers': [ '0.5.17' ],
+21 silly audit   '@tailwindcss/node': [ '4.1.12' ],
+21 silly audit   '@tailwindcss/oxide': [ '4.1.12' ],
+21 silly audit   '@tailwindcss/oxide-darwin-arm64': [ '4.1.12' ],
+21 silly audit   '@tailwindcss/oxide-linux-x64-gnu': [ '4.1.12' ],
+21 silly audit   '@tailwindcss/vite': [ '4.1.12' ],
+21 silly audit   '@tanstack/virtual-core': [ '3.13.12' ],
+21 silly audit   '@tanstack/vue-virtual': [ '3.13.12' ],
+21 silly audit   '@types/estree': [ '1.0.8' ],
+21 silly audit   '@types/json-schema': [ '7.0.15' ],
+21 silly audit   '@types/node': [ '22.17.2' ],
+21 silly audit   '@types/web-bluetooth': [ '0.0.21' ],
+21 silly audit   '@typescript-eslint/eslint-plugin': [ '8.39.1' ],
+21 silly audit   ignore: [ '7.0.5', '5.3.2' ],
+21 silly audit   '@typescript-eslint/parser': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/project-service': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/scope-manager': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/tsconfig-utils': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/type-utils': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/types': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/typescript-estree': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/utils': [ '8.39.1' ],
+21 silly audit   '@typescript-eslint/visitor-keys': [ '8.39.1' ],
+21 silly audit   'eslint-visitor-keys': [ '4.2.1', '3.4.3' ],
+21 silly audit   '@vitejs/plugin-vue': [ '6.0.1' ],
+21 silly audit   '@volar/language-core': [ '2.4.15' ],
+21 silly audit   '@volar/source-map': [ '2.4.15' ],
+21 silly audit   '@volar/typescript': [ '2.4.15' ],
+21 silly audit   '@vue/compiler-core': [ '3.5.18' ],
+21 silly audit   '@vue/compiler-dom': [ '3.5.18' ],
+21 silly audit   '@vue/compiler-sfc': [ '3.5.18' ],
+21 silly audit   '@vue/compiler-ssr': [ '3.5.18' ],
+21 silly audit   '@vue/compiler-vue2': [ '2.7.16' ],
+21 silly audit   '@vue/eslint-config-typescript': [ '14.6.0' ],
+21 silly audit   '@vue/language-core': [ '2.2.12' ],
+21 silly audit   '@vue/reactivity': [ '3.5.18' ],
+21 silly audit   '@vue/runtime-core': [ '3.5.18' ],
+21 silly audit   '@vue/runtime-dom': [ '3.5.18' ],
+21 silly audit   '@vue/server-renderer': [ '3.5.18' ],
+21 silly audit   '@vue/shared': [ '3.5.18' ],
+21 silly audit   '@vueuse/core': [ '12.8.2' ],
+21 silly audit   '@vueuse/metadata': [ '12.8.2' ],
+21 silly audit   '@vueuse/shared': [ '12.8.2' ],
+21 silly audit   acorn: [ '8.15.0' ],
+21 silly audit   'acorn-jsx': [ '5.3.2' ],
+21 silly audit   ajv: [ '6.12.6' ],
+21 silly audit   'alien-signals': [ '1.0.13' ],
+21 silly audit   'ansi-regex': [ '5.0.1' ],
+21 silly audit   'ansi-styles': [ '4.3.0' ],
+21 silly audit   argparse: [ '2.0.1' ],
+21 silly audit   'aria-hidden': [ '1.2.6' ],
+21 silly audit   asynckit: [ '0.4.0' ],
+21 silly audit   axios: [ '1.11.0' ],
+21 silly audit   'balanced-match': [ '1.0.2' ],
+21 silly audit   boolbase: [ '1.0.0' ],
+21 silly audit   braces: [ '3.0.3' ],
+21 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
+21 silly audit   'call-bound': [ '1.0.4' ],
+21 silly audit   callsites: [ '3.1.0' ],
+21 silly audit   chalk: [ '4.1.2' ],
+21 silly audit   'supports-color': [ '7.2.0', '8.1.1' ],
+21 silly audit   chownr: [ '3.0.0' ],
+21 silly audit   'class-variance-authority': [ '0.7.1' ],
+21 silly audit   cliui: [ '8.0.1' ],
+21 silly audit   clsx: [ '2.1.1' ],
+21 silly audit   'color-convert': [ '2.0.1' ],
+21 silly audit   'color-name': [ '1.1.4' ],
+21 silly audit   'combined-stream': [ '1.0.8' ],
+21 silly audit   'concat-map': [ '0.0.1' ],
+21 silly audit   concurrently: [ '9.2.0' ],
+21 silly audit   'cross-spawn': [ '7.0.6' ],
+21 silly audit   cssesc: [ '3.0.0' ],
+21 silly audit   csstype: [ '3.1.3' ],
+21 silly audit   'de-indent': [ '1.0.2' ],
+21 silly audit   debug: [ '4.4.1' ],
+21 silly audit   'deep-is': [ '0.1.4' ],
+21 silly audit   defu: [ '6.1.4' ],
+21 silly audit   'delayed-stream': [ '1.0.0' ],
+21 silly audit   'detect-libc': [ '2.0.4' ],
+21 silly audit   'dunder-proto': [ '1.0.1' ],
+21 silly audit   'emoji-regex': [ '8.0.0' ],
+21 silly audit   'enhanced-resolve': [ '5.18.3' ],
+21 silly audit   entities: [ '4.5.0' ],
+21 silly audit   'es-define-property': [ '1.0.1' ],
+21 silly audit   'es-errors': [ '1.3.0' ],
+21 silly audit   'es-object-atoms': [ '1.1.1' ],
+21 silly audit   'es-set-tostringtag': [ '2.1.0' ],
+21 silly audit   'es-toolkit': [ '1.39.10' ],
+21 silly audit   esbuild: [ '0.25.9' ],
+21 silly audit   escalade: [ '3.2.0' ],
+21 silly audit   'escape-string-regexp': [ '4.0.0' ],
+21 silly audit   eslint: [ '9.33.0' ],
+21 silly audit   'eslint-config-prettier': [ '10.1.8' ],
+21 silly audit   'eslint-plugin-vue': [ '9.33.0' ],
+21 silly audit   'eslint-scope': [ '7.2.2', '8.4.0' ],
+21 silly audit   espree: [ '9.6.1', '10.4.0' ],
+21 silly audit   globals: [ '13.24.0', '14.0.0' ],
+21 silly audit   'vue-eslint-parser': [ '9.4.3', '10.2.0' ],
+21 silly audit   esquery: [ '1.6.0' ],
+21 silly audit   esrecurse: [ '4.3.0' ],
+21 silly audit   estraverse: [ '5.3.0' ],
+21 silly audit   'estree-walker': [ '2.0.2' ],
+21 silly audit   esutils: [ '2.0.3' ],
+21 silly audit   'fast-deep-equal': [ '3.1.3' ],
+21 silly audit   'fast-glob': [ '3.3.3' ],
+21 silly audit   'glob-parent': [ '5.1.2', '6.0.2' ],
+21 silly audit   'fast-json-stable-stringify': [ '2.1.0' ],
+21 silly audit   'fast-levenshtein': [ '2.0.6' ],
+21 silly audit   fastq: [ '1.19.1' ],
+21 silly audit   'file-entry-cache': [ '8.0.0' ],
+21 silly audit   'fill-range': [ '7.1.1' ],
+21 silly audit   'find-up': [ '5.0.0' ],
+21 silly audit   'flat-cache': [ '4.0.1' ],
+21 silly audit   flatted: [ '3.3.3' ],
+21 silly audit   'follow-redirects': [ '1.15.11' ],
+21 silly audit   'form-data': [ '4.0.4' ],
+21 silly audit   fsevents: [ '2.3.3' ],
+21 silly audit   'function-bind': [ '1.1.2' ],
+21 silly audit   'get-caller-file': [ '2.0.5' ],
+21 silly audit   'get-intrinsic': [ '1.3.0' ],
+21 silly audit   'get-proto': [ '1.0.1' ],
+21 silly audit   gopd: [ '1.2.0' ],
+21 silly audit   'graceful-fs': [ '4.2.11' ],
+21 silly audit   graphemer: [ '1.4.0' ],
+21 silly audit   'has-flag': [ '4.0.0' ],
+21 silly audit   'has-symbols': [ '1.1.0' ],
+21 silly audit   'has-tostringtag': [ '1.0.2' ],
+21 silly audit   hasown: [ '2.0.2' ],
+21 silly audit   he: [ '1.2.0' ],
+21 silly audit   'import-fresh': [ '3.3.1' ],
+21 silly audit   imurmurhash: [ '0.1.4' ],
+21 silly audit   'is-extglob': [ '2.1.1' ],
+21 silly audit   'is-fullwidth-code-point': [ '3.0.0' ],
+21 silly audit   'is-glob': [ '4.0.3' ],
+21 silly audit   'is-number': [ '7.0.0' ],
+21 silly audit   isexe: [ '2.0.0' ],
+21 silly audit   jiti: [ '2.5.1' ],
+21 silly audit   'js-yaml': [ '4.1.0' ],
+21 silly audit   'json-buffer': [ '3.0.1' ],
+21 silly audit   'json-schema-traverse': [ '0.4.1' ],
+21 silly audit   'json-stable-stringify-without-jsonify': [ '1.0.1' ],
+21 silly audit   keyv: [ '4.5.4' ],
+21 silly audit   'laravel-vite-plugin': [ '2.0.0' ],
+21 silly audit   levn: [ '0.4.1' ],
+21 silly audit   lightningcss: [ '1.30.1' ],
+21 silly audit   'lightningcss-darwin-arm64': [ '1.30.1' ],
+21 silly audit   'lightningcss-linux-x64-gnu': [ '1.30.1' ],
+21 silly audit   'locate-path': [ '6.0.0' ],
+21 silly audit   lodash: [ '4.17.21' ],
+21 silly audit   'lodash.merge': [ '4.6.2' ],
+21 silly audit   'lucide-vue-next': [ '0.468.0' ],
+21 silly audit   'magic-string': [ '0.30.17' ],
+21 silly audit   'math-intrinsics': [ '1.1.0' ],
+21 silly audit   merge2: [ '1.4.1' ],
+21 silly audit   micromatch: [ '4.0.8' ],
+21 silly audit   'mime-db': [ '1.52.0' ],
+21 silly audit   'mime-types': [ '2.1.35' ],
+21 silly audit   minipass: [ '7.1.2' ],
+21 silly audit   minizlib: [ '3.0.2' ],
+21 silly audit   mkdirp: [ '3.0.1' ],
+21 silly audit   ms: [ '2.1.3' ],
+21 silly audit   'muggle-string': [ '0.4.1' ],
+21 silly audit   nanoid: [ '3.3.11' ],
+21 silly audit   'natural-compare': [ '1.4.0' ],
+21 silly audit   'nth-check': [ '2.1.1' ],
+21 silly audit   'object-inspect': [ '1.13.4' ],
+21 silly audit   ohash: [ '2.0.11' ],
+21 silly audit   optionator: [ '0.9.4' ],
+21 silly audit   'p-limit': [ '3.1.0' ],
+21 silly audit   'p-locate': [ '5.0.0' ],
+21 silly audit   'parent-module': [ '1.0.1' ],
+21 silly audit   'path-browserify': [ '1.0.1' ],
+21 silly audit   'path-exists': [ '4.0.0' ],
+21 silly audit   'path-key': [ '3.1.1' ],
+21 silly audit   picocolors: [ '1.1.1' ],
+21 silly audit   picomatch: [ '2.3.1', '4.0.3' ],
+21 silly audit   postcss: [ '8.5.6' ],
+21 silly audit   'postcss-selector-parser': [ '6.1.2' ],
+21 silly audit   'prelude-ls': [ '1.2.1' ],
+21 silly audit   prettier: [ '3.6.2' ],
+21 silly audit   'prettier-plugin-organize-imports': [ '4.2.0' ],
+21 silly audit   'prettier-plugin-tailwindcss': [ '0.6.14' ],
+21 silly audit   'proxy-from-env': [ '1.1.0' ],
+21 silly audit   punycode: [ '2.3.1' ],
+21 silly audit   qs: [ '6.14.0' ],
+21 silly audit   'queue-microtask': [ '1.2.3' ],
+21 silly audit   'reka-ui': [ '2.4.1' ],
+21 silly audit   'require-directory': [ '2.1.1' ],
+21 silly audit   'resolve-from': [ '4.0.0' ],
+21 silly audit   reusify: [ '1.1.0' ],
+21 silly audit   rollup: [ '4.46.3' ],
+21 silly audit   'run-parallel': [ '1.2.0' ],
+21 silly audit   rxjs: [ '7.8.2' ],
+21 silly audit   semver: [ '7.7.2' ],
+21 silly audit   'shebang-command': [ '2.0.0' ],
+21 silly audit   'shebang-regex': [ '3.0.0' ],
+21 silly audit   'shell-quote': [ '1.8.3' ],
+21 silly audit   'side-channel': [ '1.1.0' ],
+21 silly audit   'side-channel-list': [ '1.0.0' ],
+21 silly audit   'side-channel-map': [ '1.0.1' ],
+21 silly audit   'side-channel-weakmap': [ '1.0.2' ],
+21 silly audit   'source-map-js': [ '1.2.1' ],
+21 silly audit   'string-width': [ '4.2.3' ],
+21 silly audit   'strip-ansi': [ '6.0.1' ],
+21 silly audit   'strip-json-comments': [ '3.1.1' ],
+21 silly audit   'tailwind-merge': [ '3.3.1' ],
+21 silly audit   tailwindcss: [ '4.1.12' ],
+21 silly audit   tapable: [ '2.2.2' ],
+21 silly audit   tar: [ '7.4.3' ],
+21 silly audit   tinyglobby: [ '0.2.14' ],
+21 silly audit   fdir: [ '6.5.0' ],
+21 silly audit   'to-regex-range': [ '5.0.1' ],
+21 silly audit   'tree-kill': [ '1.2.2' ],
+21 silly audit   'ts-api-utils': [ '2.1.0' ],
+21 silly audit   tslib: [ '2.8.1' ],
+21 silly audit   'tw-animate-css': [ '1.3.7' ],
+21 silly audit   'type-check': [ '0.4.0' ],
+21 silly audit   'type-fest': [ '0.20.2' ],
+21 silly audit   typescript: [ '5.9.2' ],
+21 silly audit   'typescript-eslint': [ '8.39.1' ],
+21 silly audit   'undici-types': [ '6.21.0' ],
+21 silly audit   'uri-js': [ '4.4.1' ],
+21 silly audit   'util-deprecate': [ '1.0.2' ],
+21 silly audit   vite: [ '7.1.2' ],
+21 silly audit   'vite-plugin-full-reload': [ '1.2.0' ],
+21 silly audit   'vscode-uri': [ '3.1.0' ],
+21 silly audit   vue: [ '3.5.18' ],
+21 silly audit   'vue-tsc': [ '2.2.12' ],
+21 silly audit   which: [ '2.0.2' ],
+21 silly audit   'word-wrap': [ '1.2.5' ],
+21 silly audit   'wrap-ansi': [ '7.0.0' ],
+21 silly audit   'xml-name-validator': [ '4.0.0' ],
+21 silly audit   y18n: [ '5.0.8' ],
+21 silly audit   yallist: [ '5.0.0' ],
+21 silly audit   yargs: [ '17.7.2' ],
+21 silly audit   'yargs-parser': [ '21.1.1' ],
+21 silly audit   'yocto-queue': [ '0.1.0' ],
+21 silly audit   'sip.js': [ '0.21.2' ]
+21 silly audit }
+22 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/rollup/node_modules/@rollup/rollup-linux-x64-gnu
+23 silly reify mark deleted [
+23 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/rollup/node_modules/@rollup/rollup-linux-x64-gnu'
+23 silly reify ]
+24 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/lightningcss-linux-x64-gnu
+25 silly reify mark deleted [
+25 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/lightningcss-linux-x64-gnu'
+25 silly reify ]
+26 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@tailwindcss/oxide-linux-x64-gnu
+27 silly reify mark deleted [
+27 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@tailwindcss/oxide-linux-x64-gnu'
+27 silly reify ]
+28 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-x64-msvc
+29 silly reify mark deleted [
+29 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-x64-msvc'
+29 silly reify ]
+30 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-ia32-msvc
+31 silly reify mark deleted [
+31 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-ia32-msvc'
+31 silly reify ]
+32 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-arm64-msvc
+33 silly reify mark deleted [
+33 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-win32-arm64-msvc'
+33 silly reify ]
+34 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-x64-musl
+35 silly reify mark deleted [
+35 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-x64-musl'
+35 silly reify ]
+36 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-x64-gnu
+37 silly reify mark deleted [
+37 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-x64-gnu'
+37 silly reify ]
+38 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-s390x-gnu
+39 silly reify mark deleted [
+39 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-s390x-gnu'
+39 silly reify ]
+40 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-riscv64-musl
+41 silly reify mark deleted [
+41 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-riscv64-musl'
+41 silly reify ]
+42 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-riscv64-gnu
+43 silly reify mark deleted [
+43 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-riscv64-gnu'
+43 silly reify ]
+44 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-ppc64-gnu
+45 silly reify mark deleted [
+45 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-ppc64-gnu'
+45 silly reify ]
+46 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-loongarch64-gnu
+47 silly reify mark deleted [
+47 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-loongarch64-gnu'
+47 silly reify ]
+48 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm64-musl
+49 silly reify mark deleted [
+49 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm64-musl'
+49 silly reify ]
+50 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm64-gnu
+51 silly reify mark deleted [
+51 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm64-gnu'
+51 silly reify ]
+52 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm-musleabihf
+53 silly reify mark deleted [
+53 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm-musleabihf'
+53 silly reify ]
+54 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm-gnueabihf
+55 silly reify mark deleted [
+55 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-linux-arm-gnueabihf'
+55 silly reify ]
+56 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-freebsd-x64
+57 silly reify mark deleted [
+57 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-freebsd-x64'
+57 silly reify ]
+58 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-freebsd-arm64
+59 silly reify mark deleted [
+59 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-freebsd-arm64'
+59 silly reify ]
+60 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-darwin-x64
+61 silly reify mark deleted [
+61 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-darwin-x64'
+61 silly reify ]
+62 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-android-arm64
+63 silly reify mark deleted [
+63 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-android-arm64'
+63 silly reify ]
+64 verbose reify failed optional dependency /Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-android-arm-eabi
+65 silly reify mark deleted [
+65 silly reify   '/Users/rasulsafarovitch/Development/water/crm/node_modules/@rollup/rollup-android-arm-eabi'
+65 silly reify ]
+66 silly tarball no local data for sip.js@https://registry.npmjs.org/sip.js/-/sip.js-0.21.2.tgz. Extracting by manifest.
+67 http fetch GET 200 https://registry.npmjs.org/npm 583ms
+68 silly packumentCache corgi:https://registry.npmjs.org/yocto-queue cache-miss
+69 silly packumentCache corgi:https://registry.npmjs.org/word-wrap cache-miss
+70 silly packumentCache corgi:https://registry.npmjs.org/wrap-ansi cache-miss
+71 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser cache-miss
+72 silly packumentCache corgi:https://registry.npmjs.org/util-deprecate cache-miss
+73 silly packumentCache corgi:https://registry.npmjs.org/undici-types cache-miss
+74 silly packumentCache corgi:https://registry.npmjs.org/to-regex-range cache-miss
+75 silly packumentCache corgi:https://registry.npmjs.org/supports-color cache-miss
+76 silly packumentCache corgi:https://registry.npmjs.org/strip-json-comments cache-miss
+77 silly packumentCache corgi:https://registry.npmjs.org/strip-ansi cache-miss
+78 silly packumentCache corgi:https://registry.npmjs.org/shebang-regex cache-miss
+79 silly packumentCache corgi:https://registry.npmjs.org/shebang-command cache-miss
+80 silly packumentCache corgi:https://registry.npmjs.org/run-parallel cache-miss
+81 silly packumentCache corgi:https://registry.npmjs.org/string-width cache-miss
+82 silly packumentCache corgi:https://registry.npmjs.org/resolve-from cache-miss
+83 silly packumentCache corgi:https://registry.npmjs.org/require-directory cache-miss
+84 silly packumentCache corgi:https://registry.npmjs.org/punycode cache-miss
+85 silly packumentCache corgi:https://registry.npmjs.org/proxy-from-env cache-miss
+86 silly packumentCache corgi:https://registry.npmjs.org/picocolors cache-miss
+87 silly packumentCache corgi:https://registry.npmjs.org/path-exists cache-miss
+88 silly packumentCache corgi:https://registry.npmjs.org/parent-module cache-miss
+89 silly packumentCache corgi:https://registry.npmjs.org/path-key cache-miss
+90 silly packumentCache corgi:https://registry.npmjs.org/p-locate cache-miss
+91 silly packumentCache corgi:https://registry.npmjs.org/p-limit cache-miss
+92 silly packumentCache corgi:https://registry.npmjs.org/queue-microtask cache-miss
+93 silly packumentCache corgi:https://registry.npmjs.org/ms cache-miss
+94 silly packumentCache corgi:https://registry.npmjs.org/natural-compare cache-miss
+95 silly packumentCache corgi:https://registry.npmjs.org/mime-types cache-miss
+96 silly packumentCache corgi:https://registry.npmjs.org/merge2 cache-miss
+97 silly packumentCache corgi:https://registry.npmjs.org/mime-db cache-miss
+98 silly packumentCache corgi:https://registry.npmjs.org/micromatch cache-miss
+99 silly packumentCache corgi:https://registry.npmjs.org/lodash.merge cache-miss
+100 silly packumentCache corgi:https://registry.npmjs.org/lightningcss-darwin-arm64 cache-miss
+101 silly packumentCache corgi:https://registry.npmjs.org/locate-path cache-miss
+102 silly packumentCache corgi:https://registry.npmjs.org/is-number cache-miss
+103 silly packumentCache corgi:https://registry.npmjs.org/is-glob cache-miss
+104 silly packumentCache corgi:https://registry.npmjs.org/is-fullwidth-code-point cache-miss
+105 silly packumentCache corgi:https://registry.npmjs.org/is-extglob cache-miss
+106 silly packumentCache corgi:https://registry.npmjs.org/ignore cache-miss
+107 silly packumentCache corgi:https://registry.npmjs.org/import-fresh cache-miss
+108 silly packumentCache corgi:https://registry.npmjs.org/imurmurhash cache-miss
+109 silly packumentCache corgi:https://registry.npmjs.org/has-flag cache-miss
+110 silly packumentCache corgi:https://registry.npmjs.org/graceful-fs cache-miss
+111 silly packumentCache corgi:https://registry.npmjs.org/globals cache-miss
+112 silly packumentCache corgi:https://registry.npmjs.org/get-caller-file cache-miss
+113 silly packumentCache corgi:https://registry.npmjs.org/fsevents cache-miss
+114 silly packumentCache corgi:https://registry.npmjs.org/file-entry-cache cache-miss
+115 silly packumentCache corgi:https://registry.npmjs.org/fill-range cache-miss
+116 silly packumentCache corgi:https://registry.npmjs.org/find-up cache-miss
+117 silly packumentCache corgi:https://registry.npmjs.org/fast-levenshtein cache-miss
+118 silly packumentCache corgi:https://registry.npmjs.org/glob-parent cache-miss
+119 silly packumentCache corgi:https://registry.npmjs.org/esrecurse cache-miss
+120 silly packumentCache corgi:https://registry.npmjs.org/estraverse cache-miss
+121 silly packumentCache corgi:https://registry.npmjs.org/follow-redirects cache-miss
+122 silly packumentCache corgi:https://registry.npmjs.org/escape-string-regexp cache-miss
+123 silly packumentCache corgi:https://registry.npmjs.org/de-indent cache-miss
+124 silly packumentCache corgi:https://registry.npmjs.org/csstype cache-miss
+125 silly packumentCache corgi:https://registry.npmjs.org/color-name cache-miss
+126 silly packumentCache corgi:https://registry.npmjs.org/color-convert cache-miss
+127 silly packumentCache corgi:https://registry.npmjs.org/callsites cache-miss
+128 silly packumentCache corgi:https://registry.npmjs.org/boolbase cache-miss
+129 silly packumentCache corgi:https://registry.npmjs.org/ansi-styles cache-miss
+130 silly packumentCache corgi:https://registry.npmjs.org/ansi-regex cache-miss
+131 silly packumentCache corgi:https://registry.npmjs.org/acorn-jsx cache-miss
+132 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fshared cache-miss
+133 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fmetadata cache-miss
+134 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fcore cache-miss
+135 silly packumentCache corgi:https://registry.npmjs.org/@types%2fweb-bluetooth cache-miss
+136 silly packumentCache corgi:https://registry.npmjs.org/@types%2festree cache-miss
+137 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide-darwin-arm64 cache-miss
+138 silly packumentCache corgi:https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 cache-miss
+139 silly packumentCache corgi:https://registry.npmjs.org/@eslint-community%2feslint-utils cache-miss
+140 silly packumentCache corgi:https://registry.npmjs.org/@eslint-community%2fregexpp cache-miss
+141 silly packumentCache corgi:https://registry.npmjs.org/glob-parent cache-miss
+142 silly packumentCache corgi:https://registry.npmjs.org/globals cache-miss
+143 silly packumentCache corgi:https://registry.npmjs.org/minimatch cache-miss
+144 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser cache-miss
+145 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion cache-miss
+146 silly packumentCache corgi:https://registry.npmjs.org/supports-color cache-miss
+147 silly packumentCache corgi:https://registry.npmjs.org/ignore cache-miss
+148 silly packumentCache corgi:https://registry.npmjs.org/minimatch cache-miss
+149 silly packumentCache corgi:https://registry.npmjs.org/@types%2fjson-schema cache-miss
+150 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion cache-miss
+151 silly packumentCache corgi:https://registry.npmjs.org/tree-kill cache-miss
+152 silly packumentCache corgi:https://registry.npmjs.org/minimatch cache-miss
+153 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion cache-miss
+154 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 438ms
+155 silly audit report {
+155 silly audit report   minimatch: [
+155 silly audit report     {
+155 silly audit report       id: 1113459,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-3ppc-4f35-3m26',
+155 silly audit report       title: 'minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<3.1.3',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113465,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-3ppc-4f35-3m26',
+155 silly audit report       title: 'minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=9.0.0 <9.0.6',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113538,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-7r86-cg39-jmmj',
+155 silly audit report       title: 'minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<3.1.3',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113544,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-7r86-cg39-jmmj',
+155 silly audit report       title: 'minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=9.0.0 <9.0.7',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113546,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-23c5-xmqv-rm74',
+155 silly audit report       title: 'minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<3.1.4',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113552,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-23c5-xmqv-rm74',
+155 silly audit report       title: 'minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=9.0.0 <9.0.7',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   ajv: [
+155 silly audit report     {
+155 silly audit report       id: 1113714,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-2g4f-4pwh-qvx6',
+155 silly audit report       title: 'ajv has ReDoS when using `$data` option',
+155 silly audit report       severity: 'moderate',
+155 silly audit report       vulnerable_versions: '<6.14.0',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   axios: [
+155 silly audit report     {
+155 silly audit report       id: 1112195,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-4hjh-wcwx-xvwj',
+155 silly audit report       title: 'Axios is vulnerable to DoS attack through lack of data size check',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=1.0.0 <1.12.0',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113275,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-43fc-jf86-j433',
+155 silly audit report       title: 'Axios is Vulnerable to Denial of Service via __proto__ Key in mergeConfig',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=1.0.0 <=1.13.4',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   'js-yaml': [
+155 silly audit report     {
+155 silly audit report       id: 1112715,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-mh29-5h37-fv8m',
+155 silly audit report       title: 'js-yaml has prototype pollution in merge (<<)',
+155 silly audit report       severity: 'moderate',
+155 silly audit report       vulnerable_versions: '>=4.0.0 <4.1.1',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   lodash: [
+155 silly audit report     {
+155 silly audit report       id: 1112455,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-xxjr-mmjv-4gpg',
+155 silly audit report       title: 'Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions',
+155 silly audit report       severity: 'moderate',
+155 silly audit report       vulnerable_versions: '>=4.0.0 <=4.17.22',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   qs: [
+155 silly audit report     {
+155 silly audit report       id: 1113161,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-w7fw-mjwx-w883',
+155 silly audit report       title: "qs's arrayLimit bypass in comma parsing allows denial of service",
+155 silly audit report       severity: 'low',
+155 silly audit report       vulnerable_versions: '>=6.7.0 <=6.14.1',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113719,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-6rw7-vpxm-498p',
+155 silly audit report       title: "qs's arrayLimit bypass in its bracket notation allows DoS via memory exhaustion",
+155 silly audit report       severity: 'moderate',
+155 silly audit report       vulnerable_versions: '<6.14.1',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   rollup: [
+155 silly audit report     {
+155 silly audit report       id: 1113515,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-mw96-cpmx-2vgc',
+155 silly audit report       title: 'Rollup 4 has Arbitrary File Write via Path Traversal',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '>=4.0.0 <4.59.0',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   tar: [
+155 silly audit report     {
+155 silly audit report       id: 1112329,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-r6q2-hw4h-h46w',
+155 silly audit report       title: 'Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<=7.5.3',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1112659,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-34x7-hfp2-rc4v',
+155 silly audit report       title: 'node-tar Vulnerable to Arbitrary File Creation/Overwrite via Hardlink Path Traversal',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<7.5.7',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113300,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-8qq5-rm4j-mr97',
+155 silly audit report       title: 'node-tar is Vulnerable to Arbitrary File Overwrite and Symlink Poisoning via Insufficient Path Sanitization',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<=7.5.2',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113375,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-83g3-92jg-28cx',
+155 silly audit report       title: 'Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<7.5.8',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1113992,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-qffp-2rhf-9h96',
+155 silly audit report       title: 'tar has Hardlink Path Traversal via Drive-Relative Linkpath',
+155 silly audit report       severity: 'high',
+155 silly audit report       vulnerable_versions: '<=7.5.9',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ],
+155 silly audit report   vite: [
+155 silly audit report     {
+155 silly audit report       id: 1107326,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-g4jq-h2w9-997c',
+155 silly audit report       title: 'Vite middleware may serve files starting with the same name with the public directory',
+155 silly audit report       severity: 'low',
+155 silly audit report       vulnerable_versions: '>=7.1.0 <=7.1.4',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1107330,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-jqfw-vq24-v9c3',
+155 silly audit report       title: "Vite's `server.fs` settings were not applied to HTML files",
+155 silly audit report       severity: 'low',
+155 silly audit report       vulnerable_versions: '>=7.1.0 <=7.1.4',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     },
+155 silly audit report     {
+155 silly audit report       id: 1109137,
+155 silly audit report       url: 'https://github.com/advisories/GHSA-93m4-6634-74q7',
+155 silly audit report       title: 'vite allows server.fs.deny bypass via backslash on Windows',
+155 silly audit report       severity: 'moderate',
+155 silly audit report       vulnerable_versions: '>=7.1.0 <=7.1.10',
+155 silly audit report       cwe: [Array],
+155 silly audit report       cvss: [Object]
+155 silly audit report     }
+155 silly audit report   ]
+155 silly audit report }
+156 silly packumentCache corgi:https://registry.npmjs.org/minimatch cache-miss
+157 silly packumentCache corgi:https://registry.npmjs.org/ajv cache-miss
+158 silly packumentCache corgi:https://registry.npmjs.org/axios cache-miss
+159 silly packumentCache corgi:https://registry.npmjs.org/js-yaml cache-miss
+160 silly packumentCache corgi:https://registry.npmjs.org/lodash cache-miss
+161 silly packumentCache corgi:https://registry.npmjs.org/qs cache-miss
+162 silly packumentCache corgi:https://registry.npmjs.org/rollup cache-miss
+163 silly packumentCache corgi:https://registry.npmjs.org/tar cache-miss
+164 silly packumentCache corgi:https://registry.npmjs.org/vite cache-miss
+165 silly packumentCache corgi:https://registry.npmjs.org/xml-name-validator cache-miss
+166 silly packumentCache corgi:https://registry.npmjs.org/vite-plugin-full-reload cache-miss
+167 silly packumentCache corgi:https://registry.npmjs.org/typescript-eslint cache-miss
+168 silly packumentCache corgi:https://registry.npmjs.org/type-check cache-miss
+169 silly packumentCache corgi:https://registry.npmjs.org/vue cache-miss
+170 silly packumentCache corgi:https://registry.npmjs.org/type-fest cache-miss
+171 silly packumentCache corgi:https://registry.npmjs.org/tw-animate-css cache-miss
+172 silly packumentCache corgi:https://registry.npmjs.org/tslib cache-miss
+173 silly packumentCache corgi:https://registry.npmjs.org/tinyglobby cache-miss
+174 silly packumentCache corgi:https://registry.npmjs.org/ts-api-utils cache-miss
+175 silly packumentCache corgi:https://registry.npmjs.org/tapable cache-miss
+176 silly packumentCache corgi:https://registry.npmjs.org/side-channel-map cache-miss
+177 silly packumentCache corgi:https://registry.npmjs.org/tailwindcss cache-miss
+178 silly packumentCache corgi:https://registry.npmjs.org/side-channel-weakmap cache-miss
+179 silly packumentCache corgi:https://registry.npmjs.org/side-channel-list cache-miss
+180 silly packumentCache corgi:https://registry.npmjs.org/source-map-js cache-miss
+181 silly packumentCache corgi:https://registry.npmjs.org/side-channel cache-miss
+182 silly packumentCache corgi:https://registry.npmjs.org/qs cache-miss
+183 silly packumentCache corgi:https://registry.npmjs.org/shell-quote cache-miss
+184 silly packumentCache corgi:https://registry.npmjs.org/prettier-plugin-organize-imports cache-miss
+185 silly packumentCache corgi:https://registry.npmjs.org/prelude-ls cache-miss
+186 silly packumentCache corgi:https://registry.npmjs.org/picomatch cache-miss
+187 silly packumentCache corgi:https://registry.npmjs.org/optionator cache-miss
+188 silly packumentCache corgi:https://registry.npmjs.org/postcss cache-miss
+189 silly packumentCache corgi:https://registry.npmjs.org/path-browserify cache-miss
+190 silly packumentCache corgi:https://registry.npmjs.org/muggle-string cache-miss
+191 silly packumentCache corgi:https://registry.npmjs.org/math-intrinsics cache-miss
+192 silly packumentCache corgi:https://registry.npmjs.org/magic-string cache-miss
+193 silly packumentCache corgi:https://registry.npmjs.org/keyv cache-miss
+194 silly packumentCache corgi:https://registry.npmjs.org/levn cache-miss
+195 silly packumentCache corgi:https://registry.npmjs.org/lightningcss cache-miss
+196 silly packumentCache corgi:https://registry.npmjs.org/json-stable-stringify-without-jsonify cache-miss
+197 silly packumentCache corgi:https://registry.npmjs.org/json-buffer cache-miss
+198 silly packumentCache corgi:https://registry.npmjs.org/hasown cache-miss
+199 silly packumentCache corgi:https://registry.npmjs.org/isexe cache-miss
+200 silly packumentCache corgi:https://registry.npmjs.org/graphemer cache-miss
+201 silly packumentCache corgi:https://registry.npmjs.org/get-intrinsic cache-miss
+202 silly packumentCache corgi:https://registry.npmjs.org/flat-cache cache-miss
+203 silly packumentCache corgi:https://registry.npmjs.org/gopd cache-miss
+204 silly packumentCache corgi:https://registry.npmjs.org/form-data cache-miss
+205 silly packumentCache corgi:https://registry.npmjs.org/get-proto cache-miss
+206 silly packumentCache corgi:https://registry.npmjs.org/function-bind cache-miss
+207 silly packumentCache corgi:https://registry.npmjs.org/flatted cache-miss
+208 silly packumentCache corgi:https://registry.npmjs.org/esutils cache-miss
+209 silly packumentCache corgi:https://registry.npmjs.org/fast-deep-equal cache-miss
+210 silly packumentCache corgi:https://registry.npmjs.org/fast-json-stable-stringify cache-miss
+211 silly packumentCache corgi:https://registry.npmjs.org/espree cache-miss
+212 silly packumentCache corgi:https://registry.npmjs.org/esquery cache-miss
+213 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys cache-miss
+214 silly packumentCache corgi:https://registry.npmjs.org/eslint-scope cache-miss
+215 silly packumentCache corgi:https://registry.npmjs.org/escalade cache-miss
+216 silly packumentCache corgi:https://registry.npmjs.org/es-set-tostringtag cache-miss
+217 silly packumentCache corgi:https://registry.npmjs.org/es-define-property cache-miss
+218 silly packumentCache corgi:https://registry.npmjs.org/lodash cache-miss
+219 silly packumentCache corgi:https://registry.npmjs.org/es-errors cache-miss
+220 silly packumentCache corgi:https://registry.npmjs.org/es-object-atoms cache-miss
+221 silly packumentCache corgi:https://registry.npmjs.org/dunder-proto cache-miss
+222 silly packumentCache corgi:https://registry.npmjs.org/emoji-regex cache-miss
+223 silly packumentCache corgi:https://registry.npmjs.org/delayed-stream cache-miss
+224 silly packumentCache corgi:https://registry.npmjs.org/defu cache-miss
+225 silly packumentCache corgi:https://registry.npmjs.org/deep-is cache-miss
+226 silly packumentCache corgi:https://registry.npmjs.org/debug cache-miss
+227 silly packumentCache corgi:https://registry.npmjs.org/concat-map cache-miss
+228 silly packumentCache corgi:https://registry.npmjs.org/clsx cache-miss
+229 silly packumentCache corgi:https://registry.npmjs.org/combined-stream cache-miss
+230 silly packumentCache corgi:https://registry.npmjs.org/class-variance-authority cache-miss
+231 silly packumentCache corgi:https://registry.npmjs.org/call-bound cache-miss
+232 silly packumentCache corgi:https://registry.npmjs.org/braces cache-miss
+233 silly packumentCache corgi:https://registry.npmjs.org/call-bind-apply-helpers cache-miss
+234 silly packumentCache corgi:https://registry.npmjs.org/chalk cache-miss
+235 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion cache-miss
+236 silly packumentCache corgi:https://registry.npmjs.org/balanced-match cache-miss
+237 silly packumentCache corgi:https://registry.npmjs.org/argparse cache-miss
+238 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fshared cache-miss
+239 silly packumentCache corgi:https://registry.npmjs.org/detect-libc cache-miss
+240 silly packumentCache corgi:https://registry.npmjs.org/alien-signals cache-miss
+241 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fruntime-dom cache-miss
+242 silly packumentCache corgi:https://registry.npmjs.org/asynckit cache-miss
+243 silly packumentCache corgi:https://registry.npmjs.org/@vue%2freactivity cache-miss
+244 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fruntime-core cache-miss
+245 silly packumentCache corgi:https://registry.npmjs.org/@vue%2feslint-config-typescript cache-miss
+246 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-ssr cache-miss
+247 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-sfc cache-miss
+248 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-vue2 cache-miss
+249 silly packumentCache corgi:https://registry.npmjs.org/@volar%2flanguage-core cache-miss
+250 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-dom cache-miss
+251 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-core cache-miss
+252 silly packumentCache corgi:https://registry.npmjs.org/@vitejs%2fplugin-vue cache-miss
+253 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fvisitor-keys cache-miss
+254 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftsconfig-utils cache-miss
+255 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fparser cache-miss
+256 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fproject-service cache-miss
+257 silly packumentCache corgi:https://registry.npmjs.org/@types%2fnode cache-miss
+258 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fvite cache-miss
+259 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fnode cache-miss
+260 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide cache-miss
+261 silly packumentCache corgi:https://registry.npmjs.org/@volar%2fsource-map cache-miss
+262 silly packumentCache corgi:https://registry.npmjs.org/@rolldown%2fpluginutils cache-miss
+263 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2ftrace-mapping cache-miss
+264 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fsourcemap-codec cache-miss
+265 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fvue3 cache-miss
+266 silly packumentCache corgi:https://registry.npmjs.org/@internationalized%2fnumber cache-miss
+267 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fcore cache-miss
+268 silly packumentCache corgi:https://registry.npmjs.org/@humanfs%2fnode cache-miss
+269 silly packumentCache corgi:https://registry.npmjs.org/@humanfs%2fcore cache-miss
+270 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fremapping cache-miss
+271 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fmodule-importer cache-miss
+272 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fretry cache-miss
+273 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fvue cache-miss
+274 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fdom cache-miss
+275 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fcore cache-miss
+276 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2futils cache-miss
+277 silly packumentCache corgi:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 cache-miss
+278 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fhelper-string-parser cache-miss
+279 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fhelper-validator-identifier cache-miss
+280 silly packumentCache corgi:https://registry.npmjs.org/picomatch cache-miss
+281 silly packumentCache corgi:https://registry.npmjs.org/picomatch cache-miss
+282 silly packumentCache corgi:https://registry.npmjs.org/fdir cache-miss
+283 silly packumentCache corgi:https://registry.npmjs.org/espree cache-miss
+284 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys cache-miss
+285 silly packumentCache corgi:https://registry.npmjs.org/eslint-scope cache-miss
+286 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fserver-renderer cache-miss
+287 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys cache-miss
+288 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys cache-miss
+289 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fretry cache-miss
+290 silly packumentCache corgi:https://registry.npmjs.org/fdir cache-miss
+291 silly packumentCache corgi:https://registry.npmjs.org/which cache-miss
+292 silly packumentCache corgi:https://registry.npmjs.org/vue-tsc cache-miss
+293 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys cache-miss
+294 silly packumentCache corgi:https://registry.npmjs.org/semver cache-miss
+295 silly packumentCache corgi:https://registry.npmjs.org/prettier cache-miss
+296 silly packumentCache corgi:https://registry.npmjs.org/nanoid cache-miss
+297 silly packumentCache corgi:https://registry.npmjs.org/laravel-vite-plugin cache-miss
+298 silly packumentCache corgi:https://registry.npmjs.org/he cache-miss
+299 silly packumentCache corgi:https://registry.npmjs.org/jiti cache-miss
+300 silly packumentCache corgi:https://registry.npmjs.org/eslint-config-prettier cache-miss
+301 silly packumentCache corgi:https://registry.npmjs.org/esbuild cache-miss
+302 silly packumentCache corgi:https://registry.npmjs.org/cssesc cache-miss
+303 silly packumentCache corgi:https://registry.npmjs.org/acorn cache-miss
+304 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fparser cache-miss
+305 silly packumentCache corgi:https://registry.npmjs.org/yargs-parser cache-miss
+306 silly packumentCache corgi:https://registry.npmjs.org/yallist cache-miss
+307 silly packumentCache corgi:https://registry.npmjs.org/vscode-uri cache-miss
+308 silly packumentCache corgi:https://registry.npmjs.org/tailwind-merge cache-miss
+309 silly packumentCache corgi:https://registry.npmjs.org/tar cache-miss
+310 silly packumentCache corgi:https://registry.npmjs.org/reusify cache-miss
+311 silly packumentCache corgi:https://registry.npmjs.org/postcss-selector-parser cache-miss
+312 silly packumentCache corgi:https://registry.npmjs.org/object-inspect cache-miss
+313 silly packumentCache corgi:https://registry.npmjs.org/nth-check cache-miss
+314 silly packumentCache corgi:https://registry.npmjs.org/minimatch cache-miss
+315 silly packumentCache corgi:https://registry.npmjs.org/minizlib cache-miss
+316 silly packumentCache corgi:https://registry.npmjs.org/json-schema-traverse cache-miss
+317 silly packumentCache corgi:https://registry.npmjs.org/has-symbols cache-miss
+318 silly packumentCache corgi:https://registry.npmjs.org/minipass cache-miss
+319 silly packumentCache corgi:https://registry.npmjs.org/has-tostringtag cache-miss
+320 silly packumentCache corgi:https://registry.npmjs.org/estree-walker cache-miss
+321 silly packumentCache corgi:https://registry.npmjs.org/fastq cache-miss
+322 silly packumentCache corgi:https://registry.npmjs.org/enhanced-resolve cache-miss
+323 silly packumentCache corgi:https://registry.npmjs.org/cross-spawn cache-miss
+324 silly packumentCache corgi:https://registry.npmjs.org/chownr cache-miss
+325 silly packumentCache corgi:https://registry.npmjs.org/cliui cache-miss
+326 silly packumentCache corgi:https://registry.npmjs.org/aria-hidden cache-miss
+327 silly packumentCache corgi:https://registry.npmjs.org/ajv cache-miss
+328 silly packumentCache corgi:https://registry.npmjs.org/@volar%2ftypescript cache-miss
+329 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypes cache-miss
+330 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree cache-miss
+331 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftype-utils cache-miss
+332 silly packumentCache corgi:https://registry.npmjs.org/@tanstack%2fvue-virtual cache-miss
+333 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fscope-manager cache-miss
+334 silly packumentCache corgi:https://registry.npmjs.org/@tanstack%2fvirtual-core cache-miss
+335 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.scandir cache-miss
+336 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.walk cache-miss
+337 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fresolve-uri cache-miss
+338 silly packumentCache corgi:https://registry.npmjs.org/@isaacs%2ffs-minipass cache-miss
+339 silly packumentCache corgi:https://registry.npmjs.org/@internationalized%2fdate cache-miss
+340 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fplugin-kit cache-miss
+341 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fjs cache-miss
+342 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fobject-schema cache-miss
+343 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-helpers cache-miss
+344 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fcore cache-miss
+345 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2feslintrc cache-miss
+346 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fgen-mapping cache-miss
+347 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.stat cache-miss
+348 silly packumentCache corgi:https://registry.npmjs.org/@swc%2fhelpers cache-miss
+349 silly packumentCache corgi:https://registry.npmjs.org/typescript cache-miss
+350 silly packumentCache corgi:https://registry.npmjs.org/js-yaml cache-miss
+351 silly tarball no local data for @laravel/vite-plugin-wayfinder@https://registry.npmjs.org/@laravel/vite-plugin-wayfinder/-/vite-plugin-wayfinder-0.1.3.tgz. Extracting by manifest.
+352 silly packumentCache corgi:https://registry.npmjs.org/vue-demi cache-miss
+353 silly packumentCache corgi:https://registry.npmjs.org/y18n cache-miss
+354 silly packumentCache corgi:https://registry.npmjs.org/yargs cache-miss
+355 silly packumentCache corgi:https://registry.npmjs.org/uri-js cache-miss
+356 silly packumentCache corgi:https://registry.npmjs.org/ohash cache-miss
+357 silly packumentCache corgi:https://registry.npmjs.org/fast-glob cache-miss
+358 silly packumentCache corgi:https://registry.npmjs.org/entities cache-miss
+359 silly packumentCache corgi:https://registry.npmjs.org/es-toolkit cache-miss
+360 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2futils cache-miss
+361 silly packumentCache corgi:https://registry.npmjs.org/@vue%2flanguage-core cache-miss
+362 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2feslint-plugin cache-miss
+363 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-array cache-miss
+364 silly packumentCache corgi:https://registry.npmjs.org/vite cache-miss
+365 silly packumentCache corgi:https://registry.npmjs.org/@babel%2ftypes cache-miss
+366 silly packumentCache corgi:https://registry.npmjs.org/rollup cache-miss
+367 silly packumentCache corgi:https://registry.npmjs.org/mkdirp cache-miss
+368 silly packumentCache corgi:https://registry.npmjs.org/concurrently cache-miss
+369 silly packumentCache corgi:https://registry.npmjs.org/reka-ui cache-miss
+370 silly packumentCache corgi:https://registry.npmjs.org/lucide-vue-next cache-miss
+371 silly packumentCache corgi:https://registry.npmjs.org/prettier-plugin-tailwindcss cache-miss
+372 silly packumentCache corgi:https://registry.npmjs.org/eslint-plugin-vue cache-miss
+373 silly packumentCache corgi:https://registry.npmjs.org/axios cache-miss
+374 silly packumentCache corgi:https://registry.npmjs.org/rxjs cache-miss
+375 http fetch GET 200 https://registry.npmjs.org/word-wrap 1544ms (cache miss)
+376 silly packumentCache corgi:https://registry.npmjs.org/word-wrap set size:undefined disposed:false
+377 http fetch GET 200 https://registry.npmjs.org/yocto-queue 1547ms (cache miss)
+378 silly packumentCache corgi:https://registry.npmjs.org/yocto-queue set size:undefined disposed:false
+379 http fetch GET 200 https://registry.npmjs.org/resolve-from 1545ms (cache miss)
+380 silly packumentCache corgi:https://registry.npmjs.org/resolve-from set size:undefined disposed:false
+381 http fetch GET 200 https://registry.npmjs.org/require-directory 1548ms (cache miss)
+382 silly packumentCache corgi:https://registry.npmjs.org/require-directory set size:undefined disposed:false
+383 silly packumentCache corgi:https://registry.npmjs.org/eslint cache-miss
+384 http fetch GET 200 https://registry.npmjs.org/picocolors 1553ms (cache miss)
+385 silly packumentCache corgi:https://registry.npmjs.org/picocolors set size:undefined disposed:false
+386 http fetch GET 200 https://registry.npmjs.org/proxy-from-env 1554ms (cache miss)
+387 silly packumentCache corgi:https://registry.npmjs.org/proxy-from-env set size:undefined disposed:false
+388 http fetch GET 200 https://registry.npmjs.org/is-glob 1553ms (cache miss)
+389 silly packumentCache corgi:https://registry.npmjs.org/is-glob set size:undefined disposed:false
+390 http fetch GET 200 https://registry.npmjs.org/path-exists 1558ms (cache miss)
+391 silly packumentCache corgi:https://registry.npmjs.org/path-exists set size:undefined disposed:false
+392 http fetch GET 200 https://registry.npmjs.org/locate-path 1555ms (cache miss)
+393 silly packumentCache corgi:https://registry.npmjs.org/locate-path set size:undefined disposed:false
+394 http fetch GET 200 https://registry.npmjs.org/natural-compare 1557ms (cache miss)
+395 silly packumentCache corgi:https://registry.npmjs.org/natural-compare set size:undefined disposed:false
+396 http fetch GET 200 https://registry.npmjs.org/path-key 1560ms (cache miss)
+397 silly packumentCache corgi:https://registry.npmjs.org/path-key set size:undefined disposed:false
+398 http fetch GET 200 https://registry.npmjs.org/is-number 1557ms (cache miss)
+399 silly packumentCache corgi:https://registry.npmjs.org/is-number set size:undefined disposed:false
+400 http fetch GET 200 https://registry.npmjs.org/callsites 1547ms (cache miss)
+401 silly packumentCache corgi:https://registry.npmjs.org/callsites set size:undefined disposed:false
+402 http fetch GET 200 https://registry.npmjs.org/shebang-regex 1565ms (cache miss)
+403 silly packumentCache corgi:https://registry.npmjs.org/shebang-regex set size:undefined disposed:false
+404 http fetch GET 200 https://registry.npmjs.org/punycode 1565ms (cache miss)
+405 silly packumentCache corgi:https://registry.npmjs.org/punycode set size:undefined disposed:false
+406 http fetch GET 200 https://registry.npmjs.org/util-deprecate 1568ms (cache miss)
+407 silly packumentCache corgi:https://registry.npmjs.org/util-deprecate set size:undefined disposed:false
+408 http fetch GET 200 https://registry.npmjs.org/parent-module 1565ms (cache miss)
+409 silly packumentCache corgi:https://registry.npmjs.org/parent-module set size:undefined disposed:false
+410 http fetch GET 200 https://registry.npmjs.org/imurmurhash 1560ms (cache miss)
+411 silly packumentCache corgi:https://registry.npmjs.org/imurmurhash set size:undefined disposed:false
+412 http fetch GET 200 https://registry.npmjs.org/strip-json-comments 1569ms (cache miss)
+413 silly packumentCache corgi:https://registry.npmjs.org/strip-json-comments set size:undefined disposed:false
+414 http fetch GET 200 https://registry.npmjs.org/shebang-command 1569ms (cache miss)
+415 silly packumentCache corgi:https://registry.npmjs.org/shebang-command set size:undefined disposed:false
+416 http fetch GET 200 https://registry.npmjs.org/boolbase 1552ms (cache miss)
+417 silly packumentCache corgi:https://registry.npmjs.org/boolbase set size:undefined disposed:false
+418 http fetch GET 200 https://registry.npmjs.org/is-extglob 1565ms (cache miss)
+419 silly packumentCache corgi:https://registry.npmjs.org/is-extglob set size:undefined disposed:false
+420 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp 1559ms (cache miss)
+421 silly packumentCache corgi:https://registry.npmjs.org/escape-string-regexp set size:undefined disposed:false
+422 http fetch GET 200 https://registry.npmjs.org/de-indent 1563ms (cache miss)
+423 silly packumentCache corgi:https://registry.npmjs.org/de-indent set size:undefined disposed:false
+424 http fetch GET 200 https://registry.npmjs.org/fill-range 1569ms (cache miss)
+425 silly packumentCache corgi:https://registry.npmjs.org/fill-range set size:undefined disposed:false
+426 http fetch GET 200 https://registry.npmjs.org/is-fullwidth-code-point 1576ms (cache miss)
+427 silly packumentCache corgi:https://registry.npmjs.org/is-fullwidth-code-point set size:undefined disposed:false
+428 http fetch GET 200 https://registry.npmjs.org/file-entry-cache 1572ms (cache miss)
+429 silly packumentCache corgi:https://registry.npmjs.org/file-entry-cache set size:undefined disposed:false
+430 http fetch GET 200 https://registry.npmjs.org/acorn-jsx 1566ms (cache miss)
+431 silly packumentCache corgi:https://registry.npmjs.org/acorn-jsx set size:undefined disposed:false
+432 http fetch GET 200 https://registry.npmjs.org/ansi-regex 1566ms (cache miss)
+433 silly packumentCache corgi:https://registry.npmjs.org/ansi-regex set size:undefined disposed:false
+434 http fetch GET 200 https://registry.npmjs.org/has-flag 1580ms (cache miss)
+435 silly packumentCache corgi:https://registry.npmjs.org/has-flag set size:undefined disposed:false
+436 http fetch GET 200 https://registry.npmjs.org/xml-name-validator 1184ms (cache miss)
+437 silly packumentCache corgi:https://registry.npmjs.org/xml-name-validator set size:undefined disposed:false
+438 http fetch GET 200 https://registry.npmjs.org/color-name 1575ms (cache miss)
+439 silly packumentCache corgi:https://registry.npmjs.org/color-name set size:undefined disposed:false
+440 http fetch GET 200 https://registry.npmjs.org/fsevents 1580ms (cache miss)
+441 silly packumentCache corgi:https://registry.npmjs.org/fsevents set size:undefined disposed:false
+442 http fetch GET 200 https://registry.npmjs.org/run-parallel 1592ms (cache miss)
+443 silly packumentCache corgi:https://registry.npmjs.org/run-parallel set size:undefined disposed:false
+444 http fetch GET 200 https://registry.npmjs.org/glob-parent 1561ms (cache miss)
+445 silly packumentCache corgi:https://registry.npmjs.org/glob-parent set size:undefined disposed:false
+446 http fetch GET 200 https://registry.npmjs.org/import-fresh 1586ms (cache miss)
+447 silly packumentCache corgi:https://registry.npmjs.org/import-fresh set size:undefined disposed:false
+448 http fetch GET 200 https://registry.npmjs.org/p-locate 1592ms (cache miss)
+449 silly packumentCache corgi:https://registry.npmjs.org/p-locate set size:undefined disposed:false
+450 http fetch GET 200 https://registry.npmjs.org/tree-kill 1552ms (cache miss)
+451 silly packumentCache corgi:https://registry.npmjs.org/tree-kill set size:undefined disposed:false
+452 http fetch GET 200 https://registry.npmjs.org/brace-expansion 1562ms (cache miss)
+453 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion set size:undefined disposed:false
+454 http fetch GET 200 https://registry.npmjs.org/fast-levenshtein 1587ms (cache miss)
+455 silly packumentCache corgi:https://registry.npmjs.org/fast-levenshtein set size:undefined disposed:false
+456 http fetch GET 200 https://registry.npmjs.org/ansi-styles 1582ms (cache miss)
+457 silly packumentCache corgi:https://registry.npmjs.org/ansi-styles set size:undefined disposed:false
+458 http fetch GET 200 https://registry.npmjs.org/to-regex-range 1603ms (cache miss)
+459 silly packumentCache corgi:https://registry.npmjs.org/to-regex-range set size:undefined disposed:false
+460 http fetch GET 200 https://registry.npmjs.org/get-caller-file 1591ms (cache miss)
+461 silly packumentCache corgi:https://registry.npmjs.org/get-caller-file set size:undefined disposed:false
+462 http fetch GET 200 https://registry.npmjs.org/esrecurse 1590ms (cache miss)
+463 silly packumentCache corgi:https://registry.npmjs.org/esrecurse set size:undefined disposed:false
+464 http fetch GET 200 https://registry.npmjs.org/@eslint-community%2feslint-utils 1575ms (cache miss)
+465 silly packumentCache corgi:https://registry.npmjs.org/@eslint-community%2feslint-utils set size:undefined disposed:false
+466 http fetch GET 200 https://registry.npmjs.org/js-yaml 1495ms (cache miss)
+467 silly packumentCache corgi:https://registry.npmjs.org/js-yaml set size:undefined disposed:false
+468 http fetch GET 200 https://registry.npmjs.org/find-up 1594ms (cache miss)
+469 silly packumentCache corgi:https://registry.npmjs.org/find-up set size:undefined disposed:false
+470 http fetch GET 200 https://registry.npmjs.org/lodash.merge 1602ms (cache miss)
+471 silly packumentCache corgi:https://registry.npmjs.org/lodash.merge set size:undefined disposed:false
+472 http fetch GET 200 https://registry.npmjs.org/vite-plugin-full-reload 1203ms (cache miss)
+473 silly packumentCache corgi:https://registry.npmjs.org/vite-plugin-full-reload set size:undefined disposed:false
+474 http fetch GET 200 https://registry.npmjs.org/merge2 1606ms (cache miss)
+475 silly packumentCache corgi:https://registry.npmjs.org/merge2 set size:undefined disposed:false
+476 http fetch GET 200 https://registry.npmjs.org/side-channel-map 1193ms (cache miss)
+477 silly packumentCache corgi:https://registry.npmjs.org/side-channel-map set size:undefined disposed:false
+478 http fetch GET 200 https://registry.npmjs.org/glob-parent 1599ms (cache miss)
+479 silly packumentCache corgi:https://registry.npmjs.org/glob-parent set size:undefined disposed:false
+480 http fetch GET 200 https://registry.npmjs.org/brace-expansion 1546ms (cache miss)
+481 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion set size:undefined disposed:false
+482 http fetch GET 200 https://registry.npmjs.org/ms 1610ms (cache miss)
+483 silly packumentCache corgi:https://registry.npmjs.org/ms set size:undefined disposed:false
+484 http fetch GET 200 https://registry.npmjs.org/strip-ansi 1615ms (cache miss)
+485 silly packumentCache corgi:https://registry.npmjs.org/strip-ansi set size:undefined disposed:false
+486 http fetch GET 200 https://registry.npmjs.org/brace-expansion 1582ms (cache miss)
+487 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion set size:undefined disposed:false
+488 http fetch GET 200 https://registry.npmjs.org/@types%2fjson-schema 1583ms (cache miss)
+489 silly packumentCache corgi:https://registry.npmjs.org/@types%2fjson-schema set size:undefined disposed:false
+490 http fetch GET 200 https://registry.npmjs.org/@eslint-community%2fregexpp 1590ms (cache miss)
+491 silly packumentCache corgi:https://registry.npmjs.org/@eslint-community%2fregexpp set size:undefined disposed:false
+492 http fetch GET 200 https://registry.npmjs.org/wrap-ansi 1623ms (cache miss)
+493 silly packumentCache corgi:https://registry.npmjs.org/wrap-ansi set size:undefined disposed:false
+494 http fetch GET 200 https://registry.npmjs.org/@types%2festree 1601ms (cache miss)
+495 silly packumentCache corgi:https://registry.npmjs.org/@types%2festree set size:undefined disposed:false
+496 http fetch GET 200 https://registry.npmjs.org/color-convert 1606ms (cache miss)
+497 silly packumentCache corgi:https://registry.npmjs.org/color-convert set size:undefined disposed:false
+498 http fetch GET 200 https://registry.npmjs.org/queue-microtask 1619ms (cache miss)
+499 silly packumentCache corgi:https://registry.npmjs.org/queue-microtask set size:undefined disposed:false
+500 http fetch GET 200 https://registry.npmjs.org/lodash 1514ms (cache miss)
+501 silly packumentCache corgi:https://registry.npmjs.org/lodash set size:undefined disposed:false
+502 http fetch GET 200 https://registry.npmjs.org/p-limit 1624ms (cache miss)
+503 silly packumentCache corgi:https://registry.npmjs.org/p-limit set size:undefined disposed:false
+504 http fetch GET 200 https://registry.npmjs.org/supports-color 1594ms (cache miss)
+505 silly packumentCache corgi:https://registry.npmjs.org/supports-color set size:undefined disposed:false
+506 http fetch GET 200 https://registry.npmjs.org/estraverse 1616ms (cache miss)
+507 silly packumentCache corgi:https://registry.npmjs.org/estraverse set size:undefined disposed:false
+508 http fetch GET 200 https://registry.npmjs.org/ignore 1597ms (cache miss)
+509 silly packumentCache corgi:https://registry.npmjs.org/ignore set size:undefined disposed:false
+510 http fetch GET 200 https://registry.npmjs.org/string-width 1634ms (cache miss)
+511 silly packumentCache corgi:https://registry.npmjs.org/string-width set size:undefined disposed:false
+512 http fetch GET 200 https://registry.npmjs.org/lightningcss-darwin-arm64 1630ms (cache miss)
+513 silly packumentCache corgi:https://registry.npmjs.org/lightningcss-darwin-arm64 set size:undefined disposed:false
+514 http fetch GET 200 https://registry.npmjs.org/supports-color 1637ms (cache miss)
+515 silly packumentCache corgi:https://registry.npmjs.org/supports-color set size:undefined disposed:false
+516 http fetch GET 200 https://registry.npmjs.org/micromatch 1635ms (cache miss)
+517 silly packumentCache corgi:https://registry.npmjs.org/micromatch set size:undefined disposed:false
+518 http fetch GET 200 https://registry.npmjs.org/tapable 1231ms (cache miss)
+519 silly packumentCache corgi:https://registry.npmjs.org/tapable set size:undefined disposed:false
+520 http fetch GET 200 https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 1619ms (cache miss)
+521 silly packumentCache corgi:https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 set size:undefined disposed:false
+522 http fetch GET 200 https://registry.npmjs.org/ignore 1635ms (cache miss)
+523 silly packumentCache corgi:https://registry.npmjs.org/ignore set size:undefined disposed:false
+524 http fetch GET 200 https://registry.npmjs.org/undici-types 1645ms (cache miss)
+525 silly packumentCache corgi:https://registry.npmjs.org/undici-types set size:undefined disposed:false
+526 http fetch GET 200 https://registry.npmjs.org/csstype 1632ms (cache miss)
+527 silly packumentCache corgi:https://registry.npmjs.org/csstype set size:undefined disposed:false
+528 http fetch GET 200 https://registry.npmjs.org/graceful-fs 1638ms (cache miss)
+529 silly packumentCache corgi:https://registry.npmjs.org/graceful-fs set size:undefined disposed:false
+530 http fetch GET 200 https://registry.npmjs.org/mime-types 1646ms (cache miss)
+531 silly packumentCache corgi:https://registry.npmjs.org/mime-types set size:undefined disposed:false
+532 http fetch GET 200 https://registry.npmjs.org/minimatch 1619ms (cache miss)
+533 silly packumentCache corgi:https://registry.npmjs.org/minimatch set size:undefined disposed:false
+534 http fetch GET 200 https://registry.npmjs.org/mime-db 1649ms (cache miss)
+535 silly packumentCache corgi:https://registry.npmjs.org/mime-db set size:undefined disposed:false
+536 http fetch GET 200 https://registry.npmjs.org/minimatch 1547ms (cache miss)
+537 silly packumentCache corgi:https://registry.npmjs.org/minimatch set size:undefined disposed:false
+538 http fetch GET 200 https://registry.npmjs.org/minimatch 1627ms (cache miss)
+539 silly packumentCache corgi:https://registry.npmjs.org/minimatch set size:undefined disposed:false
+540 http fetch GET 200 https://registry.npmjs.org/globals 1631ms (cache miss)
+541 silly packumentCache corgi:https://registry.npmjs.org/globals set size:undefined disposed:false
+542 http fetch GET 200 https://registry.npmjs.org/qs 1554ms (cache miss)
+543 silly packumentCache corgi:https://registry.npmjs.org/qs set size:undefined disposed:false
+544 http fetch GET 200 https://registry.npmjs.org/vue-eslint-parser 1638ms (cache miss)
+545 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser set size:undefined disposed:false
+546 http fetch GET 200 https://registry.npmjs.org/type-check 1265ms (cache miss)
+547 silly packumentCache corgi:https://registry.npmjs.org/type-check set size:undefined disposed:false
+548 http fetch GET 200 https://registry.npmjs.org/axios 1565ms (cache miss)
+549 silly packumentCache corgi:https://registry.npmjs.org/axios set size:undefined disposed:false
+550 http fetch GET 200 https://registry.npmjs.org/follow-redirects 1665ms (cache miss)
+551 silly packumentCache corgi:https://registry.npmjs.org/follow-redirects set size:undefined disposed:false
+552 http fetch GET 200 https://registry.npmjs.org/tinyglobby 1273ms (cache miss)
+553 silly packumentCache corgi:https://registry.npmjs.org/tinyglobby set size:undefined disposed:false
+554 http fetch GET 200 https://registry.npmjs.org/@vueuse%2fmetadata 1663ms (cache miss)
+555 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fmetadata set size:undefined disposed:false
+556 http fetch GET 200 https://registry.npmjs.org/tar 1574ms (cache miss)
+557 silly packumentCache corgi:https://registry.npmjs.org/tar set size:undefined disposed:false
+558 http fetch GET 200 https://registry.npmjs.org/globals 1677ms (cache miss)
+559 silly packumentCache corgi:https://registry.npmjs.org/globals set size:undefined disposed:false
+560 http fetch GET 200 https://registry.npmjs.org/ts-api-utils 1281ms (cache miss)
+561 silly packumentCache corgi:https://registry.npmjs.org/ts-api-utils set size:undefined disposed:false
+562 http fetch GET 200 https://registry.npmjs.org/side-channel-weakmap 1266ms (cache miss)
+563 silly packumentCache corgi:https://registry.npmjs.org/side-channel-weakmap set size:undefined disposed:false
+564 http fetch GET 200 https://registry.npmjs.org/tw-animate-css 1292ms (cache miss)
+565 silly packumentCache corgi:https://registry.npmjs.org/tw-animate-css set size:undefined disposed:false
+566 http fetch GET 200 https://registry.npmjs.org/minimatch 1643ms (cache miss)
+567 silly packumentCache corgi:https://registry.npmjs.org/minimatch set size:undefined disposed:false
+568 http fetch GET 200 https://registry.npmjs.org/vue-eslint-parser 1707ms (cache miss)
+569 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser set size:undefined disposed:false
+570 http fetch GET 200 https://registry.npmjs.org/side-channel-list 1280ms (cache miss)
+571 silly packumentCache corgi:https://registry.npmjs.org/side-channel-list set size:undefined disposed:false
+572 http fetch GET 200 https://registry.npmjs.org/ajv 1600ms (cache miss)
+573 silly packumentCache corgi:https://registry.npmjs.org/ajv set size:undefined disposed:false
+574 http fetch GET 200 https://registry.npmjs.org/source-map-js 1288ms (cache miss)
+575 silly packumentCache corgi:https://registry.npmjs.org/source-map-js set size:undefined disposed:false
+576 http fetch GET 200 https://registry.npmjs.org/side-channel 1257ms (cache miss)
+577 silly packumentCache corgi:https://registry.npmjs.org/side-channel set size:undefined disposed:false
+578 http fetch GET 200 https://registry.npmjs.org/tslib 1313ms (cache miss)
+579 silly packumentCache corgi:https://registry.npmjs.org/tslib set size:undefined disposed:false
+580 http fetch GET 200 https://registry.npmjs.org/qs 1083ms (cache miss)
+581 silly packumentCache corgi:https://registry.npmjs.org/qs set size:undefined disposed:false
+582 http fetch GET 200 https://registry.npmjs.org/@types%2fweb-bluetooth 1703ms (cache miss)
+583 silly packumentCache corgi:https://registry.npmjs.org/@types%2fweb-bluetooth set size:undefined disposed:false
+584 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2foxide-darwin-arm64 1717ms (cache miss)
+585 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide-darwin-arm64 set size:undefined disposed:false
+586 http fetch GET 200 https://registry.npmjs.org/vue 1333ms (cache miss)
+587 silly packumentCache corgi:https://registry.npmjs.org/vue set size:undefined disposed:false
+588 http fetch GET 200 https://registry.npmjs.org/typescript-eslint 1345ms (cache miss)
+589 silly packumentCache corgi:https://registry.npmjs.org/typescript-eslint set size:undefined disposed:false
+590 http fetch GET 200 https://registry.npmjs.org/prelude-ls 1114ms (cache miss)
+591 silly packumentCache corgi:https://registry.npmjs.org/prelude-ls set size:undefined disposed:false
+592 http fetch GET 200 https://registry.npmjs.org/shell-quote 1122ms (cache miss)
+593 silly packumentCache corgi:https://registry.npmjs.org/shell-quote set size:undefined disposed:false
+594 http fetch GET 200 https://registry.npmjs.org/rollup 1662ms (cache miss)
+595 silly packumentCache corgi:https://registry.npmjs.org/rollup set size:undefined disposed:false
+596 http fetch GET 200 https://registry.npmjs.org/optionator 1150ms (cache miss)
+597 silly packumentCache corgi:https://registry.npmjs.org/optionator set size:undefined disposed:false
+598 http fetch GET 200 https://registry.npmjs.org/picomatch 1163ms (cache miss)
+599 silly packumentCache corgi:https://registry.npmjs.org/picomatch set size:undefined disposed:false
+600 http fetch GET 200 https://registry.npmjs.org/magic-string 1156ms (cache miss)
+601 silly packumentCache corgi:https://registry.npmjs.org/magic-string set size:undefined disposed:false
+602 http fetch GET 200 https://registry.npmjs.org/@vueuse%2fshared 1794ms (cache miss)
+603 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fshared set size:undefined disposed:false
+604 http fetch GET 200 https://registry.npmjs.org/sip.js/-/sip.js-0.21.2.tgz 2138ms (cache miss)
+605 http fetch GET 200 https://registry.npmjs.org/type-fest 1489ms (cache miss)
+606 silly packumentCache corgi:https://registry.npmjs.org/type-fest set size:undefined disposed:false
+607 http fetch GET 200 https://registry.npmjs.org/@vueuse%2fcore 1879ms (cache miss)
+608 silly packumentCache corgi:https://registry.npmjs.org/@vueuse%2fcore set size:undefined disposed:false
+609 http fetch GET 200 https://registry.npmjs.org/json-stable-stringify-without-jsonify 1241ms (cache miss)
+610 silly packumentCache corgi:https://registry.npmjs.org/json-stable-stringify-without-jsonify set size:undefined disposed:false
+611 http fetch GET 200 https://registry.npmjs.org/postcss 1255ms (cache miss)
+612 silly packumentCache corgi:https://registry.npmjs.org/postcss set size:undefined disposed:false
+613 http fetch GET 200 https://registry.npmjs.org/prettier-plugin-organize-imports 1275ms (cache miss)
+614 silly packumentCache corgi:https://registry.npmjs.org/prettier-plugin-organize-imports set size:undefined disposed:false
+615 http fetch GET 200 https://registry.npmjs.org/path-browserify 1328ms (cache miss)
+616 silly packumentCache corgi:https://registry.npmjs.org/path-browserify set size:undefined disposed:false
+617 http fetch GET 200 https://registry.npmjs.org/get-intrinsic 1327ms (cache miss)
+618 silly packumentCache corgi:https://registry.npmjs.org/get-intrinsic set size:undefined disposed:false
+619 http fetch GET 200 https://registry.npmjs.org/json-buffer 1329ms (cache miss)
+620 silly packumentCache corgi:https://registry.npmjs.org/json-buffer set size:undefined disposed:false
+621 http fetch GET 200 https://registry.npmjs.org/isexe 1330ms (cache miss)
+622 silly packumentCache corgi:https://registry.npmjs.org/isexe set size:undefined disposed:false
+623 http fetch GET 200 https://registry.npmjs.org/gopd 1330ms (cache miss)
+624 silly packumentCache corgi:https://registry.npmjs.org/gopd set size:undefined disposed:false
+625 http fetch GET 200 https://registry.npmjs.org/flat-cache 1348ms (cache miss)
+626 silly packumentCache corgi:https://registry.npmjs.org/flat-cache set size:undefined disposed:false
+627 http fetch GET 200 https://registry.npmjs.org/hasown 1351ms (cache miss)
+628 silly packumentCache corgi:https://registry.npmjs.org/hasown set size:undefined disposed:false
+629 http fetch GET 200 https://registry.npmjs.org/math-intrinsics 1402ms (cache miss)
+630 silly packumentCache corgi:https://registry.npmjs.org/math-intrinsics set size:undefined disposed:false
+631 http fetch GET 200 https://registry.npmjs.org/get-proto 1406ms (cache miss)
+632 silly packumentCache corgi:https://registry.npmjs.org/get-proto set size:undefined disposed:false
+633 http fetch GET 200 https://registry.npmjs.org/form-data 1417ms (cache miss)
+634 silly packumentCache corgi:https://registry.npmjs.org/form-data set size:undefined disposed:false
+635 http fetch GET 200 https://registry.npmjs.org/flatted 1418ms (cache miss)
+636 silly packumentCache corgi:https://registry.npmjs.org/flatted set size:undefined disposed:false
+637 http fetch GET 200 https://registry.npmjs.org/function-bind 1419ms (cache miss)
+638 silly packumentCache corgi:https://registry.npmjs.org/function-bind set size:undefined disposed:false
+639 http fetch GET 200 https://registry.npmjs.org/esutils 1427ms (cache miss)
+640 silly packumentCache corgi:https://registry.npmjs.org/esutils set size:undefined disposed:false
+641 http fetch GET 200 https://registry.npmjs.org/fast-deep-equal 1428ms (cache miss)
+642 silly packumentCache corgi:https://registry.npmjs.org/fast-deep-equal set size:undefined disposed:false
+643 http fetch GET 200 https://registry.npmjs.org/fast-json-stable-stringify 1437ms (cache miss)
+644 silly packumentCache corgi:https://registry.npmjs.org/fast-json-stable-stringify set size:undefined disposed:false
+645 http fetch GET 200 https://registry.npmjs.org/espree 1481ms (cache miss)
+646 silly packumentCache corgi:https://registry.npmjs.org/espree set size:undefined disposed:false
+647 http fetch GET 200 https://registry.npmjs.org/esquery 1502ms (cache miss)
+648 silly packumentCache corgi:https://registry.npmjs.org/esquery set size:undefined disposed:false
+649 http fetch GET 200 https://registry.npmjs.org/levn 1510ms (cache miss)
+650 silly packumentCache corgi:https://registry.npmjs.org/levn set size:undefined disposed:false
+651 http fetch GET 200 https://registry.npmjs.org/escalade 1490ms (cache miss)
+652 silly packumentCache corgi:https://registry.npmjs.org/escalade set size:undefined disposed:false
+653 http fetch GET 200 https://registry.npmjs.org/es-set-tostringtag 1510ms (cache miss)
+654 silly packumentCache corgi:https://registry.npmjs.org/es-set-tostringtag set size:undefined disposed:false
+655 http fetch GET 200 https://registry.npmjs.org/eslint-scope 1533ms (cache miss)
+656 silly packumentCache corgi:https://registry.npmjs.org/eslint-scope set size:undefined disposed:false
+657 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys 1536ms (cache miss)
+658 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys set size:undefined disposed:false
+659 http fetch GET 200 https://registry.npmjs.org/es-define-property 1504ms (cache miss)
+660 silly packumentCache corgi:https://registry.npmjs.org/es-define-property set size:undefined disposed:false
+661 http fetch GET 200 https://registry.npmjs.org/lodash 1505ms (cache miss)
+662 silly packumentCache corgi:https://registry.npmjs.org/lodash set size:undefined disposed:false
+663 http fetch GET 200 https://registry.npmjs.org/graphemer 1544ms (cache miss)
+664 silly packumentCache corgi:https://registry.npmjs.org/graphemer set size:undefined disposed:false
+665 http fetch GET 200 https://registry.npmjs.org/es-errors 1519ms (cache miss)
+666 silly packumentCache corgi:https://registry.npmjs.org/es-errors set size:undefined disposed:false
+667 http fetch GET 200 https://registry.npmjs.org/keyv 1585ms (cache miss)
+668 silly packumentCache corgi:https://registry.npmjs.org/keyv set size:undefined disposed:false
+669 http fetch GET 200 https://registry.npmjs.org/es-object-atoms 1582ms (cache miss)
+670 silly packumentCache corgi:https://registry.npmjs.org/es-object-atoms set size:undefined disposed:false
+671 http fetch GET 200 https://registry.npmjs.org/debug 1563ms (cache miss)
+672 silly packumentCache corgi:https://registry.npmjs.org/debug set size:undefined disposed:false
+673 http fetch GET 200 https://registry.npmjs.org/emoji-regex 1581ms (cache miss)
+674 silly packumentCache corgi:https://registry.npmjs.org/emoji-regex set size:undefined disposed:false
+675 http fetch GET 200 https://registry.npmjs.org/combined-stream 1581ms (cache miss)
+676 silly packumentCache corgi:https://registry.npmjs.org/combined-stream set size:undefined disposed:false
+677 http fetch GET 200 https://registry.npmjs.org/vite 2190ms (cache miss)
+678 silly packumentCache corgi:https://registry.npmjs.org/vite set size:undefined disposed:false
+679 http fetch GET 200 https://registry.npmjs.org/dunder-proto 1624ms (cache miss)
+680 silly packumentCache corgi:https://registry.npmjs.org/dunder-proto set size:undefined disposed:false
+681 http fetch GET 200 https://registry.npmjs.org/deep-is 1608ms (cache miss)
+682 silly packumentCache corgi:https://registry.npmjs.org/deep-is set size:undefined disposed:false
+683 http fetch GET 200 https://registry.npmjs.org/delayed-stream 1625ms (cache miss)
+684 silly packumentCache corgi:https://registry.npmjs.org/delayed-stream set size:undefined disposed:false
+685 http fetch GET 200 https://registry.npmjs.org/clsx 1612ms (cache miss)
+686 silly packumentCache corgi:https://registry.npmjs.org/clsx set size:undefined disposed:false
+687 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-array cache-miss
+688 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2feslintrc cache-miss
+689 silly packumentCache corgi:https://registry.npmjs.org/eslint cache-miss
+690 http fetch GET 200 https://registry.npmjs.org/balanced-match 1700ms (cache miss)
+691 silly packumentCache corgi:https://registry.npmjs.org/balanced-match set size:undefined disposed:false
+692 http fetch GET 200 https://registry.npmjs.org/muggle-string 1775ms (cache miss)
+693 silly packumentCache corgi:https://registry.npmjs.org/muggle-string set size:undefined disposed:false
+694 http fetch GET 200 https://registry.npmjs.org/brace-expansion 1703ms (cache miss)
+695 silly packumentCache corgi:https://registry.npmjs.org/brace-expansion set size:undefined disposed:false
+696 http fetch GET 200 https://registry.npmjs.org/call-bind-apply-helpers 1704ms (cache miss)
+697 silly packumentCache corgi:https://registry.npmjs.org/call-bind-apply-helpers set size:undefined disposed:false
+698 http fetch GET 200 https://registry.npmjs.org/detect-libc 1696ms (cache miss)
+699 silly packumentCache corgi:https://registry.npmjs.org/detect-libc set size:undefined disposed:false
+700 http fetch GET 200 https://registry.npmjs.org/argparse 1698ms (cache miss)
+701 silly packumentCache corgi:https://registry.npmjs.org/argparse set size:undefined disposed:false
+702 http fetch GET 200 https://registry.npmjs.org/call-bound 1706ms (cache miss)
+703 silly packumentCache corgi:https://registry.npmjs.org/call-bound set size:undefined disposed:false
+704 http fetch GET 200 https://registry.npmjs.org/braces 1706ms (cache miss)
+705 silly packumentCache corgi:https://registry.npmjs.org/braces set size:undefined disposed:false
+706 http fetch GET 200 https://registry.npmjs.org/chalk 1707ms (cache miss)
+707 silly packumentCache corgi:https://registry.npmjs.org/chalk set size:undefined disposed:false
+708 http fetch GET 200 https://registry.npmjs.org/concat-map 1781ms (cache miss)
+709 silly packumentCache corgi:https://registry.npmjs.org/concat-map set size:undefined disposed:false
+710 http fetch GET 200 https://registry.npmjs.org/asynckit 1790ms (cache miss)
+711 silly packumentCache corgi:https://registry.npmjs.org/asynckit set size:undefined disposed:false
+712 http fetch GET 200 https://registry.npmjs.org/defu 1818ms (cache miss)
+713 silly packumentCache corgi:https://registry.npmjs.org/defu set size:undefined disposed:false
+714 http fetch GET 200 https://registry.npmjs.org/lightningcss 1875ms (cache miss)
+715 silly packumentCache corgi:https://registry.npmjs.org/lightningcss set size:undefined disposed:false
+716 http fetch GET 200 https://registry.npmjs.org/class-variance-authority 1848ms (cache miss)
+717 silly packumentCache corgi:https://registry.npmjs.org/class-variance-authority set size:undefined disposed:false
+718 http fetch GET 200 https://registry.npmjs.org/alien-signals 1999ms (cache miss)
+719 silly packumentCache corgi:https://registry.npmjs.org/alien-signals set size:undefined disposed:false
+720 http fetch GET 200 https://registry.npmjs.org/tailwindcss 2337ms (cache miss)
+721 silly packumentCache corgi:https://registry.npmjs.org/tailwindcss set size:undefined disposed:false
+722 http fetch GET 200 https://registry.npmjs.org/@vue%2freactivity 2214ms (cache miss)
+723 silly packumentCache corgi:https://registry.npmjs.org/@vue%2freactivity set size:undefined disposed:false
+724 http fetch GET 200 https://registry.npmjs.org/@vue%2feslint-config-typescript 2245ms (cache miss)
+725 silly packumentCache corgi:https://registry.npmjs.org/@vue%2feslint-config-typescript set size:undefined disposed:false
+726 http fetch GET 200 https://registry.npmjs.org/@vue%2fcompiler-sfc 2304ms (cache miss)
+727 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-sfc set size:undefined disposed:false
+728 http fetch GET 200 https://registry.npmjs.org/@vue%2fcompiler-dom 2322ms (cache miss)
+729 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-dom set size:undefined disposed:false
+730 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2ftsconfig-utils 2328ms (cache miss)
+731 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftsconfig-utils set size:undefined disposed:false
+732 http fetch GET 200 https://registry.npmjs.org/@volar%2flanguage-core 2339ms (cache miss)
+733 silly packumentCache corgi:https://registry.npmjs.org/@volar%2flanguage-core set size:undefined disposed:false
+734 http fetch GET 200 https://registry.npmjs.org/@vue%2fruntime-dom 2360ms (cache miss)
+735 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fruntime-dom set size:undefined disposed:false
+736 http fetch GET 200 https://registry.npmjs.org/@vue%2fcompiler-ssr 2392ms (cache miss)
+737 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-ssr set size:undefined disposed:false
+738 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2fproject-service 2392ms (cache miss)
+739 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fproject-service set size:undefined disposed:false
+740 http fetch GET 200 https://registry.npmjs.org/@jridgewell%2ftrace-mapping 2406ms (cache miss)
+741 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2ftrace-mapping set size:undefined disposed:false
+742 http fetch GET 200 https://registry.npmjs.org/@jridgewell%2fsourcemap-codec 2412ms (cache miss)
+743 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fsourcemap-codec set size:undefined disposed:false
+744 http fetch GET 200 https://registry.npmjs.org/@rolldown%2fpluginutils 2429ms (cache miss)
+745 silly packumentCache corgi:https://registry.npmjs.org/@rolldown%2fpluginutils set size:undefined disposed:false
+746 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2fnode 2471ms (cache miss)
+747 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fnode set size:undefined disposed:false
+748 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2foxide 2488ms (cache miss)
+749 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide set size:undefined disposed:false
+750 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2fvite 2512ms (cache miss)
+751 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fvite set size:undefined disposed:false
+752 http fetch GET 200 https://registry.npmjs.org/@humanfs%2fnode 2501ms (cache miss)
+753 silly packumentCache corgi:https://registry.npmjs.org/@humanfs%2fnode set size:undefined disposed:false
+754 http fetch GET 200 https://registry.npmjs.org/@vue%2fshared 2871ms (cache miss)
+755 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fshared set size:undefined disposed:false
+756 http fetch GET 200 https://registry.npmjs.org/@vue%2fcompiler-vue2 2872ms (cache miss)
+757 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-vue2 set size:undefined disposed:false
+758 http fetch GET 200 https://registry.npmjs.org/@humanfs%2fcore 2811ms (cache miss)
+759 silly packumentCache corgi:https://registry.npmjs.org/@humanfs%2fcore set size:undefined disposed:false
+760 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes%2fmodule-importer 2846ms (cache miss)
+761 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fmodule-importer set size:undefined disposed:false
+762 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes%2fretry 2852ms (cache miss)
+763 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fretry set size:undefined disposed:false
+764 http fetch GET 200 https://registry.npmjs.org/@vitejs%2fplugin-vue 2997ms (cache miss)
+765 silly packumentCache corgi:https://registry.npmjs.org/@vitejs%2fplugin-vue set size:undefined disposed:false
+766 http fetch GET 200 https://registry.npmjs.org/@jridgewell%2fremapping 2890ms (cache miss)
+767 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fremapping set size:undefined disposed:false
+768 http fetch GET 200 https://registry.npmjs.org/@inertiajs%2fvue3 2916ms (cache miss)
+769 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fvue3 set size:undefined disposed:false
+770 http fetch GET 200 https://registry.npmjs.org/@floating-ui%2fdom 2946ms (cache miss)
+771 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fdom set size:undefined disposed:false
+772 http fetch GET 200 https://registry.npmjs.org/@floating-ui%2futils 2956ms (cache miss)
+773 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2futils set size:undefined disposed:false
+774 http fetch GET 200 https://registry.npmjs.org/@inertiajs%2fcore 2982ms (cache miss)
+775 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fcore set size:undefined disposed:false
+776 http fetch GET 200 https://registry.npmjs.org/@floating-ui%2fcore 2979ms (cache miss)
+777 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fcore set size:undefined disposed:false
+778 http fetch GET 200 https://registry.npmjs.org/@vue%2fruntime-core 3123ms (cache miss)
+779 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fruntime-core set size:undefined disposed:false
+780 http fetch GET 200 https://registry.npmjs.org/@babel%2fhelper-validator-identifier 3017ms (cache miss)
+781 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fhelper-validator-identifier set size:undefined disposed:false
+782 http fetch GET 200 https://registry.npmjs.org/picomatch 3011ms (cache miss)
+783 silly packumentCache corgi:https://registry.npmjs.org/picomatch set size:undefined disposed:false
+784 http fetch GET 200 https://registry.npmjs.org/picomatch 3111ms (cache miss)
+785 silly packumentCache corgi:https://registry.npmjs.org/picomatch set size:undefined disposed:false
+786 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fdarwin-arm64 3235ms (cache miss)
+787 silly packumentCache corgi:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 set size:undefined disposed:false
+788 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys 3226ms (cache miss)
+789 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys set size:undefined disposed:false
+790 http fetch GET 200 https://registry.npmjs.org/espree 3249ms (cache miss)
+791 silly packumentCache corgi:https://registry.npmjs.org/espree set size:undefined disposed:false
+792 http fetch GET 200 https://registry.npmjs.org/@floating-ui%2fvue 3292ms (cache miss)
+793 silly packumentCache corgi:https://registry.npmjs.org/@floating-ui%2fvue set size:undefined disposed:false
+794 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2fparser 3429ms (cache miss)
+795 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fparser set size:undefined disposed:false
+796 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes%2fretry 3333ms (cache miss)
+797 silly packumentCache corgi:https://registry.npmjs.org/@humanwhocodes%2fretry set size:undefined disposed:false
+798 http fetch GET 200 https://registry.npmjs.org/fdir 3355ms (cache miss)
+799 silly packumentCache corgi:https://registry.npmjs.org/fdir set size:undefined disposed:false
+800 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys 3365ms (cache miss)
+801 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys set size:undefined disposed:false
+802 http fetch GET 200 https://registry.npmjs.org/@vue%2fcompiler-core 3512ms (cache miss)
+803 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fcompiler-core set size:undefined disposed:false
+804 http fetch GET 200 https://registry.npmjs.org/which 3376ms (cache miss)
+805 silly packumentCache corgi:https://registry.npmjs.org/which set size:undefined disposed:false
+806 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2fvisitor-keys 3522ms (cache miss)
+807 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fvisitor-keys set size:undefined disposed:false
+808 http fetch GET 200 https://registry.npmjs.org/eslint-scope 3403ms (cache miss)
+809 silly packumentCache corgi:https://registry.npmjs.org/eslint-scope set size:undefined disposed:false
+810 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys 3459ms (cache miss)
+811 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys set size:undefined disposed:false
+812 http fetch GET 200 https://registry.npmjs.org/@types%2fnode 3516ms (cache miss)
+813 silly packumentCache corgi:https://registry.npmjs.org/@types%2fnode set size:undefined disposed:false
+814 http fetch GET 200 https://registry.npmjs.org/fdir 3470ms (cache miss)
+815 silly packumentCache corgi:https://registry.npmjs.org/fdir set size:undefined disposed:false
+816 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys 3475ms (cache miss)
+817 silly packumentCache corgi:https://registry.npmjs.org/eslint-visitor-keys set size:undefined disposed:false
+818 http fetch GET 200 https://registry.npmjs.org/semver 3473ms (cache miss)
+819 silly packumentCache corgi:https://registry.npmjs.org/semver set size:undefined disposed:false
+820 http fetch GET 200 https://registry.npmjs.org/laravel-vite-plugin 3469ms (cache miss)
+821 silly packumentCache corgi:https://registry.npmjs.org/laravel-vite-plugin set size:undefined disposed:false
+822 http fetch GET 200 https://registry.npmjs.org/@internationalized%2fnumber 3501ms (cache miss)
+823 silly packumentCache corgi:https://registry.npmjs.org/@internationalized%2fnumber set size:undefined disposed:false
+824 http fetch GET 200 https://registry.npmjs.org/jiti 3473ms (cache miss)
+825 silly packumentCache corgi:https://registry.npmjs.org/jiti set size:undefined disposed:false
+826 http fetch GET 200 https://registry.npmjs.org/he 3659ms (cache miss)
+827 silly packumentCache corgi:https://registry.npmjs.org/he set size:undefined disposed:false
+828 http fetch GET 200 https://registry.npmjs.org/vue-tsc 3717ms (cache miss)
+829 silly packumentCache corgi:https://registry.npmjs.org/vue-tsc set size:undefined disposed:false
+830 http fetch GET 200 https://registry.npmjs.org/vscode-uri 3285ms (cache miss)
+831 silly packumentCache corgi:https://registry.npmjs.org/vscode-uri set size:undefined disposed:false
+832 http fetch GET 200 https://registry.npmjs.org/@babel%2fhelper-string-parser 3768ms (cache miss)
+833 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fhelper-string-parser set size:undefined disposed:false
+834 http fetch GET 200 https://registry.npmjs.org/cssesc 3736ms (cache miss)
+835 silly packumentCache corgi:https://registry.npmjs.org/cssesc set size:undefined disposed:false
+836 http fetch GET 200 https://registry.npmjs.org/prettier 3757ms (cache miss)
+837 silly packumentCache corgi:https://registry.npmjs.org/prettier set size:undefined disposed:false
+838 http fetch GET 200 https://registry.npmjs.org/tar 3346ms (cache miss)
+839 silly packumentCache corgi:https://registry.npmjs.org/tar set size:undefined disposed:false
+840 http fetch GET 200 https://registry.npmjs.org/nanoid 3813ms (cache miss)
+841 silly packumentCache corgi:https://registry.npmjs.org/nanoid set size:undefined disposed:false
+842 http fetch GET 200 https://registry.npmjs.org/esbuild 3804ms (cache miss)
+843 silly packumentCache corgi:https://registry.npmjs.org/esbuild set size:undefined disposed:false
+844 http fetch GET 200 https://registry.npmjs.org/reusify 3366ms (cache miss)
+845 silly packumentCache corgi:https://registry.npmjs.org/reusify set size:undefined disposed:false
+846 http fetch GET 200 https://registry.npmjs.org/nth-check 3371ms (cache miss)
+847 silly packumentCache corgi:https://registry.npmjs.org/nth-check set size:undefined disposed:false
+848 http fetch GET 200 https://registry.npmjs.org/object-inspect 3374ms (cache miss)
+849 silly packumentCache corgi:https://registry.npmjs.org/object-inspect set size:undefined disposed:false
+850 http fetch GET 200 https://registry.npmjs.org/minimatch 3436ms (cache miss)
+851 silly packumentCache corgi:https://registry.npmjs.org/minimatch set size:undefined disposed:false
+852 http fetch GET 200 https://registry.npmjs.org/json-schema-traverse 3434ms (cache miss)
+853 silly packumentCache corgi:https://registry.npmjs.org/json-schema-traverse set size:undefined disposed:false
+854 http fetch GET 200 https://registry.npmjs.org/@volar%2fsource-map 3960ms (cache miss)
+855 silly packumentCache corgi:https://registry.npmjs.org/@volar%2fsource-map set size:undefined disposed:false
+856 http fetch GET 200 https://registry.npmjs.org/acorn 3897ms (cache miss)
+857 silly packumentCache corgi:https://registry.npmjs.org/acorn set size:undefined disposed:false
+858 http fetch GET 200 https://registry.npmjs.org/has-symbols 3456ms (cache miss)
+859 silly packumentCache corgi:https://registry.npmjs.org/has-symbols set size:undefined disposed:false
+860 http fetch GET 200 https://registry.npmjs.org/has-tostringtag 3463ms (cache miss)
+861 silly packumentCache corgi:https://registry.npmjs.org/has-tostringtag set size:undefined disposed:false
+862 http fetch GET 200 https://registry.npmjs.org/yallist 3479ms (cache miss)
+863 silly packumentCache corgi:https://registry.npmjs.org/yallist set size:undefined disposed:false
+864 http fetch GET 200 https://registry.npmjs.org/@vue%2fserver-renderer 3951ms (cache miss)
+865 silly packumentCache corgi:https://registry.npmjs.org/@vue%2fserver-renderer set size:undefined disposed:false
+866 http fetch GET 200 https://registry.npmjs.org/cliui 3541ms (cache miss)
+867 silly packumentCache corgi:https://registry.npmjs.org/cliui set size:undefined disposed:false
+868 http fetch GET 200 https://registry.npmjs.org/estree-walker 3547ms (cache miss)
+869 silly packumentCache corgi:https://registry.npmjs.org/estree-walker set size:undefined disposed:false
+870 http fetch GET 200 https://registry.npmjs.org/tailwind-merge 3564ms (cache miss)
+871 silly packumentCache corgi:https://registry.npmjs.org/tailwind-merge set size:undefined disposed:false
+872 http fetch GET 200 https://registry.npmjs.org/minipass 3579ms (cache miss)
+873 silly packumentCache corgi:https://registry.npmjs.org/minipass set size:undefined disposed:false
+874 http fetch GET 200 https://registry.npmjs.org/eslint-config-prettier 4046ms (cache miss)
+875 silly packumentCache corgi:https://registry.npmjs.org/eslint-config-prettier set size:undefined disposed:false
+876 http fetch GET 200 https://registry.npmjs.org/fastq 3581ms (cache miss)
+877 silly packumentCache corgi:https://registry.npmjs.org/fastq set size:undefined disposed:false
+878 http fetch GET 200 https://registry.npmjs.org/cross-spawn 3581ms (cache miss)
+879 silly packumentCache corgi:https://registry.npmjs.org/cross-spawn set size:undefined disposed:false
+880 http fetch GET 200 https://registry.npmjs.org/postcss-selector-parser 3590ms (cache miss)
+881 silly packumentCache corgi:https://registry.npmjs.org/postcss-selector-parser set size:undefined disposed:false
+882 http fetch GET 200 https://registry.npmjs.org/yargs-parser 3692ms (cache miss)
+883 silly packumentCache corgi:https://registry.npmjs.org/yargs-parser set size:undefined disposed:false
+884 http fetch GET 200 https://registry.npmjs.org/ajv 3670ms (cache miss)
+885 silly packumentCache corgi:https://registry.npmjs.org/ajv set size:undefined disposed:false
+886 http fetch GET 200 https://registry.npmjs.org/minizlib 3683ms (cache miss)
+887 silly packumentCache corgi:https://registry.npmjs.org/minizlib set size:undefined disposed:false
+888 http fetch GET 200 https://registry.npmjs.org/@babel%2fparser 4108ms (cache miss)
+889 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fparser set size:undefined disposed:false
+890 http fetch GET 200 https://registry.npmjs.org/chownr 3732ms (cache miss)
+891 silly packumentCache corgi:https://registry.npmjs.org/chownr set size:undefined disposed:false
+892 http fetch GET 200 https://registry.npmjs.org/@nodelib%2ffs.scandir 3772ms (cache miss)
+893 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.scandir set size:undefined disposed:false
+894 http fetch GET 200 https://registry.npmjs.org/@jridgewell%2fresolve-uri 3789ms (cache miss)
+895 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fresolve-uri set size:undefined disposed:false
+896 http fetch GET 200 https://registry.npmjs.org/@eslint%2fplugin-kit 3795ms (cache miss)
+897 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fplugin-kit set size:undefined disposed:false
+898 http fetch GET 200 https://registry.npmjs.org/@nodelib%2ffs.walk 3801ms (cache miss)
+899 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.walk set size:undefined disposed:false
+900 http fetch GET 200 https://registry.npmjs.org/enhanced-resolve 3849ms (cache miss)
+901 silly packumentCache corgi:https://registry.npmjs.org/enhanced-resolve set size:undefined disposed:false
+902 http fetch GET 200 https://registry.npmjs.org/@eslint%2feslintrc 3893ms (cache miss)
+903 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2feslintrc set size:undefined disposed:false
+904 http fetch GET 200 https://registry.npmjs.org/@eslint%2fjs 3899ms (cache miss)
+905 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fjs set size:undefined disposed:false
+906 http fetch GET 200 https://registry.npmjs.org/@eslint%2fcore 3921ms (cache miss)
+907 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fcore set size:undefined disposed:false
+908 http fetch GET 200 https://registry.npmjs.org/@jridgewell%2fgen-mapping 3966ms (cache miss)
+909 silly packumentCache corgi:https://registry.npmjs.org/@jridgewell%2fgen-mapping set size:undefined disposed:false
+910 http fetch GET 200 https://registry.npmjs.org/@nodelib%2ffs.stat 4015ms (cache miss)
+911 silly packumentCache corgi:https://registry.npmjs.org/@nodelib%2ffs.stat set size:undefined disposed:false
+912 http fetch GET 200 https://registry.npmjs.org/@swc%2fhelpers 4014ms (cache miss)
+913 silly packumentCache corgi:https://registry.npmjs.org/@swc%2fhelpers set size:undefined disposed:false
+914 http fetch GET 200 https://registry.npmjs.org/@eslint%2fobject-schema 4082ms (cache miss)
+915 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fobject-schema set size:undefined disposed:false
+916 http fetch GET 200 https://registry.npmjs.org/@volar%2ftypescript 4093ms (cache miss)
+917 silly packumentCache corgi:https://registry.npmjs.org/@volar%2ftypescript set size:undefined disposed:false
+918 http fetch GET 200 https://registry.npmjs.org/js-yaml 4162ms (cache miss)
+919 silly packumentCache corgi:https://registry.npmjs.org/js-yaml set size:undefined disposed:false
+920 http fetch GET 200 https://registry.npmjs.org/@isaacs%2ffs-minipass 4231ms (cache miss)
+921 silly packumentCache corgi:https://registry.npmjs.org/@isaacs%2ffs-minipass set size:undefined disposed:false
+922 http fetch GET 200 https://registry.npmjs.org/yargs 4159ms (cache miss)
+923 silly packumentCache corgi:https://registry.npmjs.org/yargs set size:undefined disposed:false
+924 http fetch GET 200 https://registry.npmjs.org/uri-js 4213ms (cache miss)
+925 silly packumentCache corgi:https://registry.npmjs.org/uri-js set size:undefined disposed:false
+926 http fetch GET 200 https://registry.npmjs.org/ohash 4255ms (cache miss)
+927 silly packumentCache corgi:https://registry.npmjs.org/ohash set size:undefined disposed:false
+928 http fetch GET 200 https://registry.npmjs.org/@tanstack%2fvirtual-core 4402ms (cache miss)
+929 silly packumentCache corgi:https://registry.npmjs.org/@tanstack%2fvirtual-core set size:undefined disposed:false
+930 http fetch GET 200 https://registry.npmjs.org/vue-demi 4374ms (cache miss)
+931 silly packumentCache corgi:https://registry.npmjs.org/vue-demi set size:undefined disposed:false
+932 http fetch GET 200 https://registry.npmjs.org/fast-glob 4288ms (cache miss)
+933 silly packumentCache corgi:https://registry.npmjs.org/fast-glob set size:undefined disposed:false
+934 http fetch GET 200 https://registry.npmjs.org/aria-hidden 4480ms (cache miss)
+935 silly packumentCache corgi:https://registry.npmjs.org/aria-hidden set size:undefined disposed:false
+936 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree 4480ms (cache miss)
+937 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree set size:undefined disposed:false
+938 http fetch GET 200 https://registry.npmjs.org/@eslint%2fconfig-helpers 4524ms (cache miss)
+939 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-helpers set size:undefined disposed:false
+940 http fetch GET 200 https://registry.npmjs.org/y18n 4397ms (cache miss)
+941 silly packumentCache corgi:https://registry.npmjs.org/y18n set size:undefined disposed:false
+942 http fetch GET 200 https://registry.npmjs.org/@tanstack%2fvue-virtual 4529ms (cache miss)
+943 silly packumentCache corgi:https://registry.npmjs.org/@tanstack%2fvue-virtual set size:undefined disposed:false
+944 http fetch GET 200 https://registry.npmjs.org/@eslint%2fconfig-array 4578ms (cache miss)
+945 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-array set size:undefined disposed:false
+946 http fetch GET 200 https://registry.npmjs.org/@laravel/vite-plugin-wayfinder/-/vite-plugin-wayfinder-0.1.3.tgz 4769ms (cache miss)
+947 http fetch GET 200 https://registry.npmjs.org/@babel%2ftypes 4725ms (cache miss)
+948 silly packumentCache corgi:https://registry.npmjs.org/@babel%2ftypes set size:undefined disposed:false
+949 http fetch GET 200 https://registry.npmjs.org/concurrently 4774ms (cache miss)
+950 silly packumentCache corgi:https://registry.npmjs.org/concurrently set size:undefined disposed:false
+951 http fetch GET 200 https://registry.npmjs.org/rollup 4819ms (cache miss)
+952 silly packumentCache corgi:https://registry.npmjs.org/rollup set size:undefined disposed:false
+953 http fetch GET 200 https://registry.npmjs.org/@vue%2flanguage-core 4848ms (cache miss)
+954 silly packumentCache corgi:https://registry.npmjs.org/@vue%2flanguage-core set size:undefined disposed:false
+955 http fetch GET 200 https://registry.npmjs.org/mkdirp 4914ms (cache miss)
+956 silly packumentCache corgi:https://registry.npmjs.org/mkdirp set size:undefined disposed:false
+957 http fetch GET 200 https://registry.npmjs.org/prettier-plugin-tailwindcss 4940ms (cache miss)
+958 silly packumentCache corgi:https://registry.npmjs.org/prettier-plugin-tailwindcss set size:undefined disposed:false
+959 http fetch GET 200 https://registry.npmjs.org/entities 4978ms (cache miss)
+960 silly packumentCache corgi:https://registry.npmjs.org/entities set size:undefined disposed:false
+961 http fetch GET 200 https://registry.npmjs.org/reka-ui 4986ms (cache miss)
+962 silly packumentCache corgi:https://registry.npmjs.org/reka-ui set size:undefined disposed:false
+963 http fetch GET 200 https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.5.tgz 5199ms (cache miss)
+964 http fetch GET 200 https://registry.npmjs.org/lucide-vue-next 5271ms (cache miss)
+965 silly packumentCache corgi:https://registry.npmjs.org/lucide-vue-next set size:undefined disposed:false
+966 http fetch GET 200 https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz 5312ms (cache miss)
+967 http fetch GET 200 https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz 5314ms (cache miss)
+968 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2feslint-plugin 5354ms (cache miss)
+969 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2feslint-plugin set size:undefined disposed:false
+970 http fetch GET 200 https://registry.npmjs.org/require-directory/-/require-directory-2.1.1.tgz 5357ms (cache miss)
+971 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2ftypes 5562ms (cache miss)
+972 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypes set size:undefined disposed:false
+973 http fetch GET 200 https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz 5404ms (cache miss)
+974 http fetch GET 200 https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz 5415ms (cache miss)
+975 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2futils 5467ms (cache miss)
+976 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2futils set size:undefined disposed:false
+977 http fetch GET 200 https://registry.npmjs.org/is-glob/-/is-glob-4.0.3.tgz 5445ms (cache miss)
+978 http fetch GET 200 https://registry.npmjs.org/es-toolkit 5494ms (cache miss)
+979 silly packumentCache corgi:https://registry.npmjs.org/es-toolkit set size:undefined disposed:false
+980 http fetch GET 200 https://registry.npmjs.org/rxjs 5475ms (cache miss)
+981 silly packumentCache corgi:https://registry.npmjs.org/rxjs set size:undefined disposed:false
+982 http fetch GET 200 https://registry.npmjs.org/path-exists/-/path-exists-4.0.0.tgz 5459ms (cache miss)
+983 http fetch GET 200 https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz 5581ms (cache miss)
+984 http fetch GET 200 https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz 5579ms (cache miss)
+985 http fetch GET 200 https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz 5583ms (cache miss)
+986 http fetch GET 200 https://registry.npmjs.org/locate-path/-/locate-path-6.0.0.tgz 5584ms (cache miss)
+987 http fetch GET 200 https://registry.npmjs.org/vite 5673ms (cache miss)
+988 silly packumentCache corgi:https://registry.npmjs.org/vite set size:undefined disposed:false
+989 http fetch GET 200 https://registry.npmjs.org/axios 5699ms (cache miss)
+990 silly packumentCache corgi:https://registry.npmjs.org/axios set size:undefined disposed:false
+991 http fetch GET 200 https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz 5673ms (cache miss)
+992 http fetch GET 200 https://registry.npmjs.org/imurmurhash/-/imurmurhash-0.1.4.tgz 5673ms (cache miss)
+993 http fetch GET 200 https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-3.1.1.tgz 5672ms (cache miss)
+994 http fetch GET 200 https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz 5696ms (cache miss)
+995 http fetch GET 200 https://registry.npmjs.org/eslint-plugin-vue 5739ms (cache miss)
+996 silly packumentCache corgi:https://registry.npmjs.org/eslint-plugin-vue set size:undefined disposed:false
+997 http fetch GET 200 https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz 5721ms (cache miss)
+998 http fetch GET 200 https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz 5734ms (cache miss)
+999 http fetch GET 200 https://registry.npmjs.org/de-indent/-/de-indent-1.0.2.tgz 5744ms (cache miss)
+1000 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz 5754ms (cache miss)
+1001 http fetch GET 200 https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz 5767ms (cache miss)
+1002 http fetch GET 200 https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz 5767ms (cache miss)
+1003 http fetch GET 200 https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz 5755ms (cache miss)
+1004 http fetch GET 200 https://registry.npmjs.org/fill-range/-/fill-range-7.1.1.tgz 5768ms (cache miss)
+1005 http fetch GET 200 https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz 5812ms (cache miss)
+1006 http fetch GET 200 https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-8.0.0.tgz 5814ms (cache miss)
+1007 http fetch GET 200 https://registry.npmjs.org/has-flag/-/has-flag-4.0.0.tgz 5818ms (cache miss)
+1008 http fetch GET 200 https://registry.npmjs.org/xml-name-validator/-/xml-name-validator-4.0.0.tgz 5817ms (cache miss)
+1009 http fetch GET 200 https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz 5822ms (cache miss)
+1010 http fetch GET 200 https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz 5861ms (cache miss)
+1011 http fetch GET 200 https://registry.npmjs.org/eslint 5898ms (cache miss)
+1012 silly packumentCache corgi:https://registry.npmjs.org/eslint set size:undefined disposed:false
+1013 http fetch GET 200 https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz 5901ms (cache miss)
+1014 http fetch GET 200 https://registry.npmjs.org/run-parallel/-/run-parallel-1.2.0.tgz 5873ms (cache miss)
+1015 http fetch GET 200 https://registry.npmjs.org/glob-parent/-/glob-parent-5.1.2.tgz 5887ms (cache miss)
+1016 http fetch GET 200 https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz 5915ms (cache miss)
+1017 http fetch GET 200 https://registry.npmjs.org/p-locate/-/p-locate-5.0.0.tgz 5886ms (cache miss)
+1018 http fetch GET 200 https://registry.npmjs.org/import-fresh/-/import-fresh-3.3.1.tgz 5895ms (cache miss)
+1019 http fetch GET 200 https://registry.npmjs.org/tree-kill/-/tree-kill-1.2.2.tgz 5893ms (cache miss)
+1020 http fetch GET 200 https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz 5894ms (cache miss)
+1021 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2ftype-utils 6142ms (cache miss)
+1022 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftype-utils set size:undefined disposed:false
+1023 http fetch GET 200 https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz 5946ms (cache miss)
+1024 http fetch GET 200 https://registry.npmjs.org/get-caller-file/-/get-caller-file-2.0.5.tgz 5949ms (cache miss)
+1025 http fetch GET 200 https://registry.npmjs.org/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz 5953ms (cache miss)
+1026 http fetch GET 200 https://registry.npmjs.org/vite-plugin-full-reload/-/vite-plugin-full-reload-1.2.0.tgz 5959ms (cache miss)
+1027 http fetch GET 200 https://registry.npmjs.org/esrecurse/-/esrecurse-4.3.0.tgz 5965ms (cache miss)
+1028 http fetch GET 200 https://registry.npmjs.org/ansi-styles/-/ansi-styles-4.3.0.tgz 5969ms (cache miss)
+1029 http fetch GET 200 https://registry.npmjs.org/merge2/-/merge2-1.4.1.tgz 6065ms (cache miss)
+1030 http fetch GET 200 https://registry.npmjs.org/to-regex-range/-/to-regex-range-5.0.1.tgz 6074ms (cache miss)
+1031 http fetch GET 200 https://registry.npmjs.org/glob-parent/-/glob-parent-6.0.2.tgz 6064ms (cache miss)
+1032 http fetch GET 200 https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz 6062ms (cache miss)
+1033 http fetch GET 200 https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz 6058ms (cache miss)
+1034 http fetch GET 200 https://registry.npmjs.org/ms/-/ms-2.1.3.tgz 6063ms (cache miss)
+1035 http fetch GET 200 https://registry.npmjs.org/side-channel-map/-/side-channel-map-1.0.1.tgz 6065ms (cache miss)
+1036 http fetch GET 200 https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.2.tgz 6069ms (cache miss)
+1037 http fetch GET 200 https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz 6141ms (cache miss)
+1038 http fetch GET 200 https://registry.npmjs.org/p-limit/-/p-limit-3.1.0.tgz 6135ms (cache miss)
+1039 http fetch GET 200 https://registry.npmjs.org/estraverse/-/estraverse-5.3.0.tgz 6134ms (cache miss)
+1040 http fetch GET 200 https://registry.npmjs.org/supports-color/-/supports-color-7.2.0.tgz 6143ms (cache miss)
+1041 http fetch GET 200 https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz 6149ms (cache miss)
+1042 http fetch GET 200 https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz 6160ms (cache miss)
+1043 http fetch GET 200 https://registry.npmjs.org/@internationalized%2fdate 6411ms (cache miss)
+1044 silly packumentCache corgi:https://registry.npmjs.org/@internationalized%2fdate set size:undefined disposed:false
+1045 http fetch GET 200 https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-7.0.0.tgz 6183ms (cache miss)
+1046 http fetch GET 200 https://registry.npmjs.org/supports-color/-/supports-color-8.1.1.tgz 6225ms (cache miss)
+1047 http fetch GET 200 https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz 6226ms (cache miss)
+1048 http fetch GET 200 https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz 6238ms (cache miss)
+1049 http fetch GET 200 https://registry.npmjs.org/@eslint-community/eslint-utils/-/eslint-utils-4.7.0.tgz 6274ms (cache miss)
+1050 http fetch GET 200 https://registry.npmjs.org/tapable/-/tapable-2.2.2.tgz 6241ms (cache miss)
+1051 http fetch GET 200 https://registry.npmjs.org/ignore/-/ignore-7.0.5.tgz 6255ms (cache miss)
+1052 http fetch GET 200 https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz 6281ms (cache miss)
+1053 http fetch GET 200 https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz 6292ms (cache miss)
+1054 http fetch GET 200 https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz 6364ms (cache miss)
+1055 http fetch GET 200 https://registry.npmjs.org/mime-types/-/mime-types-2.1.35.tgz 6318ms (cache miss)
+1056 http fetch GET 200 https://registry.npmjs.org/@eslint-community/regexpp/-/regexpp-4.12.1.tgz 6358ms (cache miss)
+1057 http fetch GET 200 https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz 6316ms (cache miss)
+1058 http fetch GET 200 https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz 6326ms (cache miss)
+1059 http fetch GET 200 https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz 6340ms (cache miss)
+1060 http fetch GET 200 https://registry.npmjs.org/globals/-/globals-13.24.0.tgz 6326ms (cache miss)
+1061 http fetch GET 200 https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz 6341ms (cache miss)
+1062 http fetch GET 200 https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz 6345ms (cache miss)
+1063 http fetch GET 200 https://registry.npmjs.org/csstype/-/csstype-3.1.3.tgz 6361ms (cache miss)
+1064 http fetch GET 200 https://registry.npmjs.org/ignore/-/ignore-5.3.2.tgz 6387ms (cache miss)
+1065 http fetch GET 200 https://registry.npmjs.org/type-check/-/type-check-0.4.0.tgz 6373ms (cache miss)
+1066 http fetch GET 200 https://registry.npmjs.org/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz 6377ms (cache miss)
+1067 http fetch GET 200 https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.11.tgz 6392ms (cache miss)
+1068 http fetch GET 200 https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.14.tgz 6399ms (cache miss)
+1069 http fetch GET 200 https://registry.npmjs.org/tw-animate-css/-/tw-animate-css-1.3.7.tgz 6382ms (cache miss)
+1070 http fetch GET 200 https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz 6388ms (cache miss)
+1071 http fetch GET 200 https://registry.npmjs.org/globals/-/globals-14.0.0.tgz 6402ms (cache miss)
+1072 http fetch GET 200 https://registry.npmjs.org/side-channel-list/-/side-channel-list-1.0.0.tgz 6483ms (cache miss)
+1073 http fetch GET 200 https://registry.npmjs.org/ts-api-utils/-/ts-api-utils-2.1.0.tgz 6500ms (cache miss)
+1074 http fetch GET 200 https://registry.npmjs.org/qs/-/qs-6.14.0.tgz 6563ms (cache miss)
+1075 http fetch GET 200 https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.39.1.tgz 6530ms (cache miss)
+1076 http fetch GET 200 https://registry.npmjs.org/@vueuse/metadata/-/metadata-12.8.2.tgz 6614ms (cache miss)
+1077 http fetch GET 200 https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz 6588ms (cache miss)
+1078 http fetch GET 200 https://registry.npmjs.org/typescript 6965ms (cache miss)
+1079 silly packumentCache corgi:https://registry.npmjs.org/typescript set size:undefined disposed:false
+1080 http fetch GET 200 https://registry.npmjs.org/shell-quote/-/shell-quote-1.8.3.tgz 6626ms (cache miss)
+1081 http fetch GET 200 https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz 6628ms (cache miss)
+1082 http fetch GET 200 https://registry.npmjs.org/optionator/-/optionator-0.9.4.tgz 6599ms (cache miss)
+1083 http fetch GET 200 https://registry.npmjs.org/@types/web-bluetooth/-/web-bluetooth-0.0.21.tgz 6712ms (cache miss)
+1084 http fetch GET 200 https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz 6630ms (cache miss)
+1085 http fetch GET 200 https://registry.npmjs.org/side-channel/-/side-channel-1.1.0.tgz 6752ms (cache miss)
+1086 http fetch GET 200 https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz 6619ms (cache miss)
+1087 http fetch GET 200 https://registry.npmjs.org/magic-string/-/magic-string-0.30.17.tgz 6720ms (cache miss)
+1088 http fetch GET 200 https://registry.npmjs.org/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-4.2.0.tgz 6633ms (cache miss)
+1089 http fetch GET 200 https://registry.npmjs.org/path-browserify/-/path-browserify-1.0.1.tgz 6630ms (cache miss)
+1090 http fetch GET 200 https://registry.npmjs.org/postcss/-/postcss-8.5.6.tgz 6704ms (cache miss)
+1091 http fetch GET 200 https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.0.tgz 6623ms (cache miss)
+1092 http fetch GET 200 https://registry.npmjs.org/json-buffer/-/json-buffer-3.0.1.tgz 6727ms (cache miss)
+1093 http fetch GET 200 https://registry.npmjs.org/vue/-/vue-3.5.18.tgz 6972ms (cache miss)
+1094 http fetch GET 200 https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz 6810ms (cache miss)
+1095 http fetch GET 200 https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz 6754ms (cache miss)
+1096 http fetch GET 200 https://registry.npmjs.org/hasown/-/hasown-2.0.2.tgz 6800ms (cache miss)
+1097 http fetch GET 200 https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz 6813ms (cache miss)
+1098 http fetch GET 200 https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz 7173ms (cache miss)
+1099 http fetch GET 200 https://registry.npmjs.org/form-data/-/form-data-4.0.4.tgz 6822ms (cache miss)
+1100 http fetch GET 200 https://registry.npmjs.org/flatted/-/flatted-3.3.3.tgz 6836ms (cache miss)
+1101 http fetch GET 200 https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz 6984ms (cache miss)
+1102 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2fscope-manager 7603ms (cache miss)
+1103 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2fscope-manager set size:undefined disposed:false
+1104 http fetch GET 200 https://registry.npmjs.org/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz 7110ms (cache miss)
+1105 http fetch GET 200 https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz 6920ms (cache miss)
+1106 http fetch GET 200 https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz 6930ms (cache miss)
+1107 http fetch GET 200 https://registry.npmjs.org/fast-json-stable-stringify/-/fast-json-stable-stringify-2.1.0.tgz 6918ms (cache miss)
+1108 http fetch GET 200 https://registry.npmjs.org/flat-cache/-/flat-cache-4.0.1.tgz 7029ms (cache miss)
+1109 http fetch GET 200 https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz 6901ms (cache miss)
+1110 http fetch GET 200 https://registry.npmjs.org/levn/-/levn-0.4.1.tgz 6921ms (cache miss)
+1111 http fetch GET 200 https://registry.npmjs.org/espree/-/espree-10.4.0.tgz 6946ms (cache miss)
+1112 http fetch GET 200 https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz 7009ms (cache miss)
+1113 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-3.4.3.tgz 6927ms (cache miss)
+1114 http fetch GET 200 https://registry.npmjs.org/@vueuse/core/-/core-12.8.2.tgz 7235ms (cache miss)
+1115 http fetch GET 200 https://registry.npmjs.org/@vueuse/shared/-/shared-12.8.2.tgz 7325ms (cache miss)
+1116 http fetch GET 200 https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz 7038ms (cache miss)
+1117 http fetch GET 200 https://registry.npmjs.org/debug/-/debug-4.4.1.tgz 6959ms (cache miss)
+1118 http fetch GET 200 https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz 7028ms (cache miss)
+1119 http fetch GET 200 https://registry.npmjs.org/combined-stream/-/combined-stream-1.0.8.tgz 7022ms (cache miss)
+1120 http fetch GET 200 https://registry.npmjs.org/es-set-tostringtag/-/es-set-tostringtag-2.1.0.tgz 7163ms (cache miss)
+1121 http fetch GET 200 https://registry.npmjs.org/esquery/-/esquery-1.6.0.tgz 7205ms (cache miss)
+1122 http fetch GET 200 https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz 7067ms (cache miss)
+1123 http fetch GET 200 https://registry.npmjs.org/deep-is/-/deep-is-0.1.4.tgz 7074ms (cache miss)
+1124 http fetch GET 200 https://registry.npmjs.org/graphemer/-/graphemer-1.4.0.tgz 7224ms (cache miss)
+1125 http fetch GET 200 https://registry.npmjs.org/clsx/-/clsx-2.1.1.tgz 7149ms (cache miss)
+1126 http fetch GET 200 https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.1.tgz 7206ms (cache miss)
+1127 http fetch GET 200 https://registry.npmjs.org/@eslint%2fconfig-array 7163ms (cache miss)
+1128 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2fconfig-array set size:undefined disposed:false
+1129 http fetch GET 200 https://registry.npmjs.org/@eslint%2feslintrc 7195ms (cache miss)
+1130 silly packumentCache corgi:https://registry.npmjs.org/@eslint%2feslintrc set size:undefined disposed:false
+1131 http fetch GET 200 https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz 7333ms (cache miss)
+1132 http fetch GET 200 https://registry.npmjs.org/keyv/-/keyv-4.5.4.tgz 7316ms (cache miss)
+1133 http fetch GET 200 https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.0.2.tgz 7157ms (cache miss)
+1134 http fetch GET 200 https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz 7160ms (cache miss)
+1135 http fetch GET 200 https://registry.npmjs.org/muggle-string/-/muggle-string-0.4.1.tgz 7176ms (cache miss)
+1136 http fetch GET 200 https://registry.npmjs.org/eslint-scope/-/eslint-scope-8.4.0.tgz 7411ms (cache miss)
+1137 http fetch GET 200 https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz 7291ms (cache miss)
+1138 http fetch GET 200 https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz 7233ms (cache miss)
+1139 http fetch GET 200 https://registry.npmjs.org/call-bound/-/call-bound-1.0.4.tgz 7233ms (cache miss)
+1140 http fetch GET 200 https://registry.npmjs.org/braces/-/braces-3.0.3.tgz 7243ms (cache miss)
+1141 http fetch GET 200 https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz 7336ms (cache miss)
+1142 http fetch GET 200 https://registry.npmjs.org/detect-libc/-/detect-libc-2.0.4.tgz 7337ms (cache miss)
+1143 http fetch GET 200 https://registry.npmjs.org/alien-signals/-/alien-signals-1.0.13.tgz 7146ms (cache miss)
+1144 http fetch GET 200 https://registry.npmjs.org/class-variance-authority/-/class-variance-authority-0.7.1.tgz 7308ms (cache miss)
+1145 http fetch GET 200 https://registry.npmjs.org/lightningcss/-/lightningcss-1.30.1.tgz 7342ms (cache miss)
+1146 http fetch GET 200 https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz 7713ms (cache miss)
+1147 http fetch GET 200 https://registry.npmjs.org/vue-eslint-parser/-/vue-eslint-parser-10.2.0.tgz 8271ms (cache miss)
+1148 http fetch GET 200 https://registry.npmjs.org/asynckit/-/asynckit-0.4.0.tgz 7500ms (cache miss)
+1149 http fetch GET 200 https://registry.npmjs.org/defu/-/defu-6.1.4.tgz 7508ms (cache miss)
+1150 http fetch GET 200 https://registry.npmjs.org/eslint 7706ms (cache miss)
+1151 silly packumentCache corgi:https://registry.npmjs.org/eslint set size:undefined disposed:false
+1152 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree cache-miss
+1153 silly packumentCache corgi:https://registry.npmjs.org/@vue%2flanguage-core cache-miss
+1154 http fetch GET 200 https://registry.npmjs.org/chalk/-/chalk-4.1.2.tgz 7629ms (cache miss)
+1155 http fetch GET 200 https://registry.npmjs.org/@vue%2flanguage-core 6ms (cache hit)
+1156 silly packumentCache corgi:https://registry.npmjs.org/@vue%2flanguage-core set size:128316 disposed:false
+1157 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree 16ms (cache hit)
+1158 silly packumentCache corgi:https://registry.npmjs.org/@typescript-eslint%2ftypescript-estree set size:8502568 disposed:false
+1159 http fetch GET 200 https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz 7685ms (cache miss)
+1160 http fetch GET 200 https://registry.npmjs.org/@vue/eslint-config-typescript/-/eslint-config-typescript-14.6.0.tgz 7216ms (cache miss)
+1161 http fetch GET 200 https://registry.npmjs.org/vue-eslint-parser/-/vue-eslint-parser-9.4.3.tgz 8524ms (cache miss)
+1162 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fcore cache-miss
+1163 http fetch GET 200 https://registry.npmjs.org/@inertiajs%2fcore 2ms (cache hit)
+1164 silly packumentCache corgi:https://registry.npmjs.org/@inertiajs%2fcore set size:105983 disposed:false
+1165 silly packumentCache corgi:https://registry.npmjs.org/concurrently cache-miss
+1166 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser cache-miss
+1167 http fetch GET 200 https://registry.npmjs.org/concurrently 3ms (cache hit)
+1168 silly packumentCache corgi:https://registry.npmjs.org/concurrently set size:102723 disposed:false
+1169 http fetch GET 200 https://registry.npmjs.org/vue-eslint-parser 5ms (cache hit)
+1170 silly packumentCache corgi:https://registry.npmjs.org/vue-eslint-parser set size:187189 disposed:false
+1171 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide cache-miss
+1172 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2foxide 6ms (cache hit)
+1173 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2foxide set size:2062313 disposed:false
+1174 http fetch GET 200 https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.18.tgz 7369ms (cache miss)
+1175 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fvite cache-miss
+1176 silly packumentCache corgi:https://registry.npmjs.org/@vitejs%2fplugin-vue cache-miss
+1177 silly packumentCache corgi:https://registry.npmjs.org/laravel-vite-plugin cache-miss
+1178 http fetch GET 200 https://registry.npmjs.org/laravel-vite-plugin 4ms (cache hit)
+1179 silly packumentCache corgi:https://registry.npmjs.org/laravel-vite-plugin set size:63107 disposed:false
+1180 http fetch GET 200 https://registry.npmjs.org/@vitejs%2fplugin-vue 14ms (cache hit)
+1181 silly packumentCache corgi:https://registry.npmjs.org/@vitejs%2fplugin-vue set size:170535 disposed:false
+1182 http fetch GET 200 https://registry.npmjs.org/@tailwindcss%2fvite 25ms (cache hit)
+1183 silly packumentCache corgi:https://registry.npmjs.org/@tailwindcss%2fvite set size:743165 disposed:false
+1184 http fetch GET 200 https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.18.tgz 7248ms (cache miss)
+1185 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/tsconfig-utils/-/tsconfig-utils-8.39.1.tgz 7325ms (cache miss)
+1186 http fetch GET 200 https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.30.1.tgz 8796ms (cache miss)
+1187 http fetch GET 200 https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.29.tgz 7202ms (cache miss)
+1188 http fetch GET 200 https://registry.npmjs.org/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.1.12.tgz 8775ms (cache miss)
+1189 http fetch GET 200 https://registry.npmjs.org/@volar/language-core/-/language-core-2.4.15.tgz 7460ms (cache miss)
+1190 http fetch GET 200 https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.18.tgz 7486ms (cache miss)
+1191 http fetch GET 200 https://registry.npmjs.org/@tailwindcss/node/-/node-4.1.12.tgz 7313ms (cache miss)
+1192 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes/module-importer/-/module-importer-1.0.1.tgz 6933ms (cache miss)
+1193 http fetch GET 200 https://registry.npmjs.org/@tailwindcss/oxide/-/oxide-4.1.12.tgz 7347ms (cache miss)
+1194 http fetch GET 200 https://registry.npmjs.org/@tailwindcss/vite/-/vite-4.1.12.tgz 7474ms (cache miss)
+1195 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes/retry/-/retry-0.4.3.tgz 7098ms (cache miss)
+1196 http fetch GET 200 https://registry.npmjs.org/@humanfs/node/-/node-0.16.6.tgz 7450ms (cache miss)
+1197 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/project-service/-/project-service-8.39.1.tgz 7680ms (cache miss)
+1198 http fetch GET 200 https://registry.npmjs.org/@vue/shared/-/shared-3.5.18.tgz 7301ms (cache miss)
+1199 http fetch GET 200 https://registry.npmjs.org/@jridgewell/remapping/-/remapping-2.3.5.tgz 7143ms (cache miss)
+1200 http fetch GET 200 https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.46.3.tgz 9271ms (cache miss)
+1201 http fetch GET 200 https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz 7643ms (cache miss)
+1202 http fetch GET 200 https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.10.tgz 7095ms (cache miss)
+1203 http fetch GET 200 https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz 7260ms (cache miss)
+1204 http fetch GET 200 https://registry.npmjs.org/@vitejs/plugin-vue/-/plugin-vue-6.0.1.tgz 7226ms (cache miss)
+1205 http fetch GET 200 https://registry.npmjs.org/@vue/compiler-vue2/-/compiler-vue2-2.7.16.tgz 7369ms (cache miss)
+1206 http fetch GET 200 https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.18.tgz 7976ms (cache miss)
+1207 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz 6951ms (cache miss)
+1208 http fetch GET 200 https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.27.1.tgz 7169ms (cache miss)
+1209 http fetch GET 200 https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.30.tgz 7796ms (cache miss)
+1210 http fetch GET 200 https://registry.npmjs.org/espree/-/espree-9.6.1.tgz 6977ms (cache miss)
+1211 http fetch GET 200 https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz 7124ms (cache miss)
+1212 http fetch GET 200 https://registry.npmjs.org/@floating-ui/dom/-/dom-1.7.3.tgz 7320ms (cache miss)
+1213 http fetch GET 200 https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz 6948ms (cache miss)
+1214 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz 6961ms (cache miss)
+1215 http fetch GET 200 https://registry.npmjs.org/which/-/which-2.0.2.tgz 6952ms (cache miss)
+1216 http fetch GET 200 https://registry.npmjs.org/@inertiajs/core/-/core-2.1.2.tgz 7370ms (cache miss)
+1217 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz 6995ms (cache miss)
+1218 http fetch GET 200 https://registry.npmjs.org/@floating-ui/core/-/core-1.7.3.tgz 7488ms (cache miss)
+1219 http fetch GET 200 https://registry.npmjs.org/eslint-scope/-/eslint-scope-7.2.2.tgz 7055ms (cache miss)
+1220 http fetch GET 200 https://registry.npmjs.org/@humanwhocodes/retry/-/retry-0.3.1.tgz 7143ms (cache miss)
+1221 http fetch GET 200 https://registry.npmjs.org/@floating-ui/vue/-/vue-1.1.8.tgz 7227ms (cache miss)
+1222 http fetch GET 200 https://registry.npmjs.org/@inertiajs/vue3/-/vue3-2.1.2.tgz 7634ms (cache miss)
+1223 http fetch GET 200 https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.1.12.tgz 8674ms (cache miss)
+1224 http fetch GET 200 https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz 7088ms (cache miss)
+1225 http fetch GET 200 https://registry.npmjs.org/semver/-/semver-7.7.2.tgz 7089ms (cache miss)
+1226 http fetch GET 200 https://registry.npmjs.org/laravel-vite-plugin/-/laravel-vite-plugin-2.0.0.tgz 7092ms (cache miss)
+1227 http fetch GET 200 https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz 7123ms (cache miss)
+1228 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/visitor-keys/-/visitor-keys-8.39.1.tgz 7201ms (cache miss)
+1229 http fetch GET 200 https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz 7604ms (cache miss)
+1230 http fetch GET 200 https://registry.npmjs.org/vue-tsc/-/vue-tsc-2.2.12.tgz 6950ms (cache miss)
+1231 http fetch GET 200 https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.27.1.tgz 6947ms (cache miss)
+1232 http fetch GET 200 https://registry.npmjs.org/cssesc/-/cssesc-3.0.0.tgz 6944ms (cache miss)
+1233 http fetch GET 200 https://registry.npmjs.org/vscode-uri/-/vscode-uri-3.1.0.tgz 6950ms (cache miss)
+1234 http fetch GET 200 https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz 6949ms (cache miss)
+1235 http fetch GET 200 https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.18.tgz 7834ms (cache miss)
+1236 http fetch GET 200 https://registry.npmjs.org/reusify/-/reusify-1.1.0.tgz 6961ms (cache miss)
+1237 http fetch GET 200 https://registry.npmjs.org/esbuild/-/esbuild-0.25.9.tgz 6978ms (cache miss)
+1238 http fetch GET 200 https://registry.npmjs.org/nth-check/-/nth-check-2.1.1.tgz 7024ms (cache miss)
+1239 http fetch GET 200 https://registry.npmjs.org/@internationalized/number/-/number-3.6.4.tgz 7390ms (cache miss)
+1240 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.39.1.tgz 7568ms (cache miss)
+1241 http fetch GET 200 https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz 7120ms (cache miss)
+1242 http fetch GET 200 https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz 7056ms (cache miss)
+1243 http fetch GET 200 https://registry.npmjs.org/he/-/he-1.2.0.tgz 7303ms (cache miss)
+1244 http fetch GET 200 https://registry.npmjs.org/has-tostringtag/-/has-tostringtag-1.0.2.tgz 7067ms (cache miss)
+1245 http fetch GET 200 https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz 7077ms (cache miss)
+1246 http fetch GET 200 https://registry.npmjs.org/cliui/-/cliui-8.0.1.tgz 7043ms (cache miss)
+1247 http fetch GET 200 https://registry.npmjs.org/yallist/-/yallist-5.0.0.tgz 7141ms (cache miss)
+1248 http fetch GET 200 https://registry.npmjs.org/@types/node/-/node-22.17.2.tgz 7631ms (cache miss)
+1249 http fetch GET 200 https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz 7092ms (cache miss)
+1250 http fetch GET 200 https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz 7192ms (cache miss)
+1251 http fetch GET 200 https://registry.npmjs.org/@volar/source-map/-/source-map-2.4.15.tgz 7211ms (cache miss)
+1252 http fetch GET 200 https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz 7248ms (cache miss)
+1253 http fetch GET 200 https://registry.npmjs.org/fastq/-/fastq-1.19.1.tgz 7120ms (cache miss)
+1254 http fetch GET 200 https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-10.1.8.tgz 7125ms (cache miss)
+1255 http fetch GET 200 https://registry.npmjs.org/minipass/-/minipass-7.1.2.tgz 7143ms (cache miss)
+1256 http fetch GET 200 https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz 7155ms (cache miss)
+1257 http fetch GET 200 https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.18.tgz 7899ms (cache miss)
+1258 http fetch GET 200 https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.2.tgz 7195ms (cache miss)
+1259 http fetch GET 200 https://registry.npmjs.org/minizlib/-/minizlib-3.0.2.tgz 7127ms (cache miss)
+1260 http fetch GET 200 https://registry.npmjs.org/chownr/-/chownr-3.0.0.tgz 7072ms (cache miss)
+1261 http fetch GET 200 https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz 7065ms (cache miss)
+1262 http fetch GET 200 https://registry.npmjs.org/@nodelib/fs.walk/-/fs.walk-1.2.8.tgz 7091ms (cache miss)
+1263 http fetch GET 200 https://registry.npmjs.org/@eslint/plugin-kit/-/plugin-kit-0.3.5.tgz 7112ms (cache miss)
+1264 http fetch GET 200 https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz 7120ms (cache miss)
+1265 http fetch GET 200 https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.18.3.tgz 7166ms (cache miss)
+1266 http fetch GET 200 https://registry.npmjs.org/@nodelib/fs.stat/-/fs.stat-2.0.5.tgz 7078ms (cache miss)
+1267 http fetch GET 200 https://registry.npmjs.org/yargs-parser/-/yargs-parser-21.1.1.tgz 7467ms (cache miss)
+1268 http fetch GET 200 https://registry.npmjs.org/@eslint/core/-/core-0.15.2.tgz 7213ms (cache miss)
+1269 http fetch GET 200 https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz 7204ms (cache miss)
+1270 http fetch GET 200 https://registry.npmjs.org/@eslint/js/-/js-9.33.0.tgz 7311ms (cache miss)
+1271 http fetch GET 200 https://registry.npmjs.org/@eslint/eslintrc/-/eslintrc-3.3.1.tgz 7331ms (cache miss)
+1272 http fetch GET 200 https://registry.npmjs.org/@eslint/object-schema/-/object-schema-2.1.6.tgz 7164ms (cache miss)
+1273 http fetch GET 200 https://registry.npmjs.org/@isaacs/fs-minipass/-/fs-minipass-4.0.1.tgz 7087ms (cache miss)
+1274 http fetch GET 200 https://registry.npmjs.org/ohash/-/ohash-2.0.11.tgz 7024ms (cache miss)
+1275 http fetch GET 200 https://registry.npmjs.org/tailwind-merge/-/tailwind-merge-3.3.1.tgz 7873ms (cache miss)
+1276 http fetch GET 200 https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.17.tgz 7452ms (cache miss)
+1277 http fetch GET 200 https://registry.npmjs.org/@babel/parser/-/parser-7.28.3.tgz 7854ms (cache miss)
+1278 http fetch GET 200 https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz 7249ms (cache miss)
+1279 http fetch GET 200 https://registry.npmjs.org/aria-hidden/-/aria-hidden-1.2.6.tgz 7143ms (cache miss)
+1280 http fetch GET 200 https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.3.tgz 7266ms (cache miss)
+1281 http fetch GET 200 https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.0.tgz 7515ms (cache miss)
+1282 http fetch GET 200 https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.18.tgz 8290ms (cache miss)
+1283 http fetch GET 200 https://registry.npmjs.org/@tanstack/virtual-core/-/virtual-core-3.13.12.tgz 7345ms (cache miss)
+1284 http fetch GET 200 https://registry.npmjs.org/y18n/-/y18n-5.0.8.tgz 7262ms (cache miss)
+1285 http fetch GET 200 https://registry.npmjs.org/vue-demi/-/vue-demi-0.14.10.tgz 7376ms (cache miss)
+1286 http fetch GET 200 https://registry.npmjs.org/ajv/-/ajv-6.12.6.tgz 8141ms (cache miss)
+1287 http fetch GET 200 https://registry.npmjs.org/@eslint/config-helpers/-/config-helpers-0.3.1.tgz 7422ms (cache miss)
+1288 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.39.1.tgz 7548ms (cache miss)
+1289 http fetch GET 200 https://registry.npmjs.org/uri-js/-/uri-js-4.4.1.tgz 7768ms (cache miss)
+1290 http fetch GET 200 https://registry.npmjs.org/@eslint/config-array/-/config-array-0.21.0.tgz 7400ms (cache miss)
+1291 http fetch GET 200 https://registry.npmjs.org/jiti/-/jiti-2.5.1.tgz 9159ms (cache miss)
+1292 http fetch GET 200 https://registry.npmjs.org/mkdirp/-/mkdirp-3.0.1.tgz 7137ms (cache miss)
+1293 http fetch GET 200 https://registry.npmjs.org/@vue/language-core/-/language-core-2.2.12.tgz 7257ms (cache miss)
+1294 http fetch GET 200 https://registry.npmjs.org/entities/-/entities-4.5.0.tgz 7186ms (cache miss)
+1295 http fetch GET 200 https://registry.npmjs.org/@tanstack/vue-virtual/-/vue-virtual-3.13.12.tgz 7801ms (cache miss)
+1296 http fetch GET 200 https://registry.npmjs.org/@volar/typescript/-/typescript-2.4.15.tgz 8496ms (cache miss)
+1297 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/utils/-/utils-8.39.1.tgz 7060ms (cache miss)
+1298 http fetch GET 200 https://registry.npmjs.org/tar/-/tar-7.4.3.tgz 9425ms (cache miss)
+1299 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/types/-/types-8.39.1.tgz 7201ms (cache miss)
+1300 http fetch GET 200 https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.18.tgz 11093ms (cache miss)
+1301 http fetch GET 200 https://registry.npmjs.org/concurrently/-/concurrently-9.2.0.tgz 7971ms (cache miss)
+1302 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/type-utils/-/type-utils-8.39.1.tgz 7070ms (cache miss)
+1303 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.39.1.tgz 7887ms (cache miss)
+1304 http fetch GET 200 https://registry.npmjs.org/eslint-plugin-vue/-/eslint-plugin-vue-9.33.0.tgz 7561ms (cache miss)
+1305 http fetch GET 200 https://registry.npmjs.org/vite/-/vite-7.1.2.tgz 7677ms (cache miss)
+1306 http fetch GET 200 https://registry.npmjs.org/rollup/-/rollup-4.46.3.tgz 8540ms (cache miss)
+1307 http fetch GET 200 https://registry.npmjs.org/@babel/types/-/types-7.28.2.tgz 8773ms (cache miss)
+1308 http fetch GET 200 https://registry.npmjs.org/es-toolkit/-/es-toolkit-1.39.10.tgz 8022ms (cache miss)
+1309 http fetch GET 200 https://registry.npmjs.org/@internationalized/date/-/date-3.8.2.tgz 7527ms (cache miss)
+1310 http fetch GET 200 https://registry.npmjs.org/@typescript-eslint/scope-manager/-/scope-manager-8.39.1.tgz 6372ms (cache miss)
+1311 http fetch GET 200 https://registry.npmjs.org/reka-ui/-/reka-ui-2.4.1.tgz 8907ms (cache miss)
+1312 http fetch GET 200 https://registry.npmjs.org/prettier-plugin-tailwindcss/-/prettier-plugin-tailwindcss-0.6.14.tgz 9055ms (cache miss)
+1313 http fetch GET 200 https://registry.npmjs.org/prettier/-/prettier-3.6.2.tgz 11620ms (cache miss)
+1314 http fetch GET 200 https://registry.npmjs.org/eslint/-/eslint-9.33.0.tgz 9417ms (cache miss)
+1315 http fetch GET 200 https://registry.npmjs.org/axios/-/axios-1.11.0.tgz 9772ms (cache miss)
+1316 http fetch GET 200 https://registry.npmjs.org/lucide-vue-next/-/lucide-vue-next-0.468.0.tgz 11203ms (cache miss)
+1317 http fetch GET 200 https://registry.npmjs.org/typescript/-/typescript-5.9.2.tgz 9770ms (cache miss)
+1318 http fetch GET 200 https://registry.npmjs.org/rxjs/-/rxjs-7.8.2.tgz 13759ms (cache miss)
+1319 http fetch GET 200 https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.25.9.tgz 16808ms (cache miss)
+1320 info run @tailwindcss/oxide@4.1.12 postinstall node_modules/@tailwindcss/oxide node ./scripts/install.js
+1321 info run esbuild@0.25.9 postinstall node_modules/esbuild node install.js
+1322 info run vue-demi@0.14.10 postinstall node_modules/@floating-ui/vue/node_modules/vue-demi node -e "try{require('./scripts/postinstall.js')}catch(e){}"
+1323 info run @tailwindcss/oxide@4.1.12 postinstall { code: 1, signal: null }
+1324 info run esbuild@0.25.9 postinstall { code: 1, signal: null }
+1325 info run vue-demi@0.14.10 postinstall { code: 0, signal: null }
+1326 verbose stack Error: command failed
+1326 verbose stack     at promiseSpawn (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:22:22)
+1326 verbose stack     at spawnWithShell (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:124:10)
+1326 verbose stack     at promiseSpawn (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:12:12)
+1326 verbose stack     at runScriptPkg (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/run-script-pkg.js:77:13)
+1326 verbose stack     at runScript (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/run-script.js:9:12)
+1326 verbose stack     at /Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:329:17
+1326 verbose stack     at run (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:67:22)
+1326 verbose stack     at /Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:84:9
+1326 verbose stack     at new Promise (<anonymous>)
+1326 verbose stack     at callLimit (/Users/rasulsafarovitch/.nvm/versions/node/v20.19.5/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:35:69)
+1327 verbose pkgid @tailwindcss/oxide@4.1.12
+1328 error code 1
+1329 error path /Users/rasulsafarovitch/Development/water/crm/node_modules/@tailwindcss/oxide
+1330 error command failed
+1331 error command sh -c node ./scripts/install.js
+1332 error node:fs:2729
+1332 error       const stats = binding.lstat(baseLong, true, undefined, true /* throwIfNoEntry */);
+1332 error                             ^
+1332 error
+1332 error Error: EPERM: operation not permitted, lstat '/Users/rasulsafarovitch/Development/water/crm/node_modules'
+1332 error     at Object.realpathSync (node:fs:2729:29)
+1332 error     at toRealPath (node:internal/modules/helpers:58:13)
+1332 error     at Module._findPath (node:internal/modules/cjs/loader:740:22)
+1332 error     at resolveMainPath (node:internal/modules/run_main:34:23)
+1332 error     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:156:24)
+1332 error     at node:internal/main/run_main_module:28:49 {
+1332 error   errno: -1,
+1332 error   code: 'EPERM',
+1332 error   syscall: 'lstat',
+1332 error   path: '/Users/rasulsafarovitch/Development/water/crm/node_modules'
+1332 error }
+1332 error
+1332 error Node.js v20.19.5
+1333 silly unfinished npm timer reify 1772741579312
+1334 silly unfinished npm timer reify:build 1772741601026
+1335 silly unfinished npm timer build 1772741601026
+1336 silly unfinished npm timer build:deps 1772741601026
+1337 silly unfinished npm timer build:run:postinstall 1772741601036
+1338 silly unfinished npm timer build:run:postinstall:node_modules/@tailwindcss/oxide 1772741601037
+1339 silly unfinished npm timer build:run:postinstall:node_modules/esbuild 1772741601041
+1340 verbose cwd /Users/rasulsafarovitch/Development/water/crm
+1341 verbose os Darwin 25.3.0
+1342 verbose node v20.19.5
+1343 verbose npm  v10.8.2
+1344 notice
+1344 notice New [31mmajor[39m version of npm available! [31m10.8.2[39m -> [34m11.11.0[39m
+1344 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.11.0[39m
+1344 notice To update run: [4mnpm install -g npm@11.11.0[24m
+1344 notice  { force: true, [Symbol(proc-log.meta)]: true }
+1345 verbose exit 1
+1346 verbose code 1
+1347 error A complete log of this run can be found in: /Users/rasulsafarovitch/Development/water/crm/.npm-cache/_logs/2026-03-05T20_12_59_078Z-debug-0.log

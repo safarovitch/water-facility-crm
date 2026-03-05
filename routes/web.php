@@ -72,6 +72,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('{order}/cancel',   [OrderController::class, 'cancel'])->name('cancel');
     Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
   });
+
+  Route::name('calls.')->prefix('calls')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CallLogController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\CallLogController::class, 'store'])->name('store');
+  });
 });
 
 require __DIR__ . '/settings.php';

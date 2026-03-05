@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
+import { Phone } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
@@ -103,6 +104,12 @@ function submitForm() {
   form.post(update(props.client.id).url);
 }
 
+const initiateCall = (phone: string | null) => {
+  if (phone && typeof window !== 'undefined' && window.initiateAsteriskCall) {
+    window.initiateAsteriskCall(phone);
+  }
+};
+
 const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs outline-none dark:bg-input/30 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
 </script>
 
@@ -134,7 +141,12 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
             </div>
             <div class="grid gap-2">
               <Label for="phone">Phone</Label>
-              <Input id="phone" v-model="form.phone" />
+              <div class="flex gap-2">
+                <Input id="phone" v-model="form.phone" class="flex-1" />
+                <Button v-if="form.phone" type="button" variant="outline" class="px-3 min-w-10 bg-green-50 hover:bg-green-100 text-green-600 border-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/40 dark:text-green-400 dark:border-green-800" title="Call" @click.prevent="initiateCall(form.phone)">
+                  <Phone class="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
