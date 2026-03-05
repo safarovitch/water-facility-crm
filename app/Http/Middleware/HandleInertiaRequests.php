@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
         'user' => $request->user(),
       ],
       'asterisk' => [
-        'host' => env('ASTERISK_HOST'),
+        'host' => env('ASTERISK_AMI_HOST'),
         'port' => env('ASTERISK_WSS_PORT'),
         'domain' => env('ASTERISK_DOMAIN'),
       ],
