@@ -201,7 +201,7 @@ const submitForm = () => {
               <!-- SIP Password -->
               <div class="grid gap-2">
                 <Label for="sip_password">SIP Password</Label>
-                <Input id="sip_password" type="password" class="mt-1 block w-full" name="sip_password" v-model="form.sip_password" placeholder="e.g. secret" />
+                <Input id="sip_password" type="text" class="mt-1 block w-full" name="sip_password" v-model="form.sip_password" placeholder="e.g. secret" />
                 <InputError class="mt-2" :message="errors.sip_password" />
               </div>
             </div>

@@ -68,7 +68,7 @@ const user = page.props.auth.user;
 
           <div class="grid gap-2">
             <Label for="sip_password">SIP Password</Label>
-            <Input id="sip_password" type="password" class="mt-1 block w-full" name="sip_password" placeholder="SIP Password" />
+            <Input id="sip_password" type="text" class="mt-1 block w-full" name="sip_password" :default-value="user.sip_password" placeholder="SIP Password" />
             <InputError class="mt-2" :message="errors.sip_password" />
           </div>
 
