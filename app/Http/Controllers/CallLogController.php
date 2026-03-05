@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
+use App\Services\AsteriskAmiService;
 
 class CallLogController extends Controller
 {
@@ -43,5 +44,47 @@ class CallLogController extends Controller
       ->log('Call ' . $validated['direction'] . ' to/from ' . $validated['phone']);
 
     return response()->json($activity, 201);
+  }
+
+  /**
+   * Originate a call via AMI.
+   */
+  public function originate(Request $request, AsteriskAmiService $amiService)
+  {
+    $validated = $request->validate([
+      'phone' => 'required|string|max:255',
+    ]);
+
+    $user = $request->user();
+
+    if (empty($user->sip_extension)) {
+      return response()->json(['message' => 'User SIP extension not configured'], 422);
+    }
+
+    try {
+      $amiService->connect();
+      $amiService->login();
+
+      // We use PJSIP as it's the modern standard for Asterisk
+      $response = $amiService->originate(
+        "PJSIP/{$user->sip_extension}",
+        $validated['phone'],
+        'from-internal',
+        1,
+        "CRM <{$user->sip_extension}>"
+      );
+
+      $amiService->logoff();
+
+      return response()->json([
+        'message' => 'Call origination started',
+        'ami_response' => trim($response)
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'message' => 'Failed to originate call',
+        'error' => $e->getMessage()
+      ], 500);
+    }
   }
 }

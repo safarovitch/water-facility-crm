@@ -4,6 +4,7 @@ import { Phone, PhoneOff, Mic, MicOff, X, Delete } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import { usePage } from '@inertiajs/vue3';
+import { AppPageProps } from '@/types';
 import axios from 'axios';
 // @ts-ignore
 import { UserAgent, Invitation, Inviter, SessionState } from 'sip.js';
@@ -19,7 +20,7 @@ const callDirection = ref<'outbound' | 'inbound' | null>(null);
 const recentCalls = ref<any[]>([]);
 const isLoadingHistory = ref(true);
 
-const page = usePage();
+const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth?.user);
 const asteriskConfig = computed(() => page.props.asterisk);
 
@@ -161,43 +162,23 @@ const initializeSIP = () => {
   };
 };
 
-const makeCall = () => {
-  if (!userAgent || !phoneNumber.value) return;
+const makeCall = async () => {
+  if (!phoneNumber.value) return;
 
-  connectionStatus.value = 'Calling...';
-  isCallActive.value = true;
-  callDirection.value = 'outbound';
+  connectionStatus.value = 'Originating...';
 
-  const domain = asteriskConfig.value.domain || asteriskConfig.value.host;
-  const targetURI = UserAgent.makeURI(`sip:${phoneNumber.value}@${domain}`);
-
-  if (!targetURI) {
-    connectionStatus.value = 'Invalid Number';
-    isCallActive.value = false;
-    return;
-  }
-
-  currentSession = new Inviter(userAgent, targetURI, {
-    sessionDescriptionHandlerOptions: {
-      constraints: { audio: true, video: false }
-    }
-  });
-
-  currentSession.stateChange.addListener((state: SessionState) => {
-    if (state === SessionState.Established) {
-      connectionStatus.value = 'In Call';
-      startDurationTimer();
-      setupRemoteAudio(currentSession);
-    } else if (state === SessionState.Terminated) {
-      endSessionCleanup();
-    }
-  });
-
-  currentSession.invite()
-    .catch((error: Error) => {
-      console.error("Failed to invite", error);
-      endSessionCleanup();
+  try {
+    const response = await axios.post('/calls/originate', {
+      phone: phoneNumber.value
     });
+    console.log('AMI Originate Response:', response.data);
+    // The backend successfully told Asterisk to ring our softphone.
+    // We just wait for the 'onInvite' event now.
+  } catch (error: any) {
+    console.error('Failed to originate call via AMI:', error);
+    connectionStatus.value = 'Origination Failed';
+    alert(error.response?.data?.message || 'Failed to start call');
+  }
 };
 
 const answerCall = () => {

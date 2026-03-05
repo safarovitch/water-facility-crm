@@ -25,15 +25,22 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    asterisk: {
+        host: string;
+        port: string;
+        domain: string;
+    };
 };
 
 export interface User {
     id: number;
     name: string;
     email: string;
-    phone: phone;
+    phone: string;
     avatar?: string;
     email_verified_at: string | null;
+    sip_extension?: string;
+    sip_password?: string;
     created_at: string;
     updated_at: string;
 }

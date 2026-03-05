@@ -76,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::name('calls.')->prefix('calls')->group(function () {
     Route::get('/', [\App\Http\Controllers\CallLogController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\CallLogController::class, 'store'])->name('store');
+    Route::post('/originate', [\App\Http\Controllers\CallLogController::class, 'originate'])->name('originate');
   });
 });
 
