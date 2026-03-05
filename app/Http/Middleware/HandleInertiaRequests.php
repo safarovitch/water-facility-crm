@@ -43,7 +43,11 @@ class HandleInertiaRequests extends Middleware
       'name' => config('app.name'),
       'quote' => ['message' => trim($message), 'author' => trim($author)],
       'auth' => [
-        'user' => $request->user(),
+        'user' => $request->user() ? [
+          ...$request->user()->toArray(),
+          'sip_extension' => $request->user()->sip_extension,
+          'sip_password' => $request->user()->sip_password,
+        ] : null,
       ],
       'asterisk' => [
         'host' => config('services.asterisk.host'),

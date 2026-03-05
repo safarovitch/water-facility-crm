@@ -91,88 +91,118 @@ const setupRemoteAudio = (session: any) => {
 };
 
 const initializeSIP = () => {
+  console.log('SIP Initialization started...');
   connectionStatus.value = 'Connecting...';
 
   if (!asteriskConfig.value?.host || !asteriskConfig.value?.port) {
+    console.error('Asterisk config missing:', asteriskConfig.value);
     connectionStatus.value = 'Asterisk env settings missing';
     return;
   }
 
   const domain = asteriskConfig.value.domain || asteriskConfig.value.host;
   const uri = UserAgent.makeURI(`sip:${user.value.sip_extension}@${domain}`);
+  console.log(`SIP URI: sip:${user.value.sip_extension}@${domain}`);
 
   if (!uri) {
+    console.error('Failed to create SIP URI');
     connectionStatus.value = 'Invalid SIP URI';
     return;
   }
 
+  const wssUrl = `wss://${asteriskConfig.value.host}:${asteriskConfig.value.port}/ws`;
+  console.log(`Connecting to WSS: ${wssUrl}`);
+
   const transportOptions = {
-    server: `wss://${asteriskConfig.value.host}:${asteriskConfig.value.port}/ws`,
+    server: wssUrl,
     connectionTimeout: 10,
-    keepAliveInterval: 30
+    keepAliveInterval: 30,
+    traceSip: true // Enable SIP tracing in console
   };
 
-  userAgent = new UserAgent({
-    uri: uri,
-    transportOptions: transportOptions,
-    authorizationUsername: user.value.sip_extension,
-    authorizationPassword: user.value.sip_password,
-    displayName: user.value.name,
-  });
-
-  userAgent.start()
-    .then(() => {
-      connectionStatus.value = 'Registering...';
-      const registerer = new Registerer(userAgent!);
-
-      registerer.stateChange.addListener((newState: RegistererState) => {
-        console.log('Registerer state changed to:', newState);
-        if (newState === RegistererState.Registered) {
-          connectionStatus.value = 'Connected';
-        } else if (newState === RegistererState.Unregistered) {
-          connectionStatus.value = 'Registration Failed';
-        } else if (newState === RegistererState.Terminated) {
-          connectionStatus.value = 'Disconnected';
-        }
-      });
-
-      registerer.register().catch(err => {
-        console.error('Registration failed:', err);
-        connectionStatus.value = 'Registration Error';
-      });
-    })
-    .catch((error: Error) => {
-      console.error(error);
-      connectionStatus.value = 'Registration Failed';
+  try {
+    userAgent = new UserAgent({
+      uri: uri,
+      transportOptions: transportOptions,
+      authorizationUsername: user.value.sip_extension,
+      authorizationPassword: user.value.sip_password,
+      displayName: user.value.name,
+      logLevel: 'debug'
     });
 
-  userAgent.delegate = {
-    onConnect: () => {
-      connectionStatus.value = 'Connected';
-    },
-    onDisconnect: () => {
-      connectionStatus.value = 'Disconnected';
-    },
-    onInvite: (invitation: Invitation) => {
-      // Incoming call handling
-      currentSession = invitation;
-      phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
-      callDirection.value = 'inbound';
-      isCallActive.value = true;
-      connectionStatus.value = 'Ringing...';
+    userAgent.start()
+      .then(() => {
+        console.log('UserAgent started successfully');
 
-      invitation.stateChange.addListener((state: SessionState) => {
-        if (state === SessionState.Established) {
-          connectionStatus.value = 'In Call';
-          isCallActive.value = true;
-          startDurationTimer();
-          setupRemoteAudio(invitation);
-        } else if (state === SessionState.Terminated) {
-          endSessionCleanup();
+        if (userAgent) {
+          userAgent.delegate = {
+            onConnect: () => {
+              console.log('SIP Transport Connected (onConnect)');
+              connectionStatus.value = 'Registering...';
+            },
+            onDisconnect: (error) => {
+              console.warn('SIP Transport Disconnected:', error);
+              connectionStatus.value = 'Disconnected';
+            },
+            onInvite: (invitation: Invitation) => {
+              console.log('Incoming INVITE:', invitation);
+              currentSession = invitation;
+              phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
+              callDirection.value = 'inbound';
+              isCallActive.value = true;
+              connectionStatus.value = 'Ringing...';
+
+              invitation.stateChange.addListener((state: SessionState) => {
+                console.log('Invitation state change:', state);
+                if (state === SessionState.Established) {
+                  connectionStatus.value = 'In Call';
+                  isCallActive.value = true;
+                  startDurationTimer();
+                  setupRemoteAudio(invitation);
+                } else if (state === SessionState.Terminated) {
+                  endSessionCleanup();
+                }
+              });
+            }
+          };
+        }
+
+        // Explicitly listen to transport events if reachable
+        // @ts-ignore
+        userAgent.transport.onConnect = () => console.log('Transport level connected');
+        // @ts-ignore
+        userAgent.transport.onDisconnect = (err) => console.error('Transport level error:', err);
+
+        const registerer = new Registerer(userAgent!);
+
+        registerer.stateChange.addListener((newState: RegistererState) => {
+          console.log('Registerer status changed:', newState);
+          if (newState === RegistererState.Registered) {
+            connectionStatus.value = 'Connected';
+          } else if (newState === RegistererState.Unregistered) {
+            connectionStatus.value = 'Registration Failed';
+          } else if (newState === RegistererState.Terminated) {
+            connectionStatus.value = 'Disconnected';
+          }
+        });
+
+        console.log('Sending REGISTER request...');
+        registerer.register().catch(err => {
+          console.error('Registerer.register() catch:', err);
+          connectionStatus.value = 'Registration Error';
+        });
+      })
+      .catch((error: Error) => {
+        console.error('UserAgent.start() failed:', error);
+        connectionStatus.value = 'WSS Error';
+        if (error.message.includes('SSL') || error.message.includes('security')) {
+          alert('WSS Connection failed. Please ensure you have accepted the certificate at https://' + asteriskConfig.value.host + ':8089/ws');
         }
       });
-    }
-  };
+  } catch (e) {
+    console.error('UserAgent creation failed:', e);
+    connectionStatus.value = 'Init Error';
+  }
 };
 
 const makeCall = async () => {
