@@ -92,7 +92,12 @@ const setupRemoteAudio = (session: any) => {
 
 const initializeSIP = () => {
   console.log('SIP Initialization started...');
+  console.log('DEBUG: Full User Object:', JSON.parse(JSON.stringify(user.value)));
   connectionStatus.value = 'Connecting...';
+
+  if (!user.value?.sip_extension) {
+    console.warn('CRITICAL: user.sip_extension is NULL. Check backend sharing.');
+  }
 
   if (!asteriskConfig.value?.host || !asteriskConfig.value?.port) {
     console.error('Asterisk config missing:', asteriskConfig.value);

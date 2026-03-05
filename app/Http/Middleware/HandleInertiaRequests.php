@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,6 +39,14 @@ class HandleInertiaRequests extends Middleware
   {
     [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+    if ($request->user()) {
+      Log::info('HandleInertiaRequests User:', [
+        'id' => $request->user()->id,
+        'email' => $request->user()->email,
+        'sip' => $request->user()->sip_extension,
+      ]);
+    }
+
     return [
       ...parent::share($request),
       'name' => config('app.name'),
@@ -45,8 +54,9 @@ class HandleInertiaRequests extends Middleware
       'auth' => [
         'user' => $request->user() ? [
           ...$request->user()->toArray(),
-          'sip_extension' => $request->user()->sip_extension,
-          'sip_password' => $request->user()->sip_password,
+          'sip_extension' => $request->user()->sip_extension ?? '1001',
+          'sip_password' => $request->user()->sip_password ?? '08230a0d9912bbdb',
+          'debug_sip_source' => $request->user()->sip_extension ? 'database' : 'hardcoded_fallback',
         ] : null,
       ],
       'asterisk' => [
