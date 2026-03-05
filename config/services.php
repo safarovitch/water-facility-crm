@@ -40,6 +40,8 @@ return [
     'port' => env('ASTERISK_AMI_PORT', 5038),
     'username' => env('ASTERISK_AMI_USER'),
     'password' => env('ASTERISK_AMI_SECRET'),
+    'wss_port' => env('ASTERISK_WSS_PORT', 8089),
+    'domain' => env('ASTERISK_DOMAIN'),
   ],
 
 ];

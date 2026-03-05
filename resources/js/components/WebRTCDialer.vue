@@ -7,7 +7,7 @@ import { usePage } from '@inertiajs/vue3';
 import { AppPageProps } from '@/types';
 import axios from 'axios';
 // @ts-ignore
-import { UserAgent, Invitation, Inviter, SessionState } from 'sip.js';
+import { UserAgent, Invitation, Inviter, SessionState, Registerer, RegistererState } from 'sip.js';
 
 const dialpadOpen = ref(false);
 const phoneNumber = ref('');
@@ -122,11 +122,24 @@ const initializeSIP = () => {
 
   userAgent.start()
     .then(() => {
-      connectionStatus.value = 'Connected';
-      // Register
-      // @ts-ignore
-      const registerer = new sip.Registerer(userAgent);
-      registerer.register();
+      connectionStatus.value = 'Registering...';
+      const registerer = new Registerer(userAgent!);
+
+      registerer.stateChange.addListener((newState: RegistererState) => {
+        console.log('Registerer state changed to:', newState);
+        if (newState === RegistererState.Registered) {
+          connectionStatus.value = 'Connected';
+        } else if (newState === RegistererState.Unregistered) {
+          connectionStatus.value = 'Registration Failed';
+        } else if (newState === RegistererState.Terminated) {
+          connectionStatus.value = 'Disconnected';
+        }
+      });
+
+      registerer.register().catch(err => {
+        console.error('Registration failed:', err);
+        connectionStatus.value = 'Registration Error';
+      });
     })
     .catch((error: Error) => {
       console.error(error);

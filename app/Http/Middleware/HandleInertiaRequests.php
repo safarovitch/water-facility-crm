@@ -46,9 +46,9 @@ class HandleInertiaRequests extends Middleware
         'user' => $request->user(),
       ],
       'asterisk' => [
-        'host' => env('ASTERISK_AMI_HOST'),
-        'port' => env('ASTERISK_WSS_PORT'),
-        'domain' => env('ASTERISK_DOMAIN'),
+        'host' => config('services.asterisk.host'),
+        'port' => config('services.asterisk.wss_port'),
+        'domain' => config('services.asterisk.domain'),
       ],
       'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
     ];
