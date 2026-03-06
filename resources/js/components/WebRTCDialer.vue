@@ -18,6 +18,7 @@ const connectionStatus = ref('Disconnected');
 const activeTab = ref<'keypad' | 'recent'>('keypad');
 const callDirection = ref<'outbound' | 'inbound' | null>(null);
 const recentCalls = ref<any[]>([]);
+const isOriginating = ref(false);
 const isLoadingHistory = ref(true);
 
 const page = usePage<AppPageProps>();
@@ -152,8 +153,17 @@ const initializeSIP = () => {
             onInvite: (invitation: Invitation) => {
               console.log('Incoming INVITE:', invitation);
               currentSession = invitation;
-              phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
-              callDirection.value = 'inbound';
+
+              if (isOriginating.value) {
+                console.log('Detected outbound call setup, preserving phoneNumber:', phoneNumber.value);
+                callDirection.value = 'outbound';
+              } else {
+                console.log('Detected inbound call, updating phoneNumber');
+                phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
+                callDirection.value = 'inbound';
+              }
+
+              isOriginating.value = false;
               isCallActive.value = true;
               connectionStatus.value = 'Ringing...';
 
@@ -214,6 +224,8 @@ const makeCall = async () => {
   if (!phoneNumber.value) return;
 
   connectionStatus.value = 'Originating...';
+  callDirection.value = 'outbound';
+  isOriginating.value = true;
 
   try {
     const response = await axios.post('/calls/originate', {
@@ -265,6 +277,7 @@ const endSessionCleanup = () => {
 
   currentSession = null;
   isCallActive.value = false;
+  isOriginating.value = false;
   callDirection.value = null;
   connectionStatus.value = 'Connected';
   stopDurationTimer();
@@ -355,7 +368,7 @@ onMounted(() => {
           <div v-if="isCallActive" class="mb-2 text-sm font-medium text-blue-600 dark:text-blue-400">
             {{ callDuration }}
           </div>
-          <Input v-show="activeTab === 'keypad' || isCallActive" v-model="phoneNumber" type="text" placeholder="Enter number..." class="text-2xl text-center font-semibold border-none shadow-none focus-visible:ring-0 px-0 h-12" :disabled="isCallActive" />
+          <Input v-show="activeTab === 'keypad' || isCallActive" v-model="phoneNumber" type="text" placeholder="Enter number..." class="text-2xl text-center font-semibold border-none shadow-none focus-visible:ring-0 px-0 h-12" :disabled="isCallActive || connectionStatus === 'Originating...'" />
         </div>
 
         <!-- Keypad Tab -->
