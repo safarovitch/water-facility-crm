@@ -35,6 +35,7 @@ interface Client {
     notes: string | null;
     credit_limit: number;
   } | null;
+  phones: { id: number; label: string; phone: string; is_default: boolean }[];
   addresses: UserAddress[];
 }
 
@@ -48,12 +49,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 const form = useForm({
   name: props.client.name,
   email: props.client.email,
-  phone: props.client.phone ?? '',
   type: (props.client.user_profile?.type ?? 'individual') as 'individual' | 'company',
   company_name: props.client.user_profile?.company_name ?? '',
   region: props.client.user_profile?.region ?? '',
   notes: props.client.user_profile?.notes ?? '',
   credit_limit: props.client.user_profile?.credit_limit ?? 0,
+  phones: (props.client.phones?.length ? props.client.phones : [{ label: 'Mobile', phone: props.client.phone ?? '', is_default: true }]).map((p: any) => ({
+    id: p.id,
+    label: p.label || 'Mobile',
+    phone: p.phone,
+    is_default: !!p.is_default
+  })) as { id?: number; label: string; phone: string; is_default: boolean }[],
   addresses: (props.client.addresses ?? []).map(a => ({
     id: a.id,
     label: a.label,
@@ -98,6 +104,29 @@ function updateAddress(i: number, val: AddressData) {
   form.addresses[i] = { ...form.addresses[i], ...val };
 }
 
+// ── Phone management ─────────────────────────────────────────────────────────
+
+function addPhone() {
+  form.phones.push({
+    label: 'Mobile',
+    phone: '',
+    is_default: false,
+  });
+}
+
+function removePhone(i: number) {
+  if (form.phones.length <= 1) return;
+  const removedIsDefault = form.phones[i].is_default;
+  form.phones.splice(i, 1);
+  if (removedIsDefault && form.phones.length > 0) {
+    form.phones[0].is_default = true;
+  }
+}
+
+function setPrimaryPhone(i: number) {
+  form.phones.forEach((p, idx) => p.is_default = idx === i);
+}
+
 // ── Submit ───────────────────────────────────────────────────────────────────
 
 function submitForm() {
@@ -117,7 +146,7 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
   <Head :title="`Edit ${client.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="relative overflow-x-auto sm:rounded-lg">
+    <div class="relative overflow-x-auto sm:rounded-lg xl:w-2/3">
       <div class="p-4 pb-6 bg-white dark:bg-gray-900">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Client</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ client.email }}</p>
@@ -138,15 +167,6 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
               <Label for="email">Email *</Label>
               <Input id="email" type="email" v-model="form.email" required />
               <InputError :message="form.errors.email" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="phone">Phone</Label>
-              <div class="flex gap-2">
-                <Input id="phone" v-model="form.phone" class="flex-1" />
-                <Button v-if="form.phone" type="button" variant="outline" class="px-3 min-w-10 bg-green-50 hover:bg-green-100 text-green-600 border-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/40 dark:text-green-400 dark:border-green-800" title="Call" @click.prevent="initiateCall(form.phone)">
-                  <Phone class="w-4 h-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -169,6 +189,42 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
             <div class="grid gap-2">
               <Label for="credit_limit">Credit Limit</Label>
               <Input id="credit_limit" type="number" min="0" v-model.number="form.credit_limit" />
+            </div>
+            <div class="grid gap-2 sm:col-span-2">
+              <div class="flex items-center justify-between mb-2">
+                <Label>Phone Numbers *</Label>
+                <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="addPhone">+ Add Phone</Button>
+              </div>
+              <div class="space-y-3">
+                <div v-for="(p, i) in form.phones" :key="p.id ?? i" class="flex gap-2 items-center">
+                  <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="relative">
+                      <select v-model="p.label" :class="selectClass" class="!mt-0">
+                        <option value="Mobile">Mobile</option>
+                        <option value="Work">Work</option>
+                        <option value="Home">Home</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="relative flex gap-1">
+                      <Input v-model="p.phone" placeholder="+998 XX XXX XX XX" class="flex-1" />
+                      <Button v-if="p.phone" type="button" variant="outline" size="icon" class="h-9 w-9 bg-green-50 hover:bg-green-100 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800" title="Call" @click.prevent="initiateCall(p.phone)">
+                        <Phone class="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1 pt-0.5">
+                    <Button type="button" variant="outline" size="icon" class="h-9 w-9" :class="p.is_default ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20' : 'text-gray-400'" @click="setPrimaryPhone(i)" title="Set as Primary">
+                      <span v-if="p.is_default" class="text-[10px] font-bold">PRI</span>
+                      <span v-else class="text-[10px] font-bold opacity-30">PRI</span>
+                    </Button>
+                    <Button v-if="form.phones.length > 1" type="button" variant="outline" size="icon" class="h-9 w-9 text-red-500 border-red-100 hover:bg-red-50" @click="removePhone(i)">
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <InputError :message="form.errors.phones" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
               <Label for="notes">Internal Notes</Label>

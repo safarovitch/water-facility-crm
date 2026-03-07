@@ -22,7 +22,11 @@ class UpdateClientRequest extends FormRequest
       // User fields
       'name'  => ['required', 'string', 'max:255'],
       'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($userId)],
-      'phone' => ['nullable', 'string', 'max:30'],
+      'phones' => ['nullable', 'array'],
+      'phones.*.id' => ['nullable', 'integer'],
+      'phones.*.label' => ['required', 'string', 'max:50'],
+      'phones.*.phone' => ['required', 'string', 'max:30'],
+      'phones.*.is_default' => ['nullable', 'boolean'],
 
       // Profile fields
       'type'         => ['required', new EnumValue(ClientType::class)],

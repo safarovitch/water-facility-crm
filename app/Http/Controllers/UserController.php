@@ -99,4 +99,21 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', __('User updated successfully'));
     }
+
+    public function checkEmail(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['exists' => false]);
+        }
+
+        return response()->json([
+            'exists'    => true,
+            'is_client' => $user->isClient(),
+            'name'      => $user->name,
+            'phone'     => $user->phone,
+        ]);
+    }
 }

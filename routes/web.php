@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('store', [UserController::class, 'store'])->name('store');
     Route::get('edit/{user}', [UserController::class, 'edit'])->name('edit');
     Route::post('update/{user}', [UserController::class, 'update'])->name('update');
+    Route::get('check-email', [UserController::class, 'checkEmail'])->name('check-email');
   });
 
   Route::name('roles.')->prefix('roles')->group(function () {

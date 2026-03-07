@@ -5,8 +5,9 @@ import { index, create, edit, destroy } from '@/routes/clients';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import { Phone } from 'lucide-vue-next';
+import { Phone, Eye, Pencil, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
+import Button from '@/components/ui/button/Button.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Clients', href: index().url },
@@ -105,9 +106,9 @@ const initiateCall = (phone: string | null) => {
             <td class="px-6 py-4">
               <div class="flex items-center gap-2">
                 <span>{{ client.phone ?? '—' }}</span>
-                <button v-if="client.phone" @click.prevent="initiateCall(client.phone)" class="text-green-500 hover:text-green-600 rounded-full p-1 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors" title="Call">
-                  <Phone class="w-4 h-4" />
-                </button>
+                <Button v-if="client.phone" variant="outline" size="icon" class="h-8 w-8" @click.prevent="initiateCall(client.phone)" title="Call">
+                  <Phone class="w-3.5 h-3.5 text-green-600 dark:text-green-500" />
+                </Button>
               </div>
             </td>
             <td class="px-6 py-4">{{ client.user_profile?.region ?? '—' }}</td>
@@ -117,10 +118,20 @@ const initiateCall = (phone: string | null) => {
                 {{ client.statusLabel }}
               </div>
             </td>
-            <td class="px-6 py-4 flex items-center gap-3">
-              <Link :href="ordersIndex({ query: { user_id: client.id } }).url" class="font-medium text-gray-600 dark:text-gray-400 hover:underline">Orders</Link>
-              <Link :href="edit(client.id).url" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
-              <button @click="deleteClient(client)" class="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</button>
+            <td class="px-6 py-4 flex items-center gap-2">
+              <Button variant="outline" size="icon" as-child title="Orders">
+                <Link :href="ordersIndex({ query: { user_id: client.id } }).url">
+                  <Eye class="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="icon" as-child title="Edit">
+                <Link :href="edit(client.id).url">
+                  <Pencil class="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="icon" title="Delete" @click="deleteClient(client)">
+                <Trash2 class="w-4 h-4 text-red-600 dark:text-red-500" />
+              </Button>
             </td>
           </tr>
           <tr v-if="props.clients.data.length === 0">

@@ -29,7 +29,6 @@ class User extends Authenticatable
   protected $fillable = [
     'name',
     'email',
-    'phone',
     'password',
     'avatar',
     'status',
@@ -47,7 +46,7 @@ class User extends Authenticatable
     'remember_token',
   ];
 
-  protected $appends = ['avatar_url', 'statusLabel', 'statusHtmlClass'];
+  protected $appends = ['avatar_url', 'statusLabel', 'statusHtmlClass', 'phone'];
 
   /**
    * Get the attributes that should be cast.
@@ -70,6 +69,12 @@ class User extends Authenticatable
         ? asset("storage/{$this->avatar}")
         : "https://ui-avatars.com/api/?background=random&name={$this->name}";
     });
+  }
+
+  public function getPhoneAttribute(): ?string
+  {
+    return $this->phones->where('is_default', true)->first()?->phone
+      ?? $this->phones->first()?->phone;
   }
 
   public function getStatusLabelAttribute(): string
@@ -108,6 +113,11 @@ class User extends Authenticatable
   public function addresses(): HasMany
   {
     return $this->hasMany(UserAddress::class);
+  }
+
+  public function phones(): HasMany
+  {
+    return $this->hasMany(UserPhone::class);
   }
 
   public function isClient(): bool
