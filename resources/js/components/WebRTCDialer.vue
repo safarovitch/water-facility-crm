@@ -444,7 +444,7 @@ onMounted(() => {
               {{ num }}
             </button>
             <div class="col-start-2">
-              <button @click="appendNumber('+')" class="h-14 w-full rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xl font-medium text-gray-700 dark:text-gray-200 transition-colors flex items-center justify-center">
+              <button @click="appendNumber('+')" class="h-14 w-full rounded-xl bg-gray-50 hover:bg-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xl font-medium text-gray-700 dark:text-gray-200 transition-colors flex items-center justify-center">
                 +
               </button>
             </div>
@@ -485,10 +485,6 @@ onMounted(() => {
                   <div class="text-xs text-gray-500 font-mono mt-0.5">
                     {{ new Date(call.created_at).toLocaleDateString() }} •
                     <span>{{ call.properties.status === 'answered' ? formatDuration(call.properties.duration) : '00:03' }}</span>
-                  </div>
-                  <!-- Audio Recording Player -->
-                  <div v-if="call.properties.recording_url" class="mt-2">
-                    <audio controls preload="none" class="h-6 w-40" :src="call.properties.recording_url"></audio>
                   </div>
                 </div>
               </div>
