@@ -36,8 +36,12 @@ class AsteriskAmiListener extends Command
       $this->info("Login successful. Listening for events...");
 
       $ami->listenForEvents(function ($event) use ($ami) {
-        if (($event['Event'] ?? '') === 'Cdr') {
-          $this->info("CDR event received: " . ($event['UniqueID'] ?? 'no-id'));
+        $eventName = $event['Event'] ?? '';
+        // $this->info("Event received: " . $eventName); // Uncomment for verbose debugging
+
+        if (strtolower($eventName) === 'cdr') {
+          $this->info("CDR event received: " . ($event['UniqueID'] ?? $event['Uniqueid'] ?? 'no-id'));
+          $this->info("Event data: " . json_encode($event));
           $disposition = $event['Disposition'] ?? '';
           $destination = $event['Destination'] ?? '';
           $source = $event['Source'] ?? '';
