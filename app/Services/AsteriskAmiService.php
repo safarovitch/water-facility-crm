@@ -21,14 +21,11 @@ class AsteriskAmiService
    */
   public function connect()
   {
-    $host = '65.21.55.168';
-    $port = 5038;
-
     $context = stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]);
-    $this->socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 10, STREAM_CLIENT_CONNECT, $context);
+    $this->socket = @stream_socket_client("tcp://{$this->host}:{$this->port}", $errno, $errstr, 10, STREAM_CLIENT_CONNECT, $context);
 
     if (!$this->socket) {
-      throw new \Exception("Could not connect to Asterisk AMI at tcp://{$host}:{$port}. Error: $errstr ($errno)");
+      throw new \Exception("Could not connect to Asterisk AMI at tcp://{$this->host}:{$this->port}. Error: $errstr ($errno)");
     }
 
     // Read the Asterisk Hello message

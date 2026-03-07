@@ -32,8 +32,12 @@ class AsteriskAmiListener extends Command
     $ami = new AsteriskAmiService();
 
     try {
+      $ami->login();
+      $this->info("Login successful. Listening for events...");
+
       $ami->listenForEvents(function ($event) use ($ami) {
         if (($event['Event'] ?? '') === 'Cdr') {
+          $this->info("CDR event received: " . ($event['UniqueID'] ?? 'no-id'));
           $disposition = $event['Disposition'] ?? '';
           $destination = $event['Destination'] ?? '';
           $source = $event['Source'] ?? '';
