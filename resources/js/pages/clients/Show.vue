@@ -238,39 +238,41 @@ const formatDate = (dateString: string) => {
                 No call history found for this client.
               </div>
               <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
-                <li v-for="call in calls" :key="call.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex justify-between items-center group">
-                  <div class="flex items-center space-x-4">
-                    <div class="rounded-full w-10 h-10 flex items-center justify-center shrink-0 border" :class="{
-                      'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:border-blue-900': call.properties.direction === 'inbound' && call.properties.status === 'answered',
-                      'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/30 dark:border-green-900': call.properties.direction === 'outbound' && call.properties.status === 'answered',
-                      'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/30 dark:border-red-900': call.properties.status !== 'answered',
-                      'bg-gray-50 text-gray-600 border-gray-200': !call.properties.status // Legacy calls
-                    }">
-                      <Phone class="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div class="font-medium text-sm text-gray-900 dark:text-gray-100 mb-0.5">
-                        {{ call.description }}
+                <li v-for="call in calls" :key="call.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group flex flex-col">
+                  <div class="flex justify-between items-center w-full">
+                    <div class="flex items-center space-x-4">
+                      <div class="rounded-full w-10 h-10 flex items-center justify-center shrink-0 border" :class="{
+                        'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:border-blue-900': call.properties.direction === 'inbound' && call.properties.status === 'answered',
+                        'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/30 dark:border-green-900': call.properties.direction === 'outbound' && call.properties.status === 'answered',
+                        'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/30 dark:border-red-900': call.properties.status !== 'answered',
+                        'bg-gray-50 text-gray-600 border-gray-200': !call.properties.status // Legacy calls
+                      }">
+                        <Phone class="w-4 h-4" />
                       </div>
-                      <div class="text-xs text-gray-500 flex flex-wrap items-center gap-3">
-                        <span class="flex items-center gap-1">
-                          <Clock class="w-3.5 h-3.5" />
-                          {{ formatDate(call.created_at) }}
-                        </span>
-                        <span class="flex items-center gap-1 font-mono bg-gray-100 dark:bg-gray-800 px-1.5 rounded" :class="call.properties.status === 'answered' ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400'">
-                          {{ call.properties.status === 'answered' ? formatDuration(call.properties.duration) : '00:03' }}
-                        </span>
-                      </div>
-
-                      <!-- Inline Audio Recording Player -->
-                      <div v-if="call.properties.recording_url" class="mt-2.5">
-                        <audio controls preload="none" class="h-8 max-w-[200px]" :src="call.properties.recording_url"></audio>
+                      <div>
+                        <div class="font-medium text-sm text-gray-900 dark:text-gray-100 mb-0.5">
+                          {{ call.description }}
+                        </div>
+                        <div class="text-xs text-gray-500 flex flex-wrap items-center gap-3">
+                          <span class="flex items-center gap-1">
+                            <Clock class="w-3.5 h-3.5" />
+                            {{ formatDate(call.created_at) }}
+                          </span>
+                          <span class="flex items-center gap-1 font-mono bg-gray-100 dark:bg-gray-800 px-1.5 rounded" :class="call.properties.status === 'answered' ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400'">
+                            {{ call.properties.status === 'answered' ? formatDuration(call.properties.duration) : '00:03' }}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <Button variant="ghost" size="icon" class="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 rounded-full hover:bg-green-50" @click="initiateCall(call.properties.phone || null)">
+                      <Phone class="w-4 h-4 fill-current" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" class="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 rounded-full hover:bg-green-50" @click="initiateCall(call.properties.phone || null)">
-                    <Phone class="w-4 h-4 fill-current" />
-                  </Button>
+
+                  <!-- Full Width Audio Recording Player -->
+                  <div v-if="call.properties.recording_url" class="mt-3 w-full">
+                    <audio controls preload="none" class="h-9 w-full" :src="call.properties.recording_url"></audio>
+                  </div>
                 </li>
               </ul>
             </div>

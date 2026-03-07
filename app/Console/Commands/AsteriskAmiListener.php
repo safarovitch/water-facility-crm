@@ -37,7 +37,7 @@ class AsteriskAmiListener extends Command
 
       $ami->listenForEvents(function ($event) use ($ami) {
         $eventName = $event['Event'] ?? '';
-        // $this->info("Event received: " . $eventName); // Uncomment for verbose debugging
+        $this->info("Event received: " . $eventName); // Uncommented for verbose debugging
 
         if (strtolower($eventName) === 'cdr') {
           $this->info("CDR event received: " . ($event['UniqueID'] ?? $event['Uniqueid'] ?? 'no-id'));
