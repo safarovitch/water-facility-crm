@@ -96,7 +96,7 @@ const initiateCall = (phone: string | null) => {
             <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
               <img class="w-10 h-10 rounded-full" :src="client.avatar_url" :alt="client.name">
               <div class="ps-3">
-                <div class="text-base font-semibold">{{ client.name }}</div>
+                <Link :href="`/clients/${client.id}`" class="text-base font-semibold hover:underline hover:text-blue-600 transition-colors">{{ client.name }}</Link>
                 <div class="font-normal text-gray-500">{{ client.email }}</div>
               </div>
             </th>
@@ -119,8 +119,8 @@ const initiateCall = (phone: string | null) => {
               </div>
             </td>
             <td class="px-6 py-4 flex items-center gap-2">
-              <Button variant="outline" size="icon" as-child title="Orders">
-                <Link :href="ordersIndex({ query: { user_id: client.id } }).url">
+              <Button variant="outline" size="icon" as-child title="View Profile">
+                <Link :href="`/clients/${client.id}`">
                   <Eye class="w-4 h-4 text-gray-600 dark:text-gray-400" />
                 </Link>
               </Button>

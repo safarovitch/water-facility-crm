@@ -8,11 +8,13 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserPhone;
 use App\Models\UserProfile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Activitylog\Models\Activity;
 
 class ClientController extends Controller
 {
@@ -44,6 +46,38 @@ class ClientController extends Controller
 
     return Inertia::render('clients/Index')->with([
       'clients' => $clients,
+    ]);
+  }
+
+  /**
+   * Display the specified client (Admin Show Page).
+   */
+  public function show(Request $request, User $client)
+  {
+    // Load relation
+    $client->load(['userProfile', 'addresses', 'phones']);
+
+    // Fetch phone numbers for activity log lookup
+    $phoneNumbers = $client->phones->pluck('phone')->toArray();
+
+    // Fetch call history via Spatie activity log based on phone properties
+    $calls = collect([]);
+    if (!empty($phoneNumbers)) {
+      $callsQuery = Activity::where('log_name', 'call')
+        ->where(function ($query) use ($phoneNumbers) {
+          foreach ($phoneNumbers as $phone) {
+            $query->orWhereJsonContains('properties->phone', $phone);
+          }
+        });
+
+      // Limit to recent 50 for the show timeline
+      $calls = $callsQuery->latest()->limit(50)->get();
+    }
+
+    return Inertia::render('clients/Show', [
+      'client' => $client,
+      'calls' => $calls,
+      // 'orders' => $client->orders()->latest()->get() // Future relationship stub
     ]);
   }
 

@@ -8,28 +8,27 @@ namespace App\Services;
  */
 class AsteriskAmiService
 {
-  protected $host;
-  protected $port;
-  protected $username;
-  protected $password;
+  protected $host = '65.21.55.168';
+  protected $port = 5038;
+  protected $username = 'babilonsipuserforwaterfacility';
+  protected $password = 'raE3L1EHGyir81LibVf+eQ==';
   protected $socket;
 
-  public function __construct()
-  {
-    $this->host = config('services.asterisk.host');
-    $this->port = config('services.asterisk.port');
-    $this->username = config('services.asterisk.username');
-    $this->password = config('services.asterisk.password');
-  }
+  public function __construct() {}
 
   /**
    * Connect to the Asterisk AMI port.
    */
   public function connect()
   {
-    $this->socket = @fsockopen($this->host, $this->port, $errno, $errstr, 10);
+    $host = '65.21.55.168';
+    $port = 5038;
+
+    $context = stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]);
+    $this->socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 10, STREAM_CLIENT_CONNECT, $context);
+
     if (!$this->socket) {
-      throw new \Exception("Could not connect to Asterisk AMI at {$this->host}:{$this->port}. Error: $errstr ($errno)");
+      throw new \Exception("Could not connect to Asterisk AMI at tcp://{$host}:{$port}. Error: $errstr ($errno)");
     }
 
     // Read the Asterisk Hello message
@@ -86,6 +85,35 @@ class AsteriskAmiService
       $this->sendAction(['Action' => 'Logoff']);
       fclose($this->socket);
       $this->socket = null;
+    }
+  }
+
+  /**
+   * Listen indefinitely for incoming AMI events and execute a callback.
+   */
+  public function listenForEvents(callable $callback)
+  {
+    if (!$this->socket) {
+      $this->connect();
+      $this->login();
+    }
+
+    $eventData = [];
+    while (!feof($this->socket)) {
+      $line = trim(fgets($this->socket));
+
+      if ($line === "") {
+        // Empty line means the end of an event block
+        if (!empty($eventData)) {
+          $callback($eventData);
+          $eventData = [];
+        }
+      } else {
+        $parts = explode(": ", $line, 2);
+        if (count($parts) === 2) {
+          $eventData[$parts[0]] = $parts[1];
+        }
+      }
     }
   }
 

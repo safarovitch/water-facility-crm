@@ -32,6 +32,7 @@ class CallLogController extends Controller
       'phone' => 'required|string|max:255',
       'duration' => 'required|integer|min:0',
       'direction' => 'required|in:inbound,outbound',
+      'status' => 'required|in:answered,missed,rejected,unanswered',
     ]);
 
     $activity = activity('call')
@@ -40,8 +41,9 @@ class CallLogController extends Controller
         'phone' => $validated['phone'],
         'duration' => $validated['duration'],
         'direction' => $validated['direction'],
+        'status' => $validated['status'],
       ])
-      ->log('Call ' . $validated['direction'] . ' to/from ' . $validated['phone']);
+      ->log(ucfirst($validated['status']) . ' ' . $validated['direction'] . ' call to/from ' . $validated['phone']);
 
     return response()->json($activity, 201);
   }

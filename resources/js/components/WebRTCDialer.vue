@@ -20,6 +20,8 @@ const callDirection = ref<'outbound' | 'inbound' | null>(null);
 const recentCalls = ref<any[]>([]);
 const isOriginating = ref(false);
 const isLoadingHistory = ref(true);
+const callStatus = ref<'answered' | 'missed' | 'rejected' | 'unanswered'>('answered');
+const ringtoneAudio = ref<HTMLAudioElement | null>(null);
 
 const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth?.user);
@@ -81,14 +83,25 @@ const setupRemoteAudio = (session: any) => {
     document.body.appendChild(remoteAudio);
   }
 
-  session.sessionDescriptionHandler.on('addTrack', () => {
+  const attachAudio = () => {
     const stream = new MediaStream();
-    session.sessionDescriptionHandler.peerConnection.getReceivers().forEach((receiver: any) => {
-      if (receiver.track) stream.addTrack(receiver.track);
+    const receivers = session.sessionDescriptionHandler.peerConnection.getReceivers();
+    receivers.forEach((receiver: any) => {
+      if (receiver.track && receiver.track.kind === 'audio') {
+        stream.addTrack(receiver.track);
+      }
     });
     remoteAudio.srcObject = stream;
-    remoteAudio.play();
-  });
+    remoteAudio.play().catch(e => console.error("Audio playback error:", e));
+  };
+
+  // Attach tracks that are already present
+  attachAudio();
+
+  // Listen for tracks that might be added later
+  if (session.sessionDescriptionHandler.on) {
+    session.sessionDescriptionHandler.on('addTrack', attachAudio);
+  }
 };
 
 const initializeSIP = () => {
@@ -161,6 +174,13 @@ const initializeSIP = () => {
                 console.log('Detected inbound call, updating phoneNumber');
                 phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
                 callDirection.value = 'inbound';
+                callStatus.value = 'missed'; // Default until answered
+
+                // Play ringtone for inbound
+                if (ringtoneAudio.value) {
+                  ringtoneAudio.value.currentTime = 0;
+                  ringtoneAudio.value.play().catch(e => console.error("Audio play failed:", e));
+                }
               }
 
               isOriginating.value = false;
@@ -171,7 +191,11 @@ const initializeSIP = () => {
                 console.log('Invitation state change:', state);
                 if (state === SessionState.Established) {
                   connectionStatus.value = 'In Call';
+                  callStatus.value = 'answered';
                   isCallActive.value = true;
+
+                  if (ringtoneAudio.value) ringtoneAudio.value.pause();
+
                   startDurationTimer();
                   setupRemoteAudio(invitation);
                 } else if (state === SessionState.Terminated) {
@@ -221,23 +245,53 @@ const initializeSIP = () => {
 };
 
 const makeCall = async () => {
-  if (!phoneNumber.value) return;
+  if (!phoneNumber.value || !userAgent) return;
 
-  connectionStatus.value = 'Originating...';
+  connectionStatus.value = 'Calling...';
   callDirection.value = 'outbound';
+  callStatus.value = 'unanswered'; // Default until connected
   isOriginating.value = true;
+  isCallActive.value = true;
 
   try {
-    const response = await axios.post('/calls/originate', {
-      phone: phoneNumber.value
+    const domain = asteriskConfig.value.domain || asteriskConfig.value.host;
+    const targetURI = UserAgent.makeURI(`sip:${phoneNumber.value}@${domain}`);
+
+    if (!targetURI) {
+      throw new Error('Invalid target URI');
+    }
+
+    const inviter = new Inviter(userAgent, targetURI, {
+      sessionDescriptionHandlerOptions: {
+        constraints: { audio: true, video: false }
+      }
     });
-    console.log('AMI Originate Response:', response.data);
-    // The backend successfully told Asterisk to ring our softphone.
-    // We just wait for the 'onInvite' event now.
+
+    currentSession = inviter;
+
+    inviter.stateChange.addListener((state: SessionState) => {
+      console.log('Outbound Inviter state change:', state);
+      if (state === SessionState.Establishing) {
+        connectionStatus.value = 'Ringing...';
+      } else if (state === SessionState.Established) {
+        connectionStatus.value = 'In Call';
+        callStatus.value = 'answered';
+        isOriginating.value = false;
+        startDurationTimer();
+        setupRemoteAudio(inviter);
+      } else if (state === SessionState.Terminated) {
+        endSessionCleanup();
+      }
+    });
+
+    await inviter.invite();
   } catch (error: any) {
-    console.error('Failed to originate call via AMI:', error);
-    connectionStatus.value = 'Origination Failed';
-    alert(error.response?.data?.message || 'Failed to start call');
+    console.error('Failed to originate call via SIP:', error);
+    connectionStatus.value = 'Call Failed';
+    isOriginating.value = false;
+    isCallActive.value = false;
+    currentSession = null;
+    alert(error.message || 'Failed to start call');
   }
 };
 
@@ -253,6 +307,12 @@ const answerCall = () => {
 
 const endCall = () => {
   if (currentSession) {
+    if (callDirection.value === 'inbound' && currentSession.state !== SessionState.Established) {
+      callStatus.value = 'rejected';
+    } else if (callDirection.value === 'outbound' && currentSession.state !== SessionState.Established) {
+      callStatus.value = 'unanswered';
+    }
+
     if (currentSession.state === SessionState.Established) {
       currentSession.bye();
     } else if (currentSession.state === SessionState.Initial && 'cancel' in currentSession) {
@@ -265,11 +325,17 @@ const endCall = () => {
 };
 
 const endSessionCleanup = () => {
+  if (ringtoneAudio.value) {
+    ringtoneAudio.value.pause();
+    ringtoneAudio.value.currentTime = 0;
+  }
+
   if (callDirection.value && phoneNumber.value) {
     axios.post('/calls', {
       phone: phoneNumber.value,
       duration: durationSeconds,
-      direction: callDirection.value
+      direction: callDirection.value,
+      status: callStatus.value
     }).then(() => {
       fetchRecentCalls();
     }).catch(e => console.error('Failed to log call', e));
@@ -368,7 +434,7 @@ onMounted(() => {
           <div v-if="isCallActive" class="mb-2 text-sm font-medium text-blue-600 dark:text-blue-400">
             {{ callDuration }}
           </div>
-          <Input v-show="activeTab === 'keypad' || isCallActive" v-model="phoneNumber" type="text" placeholder="Enter number..." class="text-2xl text-center font-semibold border-none shadow-none focus-visible:ring-0 px-0 h-12" :disabled="isCallActive || connectionStatus === 'Originating...'" />
+          <Input v-show="activeTab === 'keypad' || isCallActive" v-model="phoneNumber" type="text" placeholder="Enter number..." class="text-2xl text-center font-semibold border-none shadow-none focus-visible:ring-0 px-0 h-12" :disabled="isCallActive || connectionStatus === 'Calling...'" />
         </div>
 
         <!-- Keypad Tab -->
@@ -410,7 +476,6 @@ onMounted(() => {
             <li v-for="call in recentCalls" :key="call.id" class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex justify-between items-center transition-colors">
               <div class="flex items-center space-x-3">
                 <div class="rounded-full p-2" :class="call.properties.direction === 'inbound' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30' : 'bg-green-50 text-green-600 dark:bg-green-900/30'">
-                  <!-- Using Phone icon as base since we don't have inbound/outbound lucide-icons imported yet -->
                   <Phone class="w-4 h-4" />
                 </div>
                 <div>
@@ -418,7 +483,12 @@ onMounted(() => {
                     {{ call.properties.phone }}
                   </div>
                   <div class="text-xs text-gray-500 font-mono mt-0.5">
-                    {{ new Date(call.created_at).toLocaleDateString() }} • {{ formatDuration(call.properties.duration) }}
+                    {{ new Date(call.created_at).toLocaleDateString() }} •
+                    <span>{{ call.properties.status === 'answered' ? formatDuration(call.properties.duration) : '00:03' }}</span>
+                  </div>
+                  <!-- Audio Recording Player -->
+                  <div v-if="call.properties.recording_url" class="mt-2">
+                    <audio controls preload="none" class="h-6 w-40" :src="call.properties.recording_url"></audio>
                   </div>
                 </div>
               </div>
@@ -429,9 +499,9 @@ onMounted(() => {
           </ul>
         </div>
 
-        <div v-if="isCallActive || connectionStatus === 'Originating...'" class="px-6 pb-8 pt-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+        <div v-if="isCallActive || connectionStatus === 'Calling...'" class="px-6 pb-8 pt-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
           <div class="flex justify-center space-x-6">
-            <button v-if="isCallActive" @click="toggleMute" class="h-14 w-14 rounded-full flex items-center justify-center transition-colors shadow-sm" :class="isMuted ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            <button v-if="isCallActive && (connectionStatus === 'In Call' || connectionStatus === 'Ringing...')" @click="toggleMute" class="h-14 w-14 rounded-full flex items-center justify-center transition-colors shadow-sm" :class="isMuted ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
               <MicOff v-if="isMuted" class="h-6 w-6" />
               <Mic v-else class="h-6 w-6" />
             </button>
@@ -440,16 +510,19 @@ onMounted(() => {
               <Phone class="h-6 w-6 fill-current" />
             </button>
 
-            <button @click="endCall" class="h-14 w-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95" :class="{ 'translate-y-2': !isCallActive && connectionStatus === 'Originating...' }">
-              <PhoneOff v-if="connectionStatus !== 'Originating...'" class="h-6 w-6" />
+            <button @click="endCall" class="h-14 w-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95" :class="{ 'translate-y-2': !isCallActive && connectionStatus === 'Calling...' }">
+              <PhoneOff v-if="connectionStatus !== 'Calling...'" class="h-6 w-6" />
               <X v-else class="h-6 w-6" />
             </button>
           </div>
-          <div v-if="connectionStatus === 'Originating...'" class="text-center mt-3 text-xs text-gray-400 animate-pulse">
-            Calling your phone first...
+          <div v-if="connectionStatus === 'Calling...'" class="text-center mt-3 text-xs text-gray-400 animate-pulse">
+            Connecting...
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Hidden Audio elements -->
+    <audio ref="ringtoneAudio" loop src="/audio/ringtone.mp3" preload="auto"></audio>
   </Teleport>
 </template>
