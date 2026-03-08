@@ -99,18 +99,23 @@ class AsteriskAmiListener extends Command
               File::makeDirectory(public_path('recordings'), 0755, true);
             }
 
+            // Wait a brief moment to ensure Asterisk has finished writing the file
+            sleep(3);
+
             // Execute secure copy to pull the recording
             $asteriskHost = env('ASTERISK_AMI_HOST', '65.21.55.168');
             $this->info("Fetching recording for UniqueId: {$uniqueid} from {$asteriskHost}...");
-            $scpCommand = "scp -o StrictHostKeyChecking=no root@{$asteriskHost}:{$remoteFile} {$localPath} 2>/dev/null";
-            exec($scpCommand, $output, $returnVar);
+
+            // Capture both output and return code for better debugging
+            $scpCommand = "scp -o StrictHostKeyChecking=no root@{$asteriskHost}:{$remoteFile} {$localPath} 2>&1";
+            exec($scpCommand, $scpOutput, $returnVar);
 
             if ($returnVar === 0 && file_exists($localPath)) {
               $this->info("Successfully downloaded recording: {$localFilename}");
               Log::info("Successfully downloaded recording: {$localFilename}");
               $recordingUrl = "/recordings/{$localFilename}";
             } else {
-              $errorMsg = "Failed to download recording: {$remoteFile} from {$asteriskHost}. Return code: {$returnVar}";
+              $errorMsg = "Failed to download recording: {$remoteFile} from {$asteriskHost}. Return code: {$returnVar}. Output: " . implode("\n", $scpOutput);
               $this->warn($errorMsg);
               Log::warning($errorMsg);
             }
