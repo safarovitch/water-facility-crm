@@ -106,8 +106,12 @@ class AsteriskAmiListener extends Command
             $asteriskHost = env('ASTERISK_AMI_HOST', '65.21.55.168');
             $this->info("Fetching recording for UniqueId: {$uniqueid} from {$asteriskHost}...");
 
-            // Capture both output and return code for better debugging
-            $scpCommand = "scp -o StrictHostKeyChecking=no root@{$asteriskHost}:{$remoteFile} {$localPath} 2>&1";
+            // Build command with properly escaped arguments
+            $escapedRemote = escapeshellarg("root@{$asteriskHost}:{$remoteFile}");
+            $escapedLocal = escapeshellarg($localPath);
+            $scpCommand = "scp -o StrictHostKeyChecking=no {$escapedRemote} {$escapedLocal} 2>&1";
+
+            Log::info("Executing SCP command: " . $scpCommand);
             exec($scpCommand, $scpOutput, $returnVar);
 
             if ($returnVar === 0 && file_exists($localPath)) {
@@ -117,7 +121,7 @@ class AsteriskAmiListener extends Command
             } else {
               $errorMsg = "Failed to download recording: {$remoteFile} from {$asteriskHost}. Return code: {$returnVar}. Output: " . implode("\n", $scpOutput);
               $this->warn($errorMsg);
-              Log::warning($errorMsg);
+              Log::warning($errorMsg, ['command' => $scpCommand, 'output' => $scpOutput]);
             }
 
             // Wait a brief moment to ensure the frontend HTTP API finished saving the log first
