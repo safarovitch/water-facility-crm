@@ -6,6 +6,8 @@ use Illuminate\Console\Command;
 use App\Services\AsteriskAmiService;
 use App\Models\User;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class AsteriskAmiListener extends Command
 {
@@ -37,11 +39,12 @@ class AsteriskAmiListener extends Command
 
       $ami->listenForEvents(function ($event) use ($ami) {
         $eventName = $event['Event'] ?? '';
-        $this->info("Event received: " . $eventName); // Uncommented for verbose debugging
+        // Log::debug("AMI Event received: " . $eventName);
 
         if (strtolower($eventName) === 'cdr') {
-          $this->info("CDR event received: " . ($event['UniqueID'] ?? $event['Uniqueid'] ?? 'no-id'));
-          $this->info("Event data: " . json_encode($event));
+          $uniqueIdDisplay = $event['UniqueID'] ?? $event['Uniqueid'] ?? 'no-id';
+          $this->info("CDR event received: " . $uniqueIdDisplay);
+          Log::info("CDR event received: " . $uniqueIdDisplay, ['event' => $event]);
           $disposition = $event['Disposition'] ?? '';
           $destination = $event['Destination'] ?? '';
           $source = $event['Source'] ?? '';
@@ -91,16 +94,25 @@ class AsteriskAmiListener extends Command
             $localFilename = "{$uniqueid}.wav";
             $localPath = public_path("recordings/{$localFilename}");
 
+            // Ensure local recordings directory exists
+            if (!File::isDirectory(public_path('recordings'))) {
+              File::makeDirectory(public_path('recordings'), 0755, true);
+            }
+
             // Execute secure copy to pull the recording
-            $this->info("Fetching recording for UniqueId: {$uniqueid}...");
-            $scpCommand = "scp -o StrictHostKeyChecking=no root@65.21.55.168:{$remoteFile} {$localPath} 2>/dev/null";
+            $asteriskHost = env('ASTERISK_AMI_HOST', '65.21.55.168');
+            $this->info("Fetching recording for UniqueId: {$uniqueid} from {$asteriskHost}...");
+            $scpCommand = "scp -o StrictHostKeyChecking=no root@{$asteriskHost}:{$remoteFile} {$localPath} 2>/dev/null";
             exec($scpCommand, $output, $returnVar);
 
             if ($returnVar === 0 && file_exists($localPath)) {
               $this->info("Successfully downloaded recording: {$localFilename}");
+              Log::info("Successfully downloaded recording: {$localFilename}");
               $recordingUrl = "/recordings/{$localFilename}";
             } else {
-              $this->warn("Failed to download recording: {$remoteFile}");
+              $errorMsg = "Failed to download recording: {$remoteFile} from {$asteriskHost}. Return code: {$returnVar}";
+              $this->warn($errorMsg);
+              Log::warning($errorMsg);
             }
 
             // Wait a brief moment to ensure the frontend HTTP API finished saving the log first

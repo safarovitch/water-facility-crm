@@ -8,13 +8,18 @@ namespace App\Services;
  */
 class AsteriskAmiService
 {
-  protected $host = '65.21.55.168';
-  protected $port = 5038;
-  protected $username = 'babilonsipuserforwaterfacility';
-  protected $password = 'raE3L1EHGyir81LibVf+eQ==';
+  protected $host;
+  protected $port;
+  protected $username;
+  protected $password;
   protected $socket;
 
-  public function __construct() {}
+  public function __construct() {
+    $this->host = env('ASTERISK_AMI_HOST', '65.21.55.168');
+    $this->port = env('ASTERISK_AMI_PORT', 5038);
+    $this->username = env('ASTERISK_AMI_USER', 'babilonsipuserforwaterfacility');
+    $this->password = env('ASTERISK_AMI_SECRET', 'raE3L1EHGyir81LibVf+eQ==');
+  }
 
   /**
    * Connect to the Asterisk AMI port.
