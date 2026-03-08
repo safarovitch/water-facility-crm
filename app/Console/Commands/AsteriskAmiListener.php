@@ -93,11 +93,11 @@ class AsteriskAmiListener extends Command
             $recordingUrl = null;
             $remoteFile = "/var/spool/asterisk/monitor/{$uniqueid}.wav";
             $localFilename = "{$uniqueid}.wav";
-            $localPath = public_path("recordings/{$localFilename}");
+            $localPath = storage_path("app/public/recordings/{$localFilename}");
 
             // Ensure local recordings directory exists
-            if (!File::isDirectory(public_path('recordings'))) {
-              File::makeDirectory(public_path('recordings'), 0755, true);
+            if (!File::isDirectory(storage_path('app/public/recordings'))) {
+              File::makeDirectory(storage_path('app/public/recordings'), 0755, true);
             }
 
             // Wait a brief moment to ensure Asterisk has finished writing the file
@@ -108,10 +108,12 @@ class AsteriskAmiListener extends Command
             $this->info("Fetching recording for UniqueId: {$uniqueid} from {$asteriskHost}...");
 
             // Build command with properly escaped arguments
+            $asteriskHost = env('ASTERISK_AMI_HOST', '65.21.55.168');
+            $sshUser = env('ASTERISK_SSH_USER', 'root');
             $sshKey = env('ASTERISK_SSH_KEY');
             $identityFlag = $sshKey ? "-i " . escapeshellarg($sshKey) : "";
 
-            $escapedRemote = escapeshellarg("root@{$asteriskHost}:{$remoteFile}");
+            $escapedRemote = escapeshellarg("{$sshUser}@{$asteriskHost}:{$remoteFile}");
             $escapedLocal = escapeshellarg($localPath);
             $scpCommand = "scp {$identityFlag} -o StrictHostKeyChecking=no {$escapedRemote} {$escapedLocal} 2>&1";
 
@@ -121,7 +123,11 @@ class AsteriskAmiListener extends Command
             if ($returnVar === 0 && file_exists($localPath)) {
               $this->info("Successfully downloaded recording: {$localFilename}");
               Log::info("Successfully downloaded recording: {$localFilename}");
-              $recordingUrl = "/recordings/{$localFilename}";
+
+              // Set permissions so web server can read it
+              chmod($localPath, 0644);
+
+              $recordingUrl = "/storage/recordings/{$localFilename}";
             } else {
               $errorMsg = "Failed to download recording: {$remoteFile} from {$asteriskHost}. Return code: {$returnVar}. Output: " . implode("\n", $scpOutput);
               $this->warn($errorMsg);
@@ -140,7 +146,7 @@ class AsteriskAmiListener extends Command
               ->orderBy('id', 'desc')
               ->first();
 
-            if ($existingLog) {
+            if ($existingLog && $recordingUrl) {
               $this->info("Attaching recording to existing log #{$existingLog->id}");
               $properties = $existingLog->properties->toArray();
               $properties['recording_url'] = $recordingUrl;
@@ -151,6 +157,8 @@ class AsteriskAmiListener extends Command
                 ->update(['properties' => json_encode($properties)]);
 
               $this->info("Successfully attached {$recordingUrl} to Activity properties!");
+            } elseif ($existingLog) {
+              $this->warn("No recording URL found for log #{$existingLog->id}, skipping attachment.");
             } else {
               $this->info("No frontend log found. Creating offline log for answered call {$remotePhone}");
               activity('call')
