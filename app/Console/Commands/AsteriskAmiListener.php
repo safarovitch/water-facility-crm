@@ -30,6 +30,7 @@ class AsteriskAmiListener extends Command
    */
   public function handle()
   {
+    Log::info("AsteriskAmiListener: Command started.");
     $this->info("Connecting to Asterisk AMI...");
     $ami = new AsteriskAmiService();
 
@@ -107,9 +108,12 @@ class AsteriskAmiListener extends Command
             $this->info("Fetching recording for UniqueId: {$uniqueid} from {$asteriskHost}...");
 
             // Build command with properly escaped arguments
+            $sshKey = env('ASTERISK_SSH_KEY');
+            $identityFlag = $sshKey ? "-i " . escapeshellarg($sshKey) : "";
+
             $escapedRemote = escapeshellarg("root@{$asteriskHost}:{$remoteFile}");
             $escapedLocal = escapeshellarg($localPath);
-            $scpCommand = "scp -o StrictHostKeyChecking=no {$escapedRemote} {$escapedLocal} 2>&1";
+            $scpCommand = "scp {$identityFlag} -o StrictHostKeyChecking=no {$escapedRemote} {$escapedLocal} 2>&1";
 
             Log::info("Executing SCP command: " . $scpCommand);
             exec($scpCommand, $scpOutput, $returnVar);
