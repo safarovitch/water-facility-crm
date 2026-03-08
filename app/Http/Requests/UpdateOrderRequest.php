@@ -14,9 +14,9 @@ class UpdateOrderRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'user_id'          => ['required', 'exists:users,id'],
-      'delivery_date'    => ['nullable', 'date'],
-      'delivery_address' => ['nullable', 'string'],
+      'user_id'               => ['required', 'exists:users,id'],
+      'scheduled_delivery_at' => ['nullable', 'date'],
+      'delivery_address'      => ['nullable', 'string'],
       'notes'            => ['nullable', 'string'],
 
       'items'              => ['required', 'array', 'min:1'],

@@ -73,7 +73,11 @@ class ProductController extends Controller
     $validated['low_stock_action']    = $validated['low_stock_action']    ?? ProductLowStockAction::None;
     $validated['dimensions']  = $validated['dimensions']  ?? [];
 
-    Product::create($validated);
+    $product = Product::create($validated);
+
+    if ($request->hasFile('image')) {
+      $product->addMediaFromRequest('image')->toMediaCollection('image');
+    }
 
     return redirect()->route('products.index')
       ->with('success', 'Product created successfully.');
@@ -116,6 +120,11 @@ class ProductController extends Controller
     ]);
 
     $product->update($validated);
+
+    if ($request->hasFile('image')) {
+      $product->clearMediaCollection('image');
+      $product->addMediaFromRequest('image')->toMediaCollection('image');
+    }
 
     return redirect()->route('products.index')
       ->with('success', 'Product updated successfully.');

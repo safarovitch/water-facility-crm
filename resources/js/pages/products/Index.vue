@@ -32,6 +32,7 @@ interface Product {
   status: string;
   statusHtmlClass: string;
   statusLabel: string;
+  image_url: string | null;
 }
 
 const props = defineProps<{
@@ -72,21 +73,24 @@ const props = defineProps<{
                             </div>
                         </th> -->
             <th scope="col" class="px-6 py-3">
-              Image, Name, Slug
+              Image
             </th>
             <th scope="col" class="px-6 py-3">
-              Price, Sale Price
+              Name & Slug
+            </th>
+            <th scope="col" class="px-6 py-3 text-right">
+              Price
             </th>
             <th scope="col" class="px-6 py-3">
               Short Description
             </th>
-            <th scope="col" class="px-6 py-3">
+            <th scope="col" class="px-6 py-3 text-center">
               Quantity
             </th>
             <th scope="col" class="px-6 py-3">
-              Status, Stock status
+              Status
             </th>
-            <th scope="col" class="px-6 py-3">
+            <th scope="col" class="px-6 py-3 text-right">
               Action
             </th>
           </tr>
@@ -99,25 +103,41 @@ const props = defineProps<{
                                 <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
                             </div>
                         </td> -->
-            <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-              <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-200 shrink-0">
-                {{ (product.name?.en ?? '?').charAt(0).toUpperCase() }}
-              </div>
-              <div class="ps-3">
-                <div class="text-base font-semibold">{{ product.name?.en ?? product.name?.uz ?? '—' }}</div>
-                <div class="font-normal text-gray-500">{{ product.slug }}</div>
-              </div>
-            </th>
             <td class="px-6 py-4">
-              {{ product.price }} {{ product.currency }} <br>
-              <span v-if="product.sale_price" class="text-sm text-gray-400 line-through">{{ product.sale_price }} {{ product.currency }}</span>
+              <div v-if="product.image_url" class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <img :src="product.image_url" :alt="product.name?.en" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-200 border border-gray-200 dark:border-gray-700">
+                {{ (product.name?.en ?? product.name?.uz ?? '?').charAt(0).toUpperCase() }}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-base font-semibold text-gray-900 dark:text-white">{{ product.name?.en ?? product.name?.uz ?? '—' }}</div>
+              <div class="text-xs font-mono text-gray-500">{{ product.sku }} / {{ product.slug }}</div>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="font-medium text-gray-900 dark:text-white">
+                {{ product.price }} {{ product.currency }}
+              </div>
+              <div v-if="product.sale_price && parseFloat(product.sale_price) > 0" class="text-xs text-gray-400 line-through">
+                {{ product.sale_price }} {{ product.currency }}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-500 line-clamp-2 max-w-xs">
+                {{ product.short_description?.en ?? product.short_description?.uz ?? '—' }}
+              </div>
+            </td>
+            <td class="px-6 py-4 text-center font-medium">
+              {{ product.quantity }}
             </td>
             <td class="px-6 py-4">
               <div class="flex items-center">
-                <div class="h-2.5 w-2.5 rounded-full me-2" :class="product.statusHtmlClass"></div> {{ product.statusLabel }}
+                <div class="h-2 w-2 rounded-full me-2" :class="product.statusHtmlClass"></div>
+                <span class="text-xs font-medium">{{ product.statusLabel }}</span>
               </div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 text-right">
               <Link :href="edit(product.id).url" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
             </td>
           </tr>

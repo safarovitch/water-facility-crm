@@ -23,7 +23,8 @@ interface Order {
   total_amount: string;
   paid_amount: string;
   balance_due: number;
-  delivery_date: string | null;
+  scheduled_delivery_at: string | null;
+  actual_delivery_at: string | null;
   delivery_address: string | null;
   notes: string | null;
   created_at: string;
@@ -63,6 +64,10 @@ const changeStatus = (status: string) => {
   if (status === 'cancelled') {
     if (!confirm('Cancel this order?')) return;
     router.patch(cancel(props.order.id).url, {}, { preserveScroll: true });
+  } else if (status === 'delivered') {
+    const actual = prompt('Confirm Actual Delivery Date & Time:', new Date().toISOString().slice(0, 16).replace('T', ' '));
+    if (actual === null) return;
+    router.patch(updateStatus(props.order.id).url, { status, actual_delivery_at: actual }, { preserveScroll: true });
   } else {
     router.patch(updateStatus(props.order.id).url, { status }, { preserveScroll: true });
   }
@@ -124,7 +129,10 @@ const statusButtonClass = (s: string) => {
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Delivery</h2>
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <span class="font-medium">Date:</span> {{ order.delivery_date ?? '—' }}
+            <span class="font-medium">Scheduled:</span> {{ order.scheduled_delivery_at ?? '—' }}
+          </p>
+          <p class="text-sm text-gray-700 dark:text-gray-300 mt-1" v-if="order.actual_delivery_at">
+            <span class="font-medium">Actual:</span> {{ order.actual_delivery_at }}
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
             <span class="font-medium">Address:</span> {{ order.delivery_address ?? '—' }}

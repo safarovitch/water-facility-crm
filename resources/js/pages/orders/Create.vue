@@ -24,8 +24,10 @@ interface LineItem { product_id: number | null; quantity: number; unit_price: nu
 
 const form = useForm({
   user_id: null as number | null,
-  delivery_date: '',
+  scheduled_delivery_at: '',
   delivery_address: '',
+  new_address: '',
+  new_address_label: '',
   notes: '',
   items: [] as LineItem[],
 });
@@ -68,6 +70,23 @@ const submitForm = () => { form.post(store().url); };
 
 const clientLabel = (c: Client) =>
   c.user_profile?.company_name ? `${c.name} (${c.user_profile.company_name})` : c.name;
+
+const selectedClient = computed(() => props.clients.find(c => c.id === form.user_id));
+const clientAddresses = computed(() => (selectedClient.value as any)?.addresses || []);
+
+const isAddingNewAddress = ref(false);
+
+const onAddressSelect = (addr: string) => {
+  form.delivery_address = addr;
+  isAddingNewAddress.value = false;
+};
+
+const toggleNewAddress = () => {
+  isAddingNewAddress.value = !isAddingNewAddress.value;
+  if (isAddingNewAddress.value) {
+    form.delivery_address = '';
+  }
+};
 </script>
 
 <template>
@@ -93,14 +112,58 @@ const clientLabel = (c: Client) =>
               <InputError :message="form.errors.user_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="delivery_date">Delivery Date</Label>
-              <Input id="delivery_date" type="date" v-model="form.delivery_date" />
-              <InputError :message="form.errors.delivery_date" />
+              <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time</Label>
+              <Input id="scheduled_delivery_at" type="datetime-local" v-model="form.scheduled_delivery_at" />
+              <InputError :message="form.errors.scheduled_delivery_at" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
-              <Label for="delivery_address">Delivery Address</Label>
-              <textarea id="delivery_address" v-model="form.delivery_address" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+              <Label>Delivery Address</Label>
+              <div v-if="clientAddresses.length > 0 && !isAddingNewAddress" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                <div v-for="addr in clientAddresses" :key="addr.id" 
+                  @click="onAddressSelect(addr.address_line)"
+                  :class="[
+                    'p-3 rounded-lg border cursor-pointer transition-colors text-sm',
+                    form.delivery_address === addr.address_line 
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                  ]">
+                  <div class="font-medium text-gray-900 dark:text-white">{{ addr.label }}</div>
+                  <div class="text-xs text-gray-500 mt-1 line-clamp-2">{{ addr.address_line }}</div>
+                </div>
+              </div>
+
+              <div v-if="!isAddingNewAddress" class="flex justify-start">
+                <Button type="button" variant="link" size="sm" @click="toggleNewAddress" class="px-0 h-auto">
+                  + Add new address for this client
+                </Button>
+              </div>
+
+              <div v-if="isAddingNewAddress" class="space-y-3 p-4 rounded-xl border border-blue-100 bg-blue-50/30 dark:border-blue-900/30 dark:bg-blue-900/10">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">Adding New Address</h3>
+                  <Button type="button" variant="ghost" size="sm" @click="toggleNewAddress">Cancel</Button>
+                </div>
+                <div class="grid gap-3">
+                  <div class="grid gap-1.5">
+                    <Label for="new_address_label" class="text-xs">Address Label (e.g. Home, Office)</Label>
+                    <Input id="new_address_label" v-model="form.new_address_label" placeholder="Office" />
+                  </div>
+                  <div class="grid gap-1.5">
+                    <Label for="new_address" class="text-xs">Address Line *</Label>
+                    <textarea id="new_address" v-model="form.new_address" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Street, building..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="!isAddingNewAddress && clientAddresses.length === 0" class="mt-2 p-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                <p class="text-xs text-gray-500 mb-2">No addresses found for this client.</p>
+                <Button type="button" variant="outline" size="sm" @click="toggleNewAddress">
+                  Add First Address
+                </Button>
+              </div>
+
               <InputError :message="form.errors.delivery_address" />
+              <InputError :message="form.errors.new_address" />
             </div>
           </div>
         </div>

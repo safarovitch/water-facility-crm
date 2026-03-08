@@ -34,6 +34,7 @@ const form = useForm({
   low_stock_action: 'none',
   status: 'active',
   short_description: { en: '', uz: '', ru: '' } as Record<string, string>,
+  image: null as File | null,
 });
 
 const isFormValid = computed(() =>
@@ -61,6 +62,30 @@ const selectClass = cn(
       </div>
 
       <form @submit.prevent="submitForm" class="space-y-6">
+
+        <!-- Image Upload -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
+          <div class="flex items-center gap-6">
+            <div class="w-32 h-32 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group">
+              <img v-if="form.image" :src="window.URL.createObjectURL(form.image)" class="w-full h-full object-cover" />
+              <div v-else class="text-gray-400 text-xs text-center p-2">No image selected</div>
+              
+              <label for="image_upload" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                <span class="text-white text-xs font-medium">Change</span>
+              </label>
+              <input id="image_upload" type="file" @change="(e) => form.image = (e.target as HTMLInputElement).files?.[0] || null" class="hidden" accept="image/*" />
+            </div>
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Upload image</p>
+              <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+              <Button type="button" variant="outline" size="sm" @click="() => window.document.getElementById('image_upload')?.click()">
+                Select File
+              </Button>
+            </div>
+          </div>
+          <InputError :message="form.errors.image" class="mt-2" />
+        </div>
 
         <!-- Basic Info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">

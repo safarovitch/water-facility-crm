@@ -44,6 +44,13 @@ class Product extends Model implements HasMedia
     'manage_stock' => 'boolean',
   ];
 
+  protected $appends = ['image_url'];
+
+  public function getImageUrlAttribute(): ?string
+  {
+    return $this->getFirstMediaUrl('image');
+  }
+
   /**
    * Get the options for generating the slug.
    */

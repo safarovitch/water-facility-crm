@@ -14,7 +14,8 @@ class Order extends Model
     'order_number',
     'user_id',
     'status',
-    'delivery_date',
+    'scheduled_delivery_at',
+    'actual_delivery_at',
     'delivery_address',
     'total_amount',
     'paid_amount',
@@ -24,11 +25,12 @@ class Order extends Model
   ];
 
   protected $casts = [
-    'status'         => OrderStatus::class,
-    'payment_status' => PaymentStatus::class,
-    'delivery_date'  => 'date',
-    'total_amount'   => 'decimal:2',
-    'paid_amount'    => 'decimal:2',
+    'status'                => OrderStatus::class,
+    'payment_status'        => PaymentStatus::class,
+    'scheduled_delivery_at' => 'datetime',
+    'actual_delivery_at'    => 'datetime',
+    'total_amount'          => 'decimal:2',
+    'paid_amount'           => 'decimal:2',
   ];
 
   protected $appends = ['balance_due'];

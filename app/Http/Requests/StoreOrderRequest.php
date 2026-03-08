@@ -14,10 +14,10 @@ class StoreOrderRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'user_id'          => ['required', 'exists:users,id'],
-      'delivery_date'    => ['nullable', 'date', 'after_or_equal:today'],
-      'delivery_address' => ['nullable', 'string'],
-      'notes'            => ['nullable', 'string'],
+      'user_id'               => ['required', 'exists:users,id'],
+      'scheduled_delivery_at' => ['nullable', 'date', 'after_or_equal:today'],
+      'delivery_address'      => ['nullable', 'string'],
+      'notes'                 => ['nullable', 'string'],
 
       'items'                  => ['required', 'array', 'min:1'],
       'items.*.product_id'     => ['required', 'exists:products,id'],

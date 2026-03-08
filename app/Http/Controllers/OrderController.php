@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\UserAddress;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -53,7 +54,7 @@ class OrderController extends Controller
   public function create(): Response
   {
     return Inertia::render('orders/Create')->with([
-      'clients'  => User::role('Client')->with('userProfile')->get(['id', 'name', 'email']),
+      'clients'  => User::role('Client')->with(['userProfile', 'addresses'])->get(['id', 'name', 'email']),
       'products' => Product::select(['id', 'name', 'price', 'sale_price', 'quantity', 'status'])->get(),
     ]);
   }
@@ -76,13 +77,24 @@ class OrderController extends Controller
 
       $total = $items->sum('subtotal');
 
+      $deliveryAddress = $request->delivery_address;
+
+      if ($request->filled('new_address')) {
+        $address = UserAddress::create([
+          'user_id'      => $request->user_id,
+          'label'        => $request->new_address_label ?? 'New Address',
+          'address_line' => $request->new_address,
+        ]);
+        $deliveryAddress = $address->address_line;
+      }
+
       $order = Order::create([
-        'user_id'          => $request->user_id,
-        'delivery_date'    => $request->delivery_date,
-        'delivery_address' => $request->delivery_address,
-        'notes'            => $request->notes,
-        'total_amount'     => $total,
-        'created_by'       => auth()->id(),
+        'user_id'               => $request->user_id,
+        'scheduled_delivery_at' => $request->scheduled_delivery_at,
+        'delivery_address'      => $deliveryAddress,
+        'notes'                 => $request->notes,
+        'total_amount'          => $total,
+        'created_by'            => auth()->id(),
       ]);
 
       $order->items()->createMany($items->toArray());
@@ -132,11 +144,11 @@ class OrderController extends Controller
       });
 
       $order->update([
-        'user_id'          => $request->user_id,
-        'delivery_date'    => $request->delivery_date,
-        'delivery_address' => $request->delivery_address,
-        'notes'            => $request->notes,
-        'total_amount'     => $items->sum('subtotal'),
+        'user_id'               => $request->user_id,
+        'scheduled_delivery_at' => $request->scheduled_delivery_at,
+        'delivery_address'      => $request->delivery_address,
+        'notes'                 => $request->notes,
+        'total_amount'          => $items->sum('subtotal'),
       ]);
 
       $order->items()->delete();
@@ -160,11 +172,12 @@ class OrderController extends Controller
 
   public function updateStatus(Order $order)
   {
-    $status = request()->validate([
-      'status' => ['required', 'in:' . implode(',', OrderStatus::getValues())],
-    ])['status'];
+    $data = request()->validate([
+      'status'             => ['required', 'in:' . implode(',', OrderStatus::getValues())],
+      'actual_delivery_at' => ['nullable', 'date'],
+    ]);
 
-    $order->update(['status' => $status]);
+    $order->update($data);
 
     return back()->with('success', 'Order status updated.');
   }

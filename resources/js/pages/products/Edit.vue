@@ -25,6 +25,7 @@ interface Product {
   low_stock_action: string;
   status: string;
   short_description: Record<string, string> | null;
+  image_url: string | null;
 }
 
 const props = defineProps<{
@@ -39,7 +40,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const form = useForm({
-  name: { en: props.product.name?.en ?? '', uz: props.product.name?.uz ?? '', ru: props.product.name?.ru ?? '' },
+  name: { 
+    en: props.product.name?.en ?? '', 
+    uz: props.product.name?.uz ?? '', 
+    ru: props.product.name?.ru ?? '' 
+  },
   sku: props.product.sku,
   price: props.product.price,
   sale_price: props.product.sale_price,
@@ -56,11 +61,25 @@ const form = useForm({
     uz: props.product.short_description?.uz ?? '',
     ru: props.product.short_description?.ru ?? '',
   },
+  image: null as File | null,
+  _method: 'PUT', // For multipart/form-data with PUT
 });
 
 const submitForm = () => {
   form.post(update(props.product.id).url);
 };
+
+const handleFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    form.image = file;
+  }
+};
+
+const getImageUrl = computed(() => {
+  if (form.image) return window.URL.createObjectURL(form.image);
+  return props.product.image_url;
+});
 
 const selectClass = cn(
   'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs outline-none dark:bg-input/30 md:text-sm',
@@ -79,6 +98,30 @@ const selectClass = cn(
       </div>
 
       <form @submit.prevent="submitForm" class="space-y-6">
+
+        <!-- Image Upload -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
+          <div class="flex items-center gap-6">
+            <div class="w-32 h-32 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group">
+              <img v-if="getImageUrl" :src="getImageUrl" class="w-full h-full object-cover" />
+              <div v-else class="text-gray-400 text-xs text-center p-2">No image</div>
+              
+              <label for="image_upload" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                <span class="text-white text-xs font-medium">Change</span>
+              </label>
+              <input id="image_upload" type="file" @change="handleFileChange" class="hidden" accept="image/*" />
+            </div>
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Update product image</p>
+              <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+              <Button type="button" variant="outline" size="sm" @click="() => window.document.getElementById('image_upload')?.click()">
+                Select File
+              </Button>
+            </div>
+          </div>
+          <InputError :message="form.errors.image" class="mt-2" />
+        </div>
 
         <!-- Basic Info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
