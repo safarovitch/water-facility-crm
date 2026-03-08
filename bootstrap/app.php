@@ -15,9 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
     health: '/up',
   )
   ->withSchedule(function ($schedule) {
-    // Heartbeat to confirm the scheduler is running
-    Log::debug("Scheduler heartbeat - processing asterisk:listen");
-
     $schedule->command('asterisk:listen')
       ->everyMinute()
       ->withoutOverlapping()
