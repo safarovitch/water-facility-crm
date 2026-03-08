@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
   ->withRouting(
@@ -14,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     health: '/up',
   )
   ->withSchedule(function ($schedule) {
+    // Heartbeat to confirm the scheduler is running
+    Log::debug("Scheduler heartbeat - processing asterisk:listen");
+
     $schedule->command('asterisk:listen')
       ->everyMinute()
       ->withoutOverlapping()
