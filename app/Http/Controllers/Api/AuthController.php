@@ -18,19 +18,7 @@ class AuthController extends Controller
             'identifier' => 'required|string',
         ]);
 
-        $identifier = $request->identifier;
-        
-        // Normalize identifier if it looks like a phone number
-        try {
-            if (str_contains($identifier, '@')) {
-                // Keep as is for email
-            } else {
-                $identifier = (string) phone($identifier, 'AZ', 'E164');
-            }
-        } catch (\Exception $e) {
-            // Fallback to original if not a valid phone either
-        }
-
+        $identifier = $this->normalizeIdentifier($request->identifier);
         $code = (string) rand(100000, 999999);
         
         // In a real app, we would send this via SMS/Email
@@ -46,7 +34,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'OTP sent successfully (check logs).',
-            'identifier' => $identifier, // Return normalized identifier for client consistency
+            'identifier' => $identifier,
         ]);
     }
 
@@ -57,7 +45,7 @@ class AuthController extends Controller
             'code' => 'required|string',
         ]);
 
-        $identifier = $request->identifier;
+        $identifier = $this->normalizeIdentifier($request->identifier);
 
         $otp = OtpCode::where('identifier', $identifier)
             ->where('code', $request->code)
@@ -68,10 +56,14 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid or expired OTP.'], 422);
         }
 
-        // Find user by phone (identifier) or email
-        $user = User::whereHas('phones', function($q) use ($identifier) {
-            $q->where('phone', $identifier);
-        })->orWhere('email', $identifier)->first();
+        // Find user by normalized identifier
+        if (str_contains($identifier, '@')) {
+            $user = User::where('email', $identifier)->first();
+        } else {
+            $user = User::whereHas('phones', function($q) use ($identifier) {
+                $q->where('phone', $identifier);
+            })->first();
+        }
 
         if (!$user) {
              return response()->json(['message' => 'User not found.'], 404);
@@ -97,5 +89,21 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully.']);
+    }
+
+    private function normalizeIdentifier(string $identifier): string
+    {
+        if (str_contains($identifier, '@')) {
+            return strtolower(trim($identifier));
+        }
+
+        try {
+            // Use laravel-phone to normalize. If + is present, it auto-detects.
+            // Default to AZ if no plus, but if + is present it will correctly handle US (+1) etc.
+            return (string) phone($identifier, ['AZ', 'US', 'RU'], 'E164');
+        } catch (\Exception $e) {
+            // Strip everything but numbers and + for a basic cleanup if library fails
+            return preg_replace('/[^\d+]/', '', $identifier);
+        }
     }
 }
