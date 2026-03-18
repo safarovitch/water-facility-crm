@@ -18,6 +18,6 @@ class OtpCode extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('expires_at', '>', now('UTC'));
+        return $query->where('expires_at', '>', \Illuminate\Support\Facades\DB::raw('NOW()'));
     }
 }

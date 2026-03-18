@@ -40,7 +40,7 @@ class AuthController extends Controller
             ['identifier' => $identifier],
             [
                 'code' => $code,
-                'expires_at' => now('UTC')->addMinutes(15),
+                'expires_at' => \Illuminate\Support\Facades\DB::raw('DATE_ADD(NOW(), INTERVAL 15 MINUTE)'),
             ]
         );
 
