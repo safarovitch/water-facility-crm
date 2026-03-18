@@ -13,7 +13,7 @@ class OtpCode extends Model
     ];
 
     protected $casts = [
-        'expires_at' => 'datetime',
+        // 'expires_at' => 'datetime',
     ];
 
     public function scopeValid($query)
