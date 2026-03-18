@@ -16,6 +16,7 @@ class UserRolesSeeder extends Seeder
             ['name' => 'Admin', 'guard_name' => 'web'],
             ['name' => 'Staff manager', 'guard_name' => 'web'],
             ['name' => 'Currier manager', 'guard_name' => 'web'],
+            ['name' => 'Currier', 'guard_name' => 'web'],
             ['name' => 'Product manager', 'guard_name' => 'web'],
             ['name' => 'Finance manager', 'guard_name' => 'web'],
             ['name' => 'Content manager', 'guard_name' => 'web'],

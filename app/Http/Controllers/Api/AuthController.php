@@ -19,6 +19,18 @@ class AuthController extends Controller
         ]);
 
         $identifier = $request->identifier;
+        
+        // Normalize identifier if it looks like a phone number
+        try {
+            if (str_contains($identifier, '@')) {
+                // Keep as is for email
+            } else {
+                $identifier = (string) phone($identifier, 'AZ', 'E164');
+            }
+        } catch (\Exception $e) {
+            // Fallback to original if not a valid phone either
+        }
+
         $code = (string) rand(100000, 999999);
         
         // In a real app, we would send this via SMS/Email
@@ -27,13 +39,14 @@ class AuthController extends Controller
         OtpCode::updateOrCreate(
             ['identifier' => $identifier],
             [
-                'code' => $code, // Ideally hashed, but for simple OTP string is fine if short-lived
+                'code' => $code,
                 'expires_at' => now()->addMinutes(10),
             ]
         );
 
         return response()->json([
             'message' => 'OTP sent successfully (check logs).',
+            'identifier' => $identifier, // Return normalized identifier for client consistency
         ]);
     }
 
@@ -44,7 +57,9 @@ class AuthController extends Controller
             'code' => 'required|string',
         ]);
 
-        $otp = OtpCode::where('identifier', $request->identifier)
+        $identifier = $request->identifier;
+
+        $otp = OtpCode::where('identifier', $identifier)
             ->where('code', $request->code)
             ->valid()
             ->first();
@@ -53,11 +68,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid or expired OTP.'], 422);
         }
 
-        // Find user by phone (identifier) or create if phone matches a pattern
-        // For couriers, we expect them to exist in the system already
-        $user = User::whereHas('phones', function($q) use ($request) {
-            $q->where('phone', $request->identifier);
-        })->orWhere('email', $request->identifier)->first();
+        // Find user by phone (identifier) or email
+        $user = User::whereHas('phones', function($q) use ($identifier) {
+            $q->where('phone', $identifier);
+        })->orWhere('email', $identifier)->first();
 
         if (!$user) {
              return response()->json(['message' => 'User not found.'], 404);
