@@ -86,9 +86,7 @@ const isFormValid = computed(() => {
 const submitForm = () => {
   form.post(store.url(), {
     forceFormData: true, // converts the form to multipart/form-data
-    onFinish: () => {
-      console.log('Form submitted!');
-    }
+    onFinish: () => {}
   });
 };
 </script>

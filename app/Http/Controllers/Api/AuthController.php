@@ -40,7 +40,7 @@ class AuthController extends Controller
             ['identifier' => $identifier],
             [
                 'code' => $code,
-                'expires_at' => now()->addMinutes(10),
+                'expires_at' => now('UTC')->addMinutes(15),
             ]
         );
 

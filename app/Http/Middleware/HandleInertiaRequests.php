@@ -39,13 +39,6 @@ class HandleInertiaRequests extends Middleware
   {
     [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-    if ($request->user()) {
-      Log::info('HandleInertiaRequests User:', [
-        'id' => $request->user()->id,
-        'email' => $request->user()->email,
-        'sip' => $request->user()->sip_extension,
-      ]);
-    }
 
     return [
       ...parent::share($request),

@@ -105,38 +105,32 @@ const setupRemoteAudio = (session: any) => {
 };
 
 const initializeSIP = () => {
-  console.log('SIP Initialization started...');
-  console.log('DEBUG: Full User Object:', JSON.parse(JSON.stringify(user.value)));
   connectionStatus.value = 'Connecting...';
 
   if (!user.value?.sip_extension) {
-    console.warn('CRITICAL: user.sip_extension is NULL. Check backend sharing.');
+    // 
   }
 
   if (!asteriskConfig.value?.host || !asteriskConfig.value?.port) {
-    console.error('Asterisk config missing:', asteriskConfig.value);
     connectionStatus.value = 'Asterisk env settings missing';
     return;
   }
 
   const domain = asteriskConfig.value.domain || asteriskConfig.value.host;
   const uri = UserAgent.makeURI(`sip:${user.value.sip_extension}@${domain}`);
-  console.log(`SIP URI: sip:${user.value.sip_extension}@${domain}`);
 
   if (!uri) {
-    console.error('Failed to create SIP URI');
     connectionStatus.value = 'Invalid SIP URI';
     return;
   }
 
   const wssUrl = `wss://${asteriskConfig.value.host}:${asteriskConfig.value.port}/ws`;
-  console.log(`Connecting to WSS: ${wssUrl}`);
 
   const transportOptions = {
     server: wssUrl,
     connectionTimeout: 10,
     keepAliveInterval: 30,
-    traceSip: true // Enable SIP tracing in console
+    traceSip: false
   };
 
   try {
@@ -146,17 +140,15 @@ const initializeSIP = () => {
       authorizationUsername: user.value.sip_extension,
       authorizationPassword: user.value.sip_password,
       displayName: user.value.name,
-      logLevel: 'debug'
+      logLevel: 'error'
     });
 
     userAgent.start()
       .then(() => {
-        console.log('UserAgent started successfully');
 
         if (userAgent) {
           userAgent.delegate = {
             onConnect: () => {
-              console.log('SIP Transport Connected (onConnect)');
               connectionStatus.value = 'Registering...';
             },
             onDisconnect: (error) => {
@@ -164,14 +156,11 @@ const initializeSIP = () => {
               connectionStatus.value = 'Disconnected';
             },
             onInvite: (invitation: Invitation) => {
-              console.log('Incoming INVITE:', invitation);
               currentSession = invitation;
 
               if (isOriginating.value) {
-                console.log('Detected outbound call setup, preserving phoneNumber:', phoneNumber.value);
                 callDirection.value = 'outbound';
               } else {
-                console.log('Detected inbound call, updating phoneNumber');
                 phoneNumber.value = invitation.remoteIdentity.uri.user || 'Unknown';
                 callDirection.value = 'inbound';
                 callStatus.value = 'missed'; // Default until answered
@@ -188,7 +177,6 @@ const initializeSIP = () => {
               connectionStatus.value = 'Ringing...';
 
               invitation.stateChange.addListener((state: SessionState) => {
-                console.log('Invitation state change:', state);
                 if (state === SessionState.Established) {
                   connectionStatus.value = 'In Call';
                   callStatus.value = 'answered';
@@ -208,14 +196,13 @@ const initializeSIP = () => {
 
         // Explicitly listen to transport events if reachable
         // @ts-ignore
-        userAgent.transport.onConnect = () => console.log('Transport level connected');
+        userAgent.transport.onConnect = () => {};
         // @ts-ignore
-        userAgent.transport.onDisconnect = (err) => console.error('Transport level error:', err);
+        userAgent.transport.onDisconnect = (err) => {};
 
         const registerer = new Registerer(userAgent!);
 
         registerer.stateChange.addListener((newState: RegistererState) => {
-          console.log('Registerer status changed:', newState);
           if (newState === RegistererState.Registered) {
             connectionStatus.value = 'Connected';
           } else if (newState === RegistererState.Unregistered) {
@@ -225,21 +212,17 @@ const initializeSIP = () => {
           }
         });
 
-        console.log('Sending REGISTER request...');
         registerer.register().catch(err => {
-          console.error('Registerer.register() catch:', err);
           connectionStatus.value = 'Registration Error';
         });
       })
       .catch((error: Error) => {
-        console.error('UserAgent.start() failed:', error);
         connectionStatus.value = 'WSS Error';
         if (error.message.includes('SSL') || error.message.includes('security')) {
           alert('WSS Connection failed. Please ensure you have accepted the certificate at https://' + asteriskConfig.value.host + ':8089/ws');
         }
       });
   } catch (e) {
-    console.error('UserAgent creation failed:', e);
     connectionStatus.value = 'Init Error';
   }
 };
@@ -270,7 +253,6 @@ const makeCall = async () => {
     currentSession = inviter;
 
     inviter.stateChange.addListener((state: SessionState) => {
-      console.log('Outbound Inviter state change:', state);
       if (state === SessionState.Establishing) {
         connectionStatus.value = 'Ringing...';
       } else if (state === SessionState.Established) {
@@ -286,7 +268,6 @@ const makeCall = async () => {
 
     await inviter.invite();
   } catch (error: any) {
-    console.error('Failed to originate call via SIP:', error);
     connectionStatus.value = 'Call Failed';
     isOriginating.value = false;
     isCallActive.value = false;
@@ -338,7 +319,7 @@ const endSessionCleanup = () => {
       status: callStatus.value
     }).then(() => {
       fetchRecentCalls();
-    }).catch(e => console.error('Failed to log call', e));
+    }).catch(e => {});
   }
 
   currentSession = null;
@@ -369,7 +350,6 @@ const fetchRecentCalls = async () => {
     const response = await axios.get('/calls');
     recentCalls.value = response.data;
   } catch (error) {
-    console.error('Failed to load recent calls', error);
   } finally {
     isLoadingHistory.value = false;
   }
