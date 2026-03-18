@@ -8,26 +8,19 @@ import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
-    },
-    {
-        title: 'Appearance',
-        href: appearance(),
-    },
-];
+const page = usePage();
+const user = page.props.auth.user as any;
+const isClient = user?.roles?.includes('Client') && !user?.roles?.some((r: string) => ['Admin','Manager','Operator','Courier'].includes(r));
+
+const sidebarNavItems = computed((): NavItem[] => [
+    { title: 'Profile',     href: edit() },
+    { title: 'Password',    href: editPassword() },
+    ...(!isClient ? [{ title: 'Two-Factor Auth', href: show() }] : []),
+    { title: 'Appearance',  href: appearance() },
+]);
 
 const currentPath = typeof window !== undefined ? window.location.pathname : '';
 </script>

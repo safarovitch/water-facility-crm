@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
@@ -180,5 +181,27 @@ class OrderController extends Controller
     $order->update($data);
 
     return back()->with('success', 'Order status updated.');
+  }
+
+  public function payWithWallet(Order $order, \App\Services\WalletService $walletService)
+  {
+    if ($order->payment_status->value === PaymentStatus::Paid) {
+      return back()->with('error', 'Order is already paid.');
+    }
+
+    $amountToPay = $order->balance_due;
+
+    try {
+      $walletService->pay($order->client, $amountToPay, Order::class, $order->id, [
+        'order_number' => $order->order_number,
+      ]);
+
+      $order->increment('paid_amount', $amountToPay);
+      $order->update(['payment_status' => PaymentStatus::Paid]);
+
+      return back()->with('success', 'Order paid successfully using wallet.');
+    } catch (\Exception $e) {
+      return back()->with('error', $e->getMessage());
+    }
   }
 }

@@ -47,24 +47,31 @@ class ProductController extends Controller
    */
   public function store(Request $request): RedirectResponse
   {
-    $validated = $request->validate([
-      'name'               => 'required|array',
-      'name.en'            => 'required|string|max:255',
-      'sku'                => 'required|string|max:100|unique:products,sku',
-      'price'              => 'required|numeric|min:0',
-      'sale_price'         => 'nullable|numeric|min:0',
-      'cost'               => 'nullable|numeric|min:0',
-      'weight'             => 'nullable|numeric|min:0',
-      'quantity'           => 'required|integer|min:0',
-      'currency'           => 'required|string|max:10',
-      'manage_stock'       => 'boolean',
+    $locales = config('app.available_locales', ['ru', 'tg']);
+    
+    $rules = [
+      'name'                => 'required|array',
+      'sku'                 => 'required|string|max:100|unique:products,sku',
+      'price'               => 'required|numeric|min:0',
+      'sale_price'          => 'nullable|numeric|min:0',
+      'cost'                => 'nullable|numeric|min:0',
+      'weight'              => 'nullable|numeric|min:0',
+      'quantity'            => 'required|integer|min:0',
+      'currency'            => 'required|string|max:10',
+      'manage_stock'        => 'boolean',
       'low_stock_threshold' => 'nullable|integer|min:0',
-      'low_stock_action'   => 'nullable|string',
-      'status'             => 'required|string',
-      'short_description'  => 'nullable|array',
-      'description'        => 'nullable|array',
-      'dimensions'         => 'nullable|array',
-    ]);
+      'low_stock_action'    => 'nullable|string',
+      'status'              => 'required|string',
+      'short_description'   => 'nullable|array',
+      'description'         => 'nullable|array',
+      'dimensions'          => 'nullable|array',
+    ];
+
+    foreach ($locales as $locale) {
+      $rules["name.{$locale}"] = 'required|string|max:255';
+    }
+
+    $validated = $request->validate($rules);
 
     $validated['sale_price']  = $validated['sale_price']  ?? 0;
     $validated['cost']        = $validated['cost']        ?? 0;
@@ -100,24 +107,31 @@ class ProductController extends Controller
    */
   public function update(Request $request, Product $product): RedirectResponse
   {
-    $validated = $request->validate([
-      'name'               => 'required|array',
-      'name.en'            => 'required|string|max:255',
-      'sku'                => 'required|string|max:100|unique:products,sku,' . $product->id,
-      'price'              => 'required|numeric|min:0',
-      'sale_price'         => 'nullable|numeric|min:0',
-      'cost'               => 'nullable|numeric|min:0',
-      'weight'             => 'nullable|numeric|min:0',
-      'quantity'           => 'required|integer|min:0',
-      'currency'           => 'required|string|max:10',
-      'manage_stock'       => 'boolean',
+    $locales = config('app.available_locales', ['ru', 'tg']);
+
+    $rules = [
+      'name'                => 'required|array',
+      'sku'                 => 'required|string|max:100|unique:products,sku,' . $product->id,
+      'price'               => 'required|numeric|min:0',
+      'sale_price'          => 'nullable|numeric|min:0',
+      'cost'                => 'nullable|numeric|min:0',
+      'weight'              => 'nullable|numeric|min:0',
+      'quantity'            => 'required|integer|min:0',
+      'currency'            => 'required|string|max:10',
+      'manage_stock'        => 'boolean',
       'low_stock_threshold' => 'nullable|integer|min:0',
-      'low_stock_action'   => 'nullable|string',
-      'status'             => 'required|string',
-      'short_description'  => 'nullable|array',
-      'description'        => 'nullable|array',
-      'dimensions'         => 'nullable|array',
-    ]);
+      'low_stock_action'    => 'nullable|string',
+      'status'              => 'required|string',
+      'short_description'   => 'nullable|array',
+      'description'         => 'nullable|array',
+      'dimensions'          => 'nullable|array',
+    ];
+
+    foreach ($locales as $locale) {
+      $rules["name.{$locale}"] = 'required|string|max:255';
+    }
+
+    $validated = $request->validate($rules);
 
     $product->update($validated);
 

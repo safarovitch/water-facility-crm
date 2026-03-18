@@ -4,8 +4,9 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { index as usersIndex } from '@/routes/users';
@@ -14,75 +15,110 @@ import { index as permissionsIndex } from '@/routes/permissions';
 import { index as productsIndex } from '@/routes/products';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as ordersIndex } from '@/routes/orders';
+import { computed } from 'vue';
 
-const mainNavItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    href: dashboard(),
-    icon: LayoutGrid,
-  },
-  {
-    title: 'Sales',
-    href: '#',
-    icon: ClipboardList,
-    children: [
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const userRoles = computed(() => user.value?.roles?.map(r => r.toLowerCase()) || []);
+const isStaff = computed(() => userRoles.value.some(role => role !== 'client'));
+const isOnlyClient = computed(() => userRoles.value.length === 1 && userRoles.value.includes('client'));
+
+// adminMode is shared via HandleInertiaRequests — true only when staff has toggled admin mode on
+const adminMode = computed(() => (page.props as any).adminMode as boolean);
+
+const mainNavItems = computed((): NavItem[] => {
+  const items: NavItem[] = [];
+
+  // Show My Profile only in user mode (not in admin mode)
+  if (!adminMode.value) {
+    items.push({
+      title: 'My Profile',
+      href: dashboard(),
+      icon: LayoutGrid,
+    });
+  }
+
+  // Admin/staff nav items — shown ONLY when admin mode is active
+  if (isStaff.value && adminMode.value) {
+    items.push(
       {
-        title: 'Clients',
-        href: clientsIndex(),
-        icon: Users2,
+        title: 'Admin Dashboard',
+        href: adminDashboard(),
+        icon: LayoutGrid,
       },
       {
-        title: 'Orders',
-        href: ordersIndex(),
-        icon: ShoppingCart,
+        title: 'Sales',
+        href: '#',
+        icon: ClipboardList,
+        children: [
+          {
+            title: 'Clients',
+            href: clientsIndex(),
+            icon: Users2,
+          },
+          {
+            title: 'Orders',
+            href: ordersIndex(),
+            icon: ShoppingCart,
+          },
+        ],
       },
-    ],
-  },
-  {
-    title: 'User management',
-    href: '#',
-    icon: UsersIcon,
-    children: [
       {
-        title: 'All users',
-        href: usersIndex(),
+        title: 'User management',
+        href: '#',
         icon: UsersIcon,
+        children: [
+          {
+            title: 'All users',
+            href: usersIndex(),
+            icon: UsersIcon,
+          },
+          {
+            title: 'Roles',
+            href: rolesIndex(),
+            icon: UserX,
+          },
+          {
+            title: 'Permissions',
+            href: permissionsIndex(),
+            icon: UserCheck2,
+          },
+        ]
       },
       {
-        title: 'Roles',
-        href: rolesIndex(),
-        icon: UserX,
-      },
-      {
-        title: 'Permissions',
-        href: permissionsIndex(),
-        icon: UserCheck2,
-      },
-    ]
-  },
-  {
-    title: 'Products',
-    href: productsIndex(),
-    icon: Package,
-  },
-];
+        title: 'Products',
+        href: productsIndex(),
+        icon: Package,
+      }
+    );
+  } else if (isOnlyClient.value || (isStaff.value && !adminMode.value)) {
+    // In user mode (including admins in user mode): show My Orders
+    items.push({
+      title: 'My Orders',
+      href: ordersIndex(),
+      icon: ShoppingCart,
+    });
+  }
 
-const footerNavItems: NavItem[] = [
-  // {
-  //     title: 'Github Repo',
-  //     href: 'https://github.com/laravel/vue-starter-kit',
-  //     icon: Folder,
-  // },
-  // {
-  //     title: 'Documentation',
-  //     href: 'https://laravel.com/docs/starter-kits#vue',
-  //     icon: BookOpen,
-  // },
-];
+  return items;
+});
+
+const footerNavItems = computed((): NavItem[] => {
+  if (isOnlyClient.value && !isStaff.value) {
+    return [
+      {
+        title: 'Call Facility',
+        href: 'tel:+992884238383',
+        icon: Phone,
+      },
+    ];
+  }
+  return [];
+});
 </script>
 
 <template>
-  <Sidebar collapsible="icon" variant="inset">
+  <Sidebar variant="inset">
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>

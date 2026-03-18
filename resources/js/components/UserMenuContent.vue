@@ -2,20 +2,31 @@
 import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { logout } from '@/routes';
+import { adminSwitchMode } from '@/lib/admin-routes';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
-import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from 'lucide-vue-next';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { LogOut, Settings, LayoutGrid, UserIcon } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface Props {
     user: User;
 }
 
-const handleLogout = () => {
-    router.flushAll();
-};
+const props = defineProps<Props>();
+const page = usePage();
 
-defineProps<Props>();
+const adminMode = computed(() => (page.props as any).adminMode as boolean);
+
+const isStaff = computed(() =>
+    props.user.roles?.some((r: string) => r.toLowerCase() !== 'client')
+);
+
+const handleLogout = () => router.flushAll();
+
+const switchMode = () => {
+    router.post(adminSwitchMode().url, {}, { preserveScroll: false });
+};
 </script>
 
 <template>
@@ -26,6 +37,21 @@ defineProps<Props>();
     </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
+        <!-- Admin mode toggle — only visible to staff/admin users -->
+        <DropdownMenuItem
+            v-if="isStaff"
+            class="cursor-pointer"
+            :class="adminMode
+                ? 'text-muted-foreground'
+                : 'font-medium text-primary focus:text-primary'"
+            @click="switchMode"
+        >
+            <LayoutGrid v-if="!adminMode" class="mr-2 h-4 w-4 text-primary" />
+            <UserIcon v-else class="mr-2 h-4 w-4" />
+            {{ adminMode ? 'Switch to User View' : 'Switch to Admin View' }}
+        </DropdownMenuItem>
+
+        <!-- Settings -->
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="edit()" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />

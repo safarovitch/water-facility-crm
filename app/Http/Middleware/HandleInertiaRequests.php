@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
       'auth' => [
         'user' => $request->user() ? [
           ...$request->user()->toArray(),
+          'roles' => $request->user()->getRoleNames(),
           'sip_extension' => $request->user()->sip_extension,
           'sip_password' => $request->user()->sip_password,
         ] : null,
@@ -63,7 +64,13 @@ class HandleInertiaRequests extends Middleware
         'port' => config('services.asterisk.wss_port'),
         'domain' => config('services.asterisk.domain'),
       ],
+      'available_locales' => config('app.available_locales'),
       'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+      'flash' => [
+        'success' => $request->session()->get('success'),
+        'error'   => $request->session()->get('error'),
+      ],
+      'adminMode' => $request->session()->get('admin_mode', false),
     ];
   }
 }

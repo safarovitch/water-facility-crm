@@ -21,22 +21,6 @@ const props = defineProps<{
 const items = props.items
 
 const page = usePage()
-
-// Track which dropdown is open
-const openDropdown = ref<string | null>(null)
-
-function toggleDropdown(title: string) {
-  openDropdown.value = openDropdown.value === title ? null : title
-}
-
-// Automatically open dropdown if any child is active
-watchEffect(() => {
-  items.forEach(item => {
-    if (item.children && item.children.some(child => urlIsActive(child.href, page.url))) {
-      openDropdown.value = item.title
-    }
-  })
-})
 </script>
 
 <template>
@@ -54,21 +38,23 @@ watchEffect(() => {
             <Link v-else-if="!item.children" :href="item.href" class="flex items-center flex-1">
               <component :is="item.icon" class="mr-2 w-5 h-5" />
               <span>{{ item.title }}</span>
+              <span v-if="item.badge" class="ml-auto inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-bold text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                {{ item.badge }}
+              </span>
             </Link>
 
-            <!-- If has children, show text + chevron -->
-            <div v-else class="flex items-center flex-1 justify-between cursor-pointer" @click="toggleDropdown(item.title)">
+            <!-- If has children, show text -->
+            <div v-else class="flex items-center flex-1 justify-between">
               <div class="flex items-center">
                 <component :is="item.icon" class="mr-2 w-5 h-5" />
                 <span>{{ item.title }}</span>
               </div>
-              <ChevronDown class="transition-transform" :class="{ 'rotate-180': openDropdown === item.title }" width="16" height="16" />
             </div>
           </div>
         </SidebarMenuButton>
 
-        <!-- Inline dropdown for children -->
-        <SidebarMenu v-if="item.children && openDropdown === item.title" class="mt-1 space-y-1 pl-6" as="div">
+        <!-- Always show children if they exist -->
+        <SidebarMenu v-if="item.children" class="mt-1 space-y-1 pl-6" as="div">
           <SidebarMenuItem v-for="child in item.children" :key="child.title">
             <SidebarMenuButton as-child :is-active="urlIsActive(child.href, page.url)" :tooltip="child.title">
               <Link :href="child.href" class="flex items-center">

@@ -8,7 +8,8 @@ import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
 import { index, store } from '@/routes/products';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 const props = defineProps<{
   statuses: Record<string, string>;
@@ -20,8 +21,10 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'New Product', href: '#' },
 ];
 
+const availableLocales = usePage().props.available_locales as string[];
+
 const form = useForm({
-  name: { en: '', uz: '', ru: '' } as Record<string, string>,
+  name: Object.fromEntries(availableLocales.map(l => [l, ''])),
   sku: '',
   price: '',
   sale_price: '',
@@ -33,16 +36,43 @@ const form = useForm({
   low_stock_threshold: 0,
   low_stock_action: 'none',
   status: 'active',
-  short_description: { en: '', uz: '', ru: '' } as Record<string, string>,
+  short_description: Object.fromEntries(availableLocales.map(l => [l, ''])),
   image: null as File | null,
 });
 
-const isFormValid = computed(() =>
-  form.name.en.length > 0 && form.sku.length > 0 && String(form.price).length > 0
-);
+const languageLabels: Record<string, string> = {
+  ru: 'Русский',
+  tg: 'Тоҷикӣ',
+  en: 'English',
+};
+
+const availableLanguages = availableLocales.map(code => ({
+  code,
+  label: languageLabels[code] || code.toUpperCase(),
+}));
+
+type LanguageCode = typeof availableLanguages[number]['code'];
+
+const currentLang = ref<LanguageCode>('ru');
+
+const isFormValid = computed(() => {
+  const firstLocale = availableLocales[0] || 'ru';
+  return form.name[firstLocale]?.length > 0 && form.sku.length > 0 && String(form.price).length > 0;
+});
 
 const submitForm = () => {
   form.post(store().url);
+};
+
+const getImageUrl = computed(() => {
+  if (form.image) return URL.createObjectURL(form.image);
+  return null;
+});
+
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const triggerUpload = () => {
+  fileInput.value?.click();
 };
 
 const selectClass = cn(
@@ -61,6 +91,20 @@ const selectClass = cn(
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Add a product to the catalogue</p>
       </div>
 
+      <!-- Language Switcher -->
+      <div class="flex justify-end mb-6">
+        <div class="inline-flex p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <button v-for="lang in availableLanguages" :key="lang.code" type="button" @click="currentLang = lang.code" :class="[
+            'px-4 py-1.5 text-sm font-medium rounded-md transition-all',
+            currentLang === lang.code
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          ]">
+            {{ lang.label }}
+          </button>
+        </div>
+      </div>
+
       <form @submit.prevent="submitForm" class="space-y-6">
 
         <!-- Image Upload -->
@@ -68,18 +112,18 @@ const selectClass = cn(
           <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
           <div class="flex items-center gap-6">
             <div class="w-32 h-32 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group">
-              <img v-if="form.image" :src="window.URL.createObjectURL(form.image)" class="w-full h-full object-cover" />
+              <img v-if="getImageUrl" :src="getImageUrl" class="w-full h-full object-cover" />
               <div v-else class="text-gray-400 text-xs text-center p-2">No image selected</div>
-              
+
               <label for="image_upload" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
                 <span class="text-white text-xs font-medium">Change</span>
               </label>
-              <input id="image_upload" type="file" @change="(e) => form.image = (e.target as HTMLInputElement).files?.[0] || null" class="hidden" accept="image/*" />
+              <input id="image_upload" type="file" ref="fileInput" @change="(e) => form.image = (e.target as HTMLInputElement).files?.[0] || null" class="hidden" accept="image/*" />
             </div>
             <div class="space-y-1">
               <p class="text-sm font-medium text-gray-900 dark:text-white">Upload image</p>
               <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
-              <Button type="button" variant="outline" size="sm" @click="() => window.document.getElementById('image_upload')?.click()">
+              <Button type="button" variant="outline" size="sm" @click="triggerUpload">
                 Select File
               </Button>
             </div>
@@ -92,21 +136,10 @@ const selectClass = cn(
           <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Basic Info</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 
-            <!-- Name EN -->
-            <div class="grid gap-2">
-              <Label for="name_en">Name (EN) *</Label>
-              <Input id="name_en" v-model="form.name.en" required placeholder="Product name in English" />
-              <InputError :message="form.errors['name.en']" />
-            </div>
-            <!-- Name UZ -->
-            <div class="grid gap-2">
-              <Label for="name_uz">Name (UZ)</Label>
-              <Input id="name_uz" v-model="form.name.uz" placeholder="Mahsulot nomi" />
-            </div>
-            <!-- Name RU -->
-            <div class="grid gap-2">
-              <Label for="name_ru">Name (RU)</Label>
-              <Input id="name_ru" v-model="form.name.ru" placeholder="Название продукта" />
+            <div class="grid gap-2 sm:col-span-1">
+              <Label :for="'name_' + currentLang">Name ({{ currentLang.toUpperCase() }}) *</Label>
+              <Input :id="'name_' + currentLang" v-model="form.name[currentLang]" required :placeholder="`Product name in ${currentLang.toUpperCase()}`" />
+              <InputError :message="form.errors[`name.${currentLang}` as keyof typeof form.errors]" />
             </div>
 
             <!-- SKU -->
@@ -132,10 +165,10 @@ const selectClass = cn(
               <InputError :message="form.errors.currency" />
             </div>
 
-            <!-- Short description EN -->
             <div class="grid gap-2 sm:col-span-2">
-              <Label for="short_desc_en">Short Description (EN)</Label>
-              <textarea id="short_desc_en" v-model="form.short_description.en" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Brief product description..."></textarea>
+              <Label :for="'short_desc_' + currentLang">Short Description ({{ currentLang.toUpperCase() }})</Label>
+              <textarea :id="'short_desc_' + currentLang" v-model="form.short_description[currentLang]" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" :placeholder="`Brief description in ${currentLang.toUpperCase()}...`"></textarea>
+              <InputError :message="form.errors[`short_description.${currentLang}` as keyof typeof form.errors]" />
             </div>
           </div>
         </div>

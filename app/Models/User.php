@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Enums\UserStatus;
+use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,10 +17,12 @@ use Illuminate\Support\Facades\Cache;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
+use Laravel\Sanctum\HasApiTokens;
+
 class User extends Authenticatable
 {
   /** @use HasFactory<\Database\Factories\UserFactory> */
-  use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
+  use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasHumanTimestamps, HasApiTokens;
 
   /**
    * The attributes that are mass assignable.
@@ -46,7 +49,16 @@ class User extends Authenticatable
     'remember_token',
   ];
 
-  protected $appends = ['avatar_url', 'statusLabel', 'statusHtmlClass', 'phone'];
+  protected $appends = [
+    'avatar_url',
+    'statusLabel',
+    'statusHtmlClass',
+    'phone',
+    'created_at_human',
+    'created_at_formatted',
+    'updated_at_human',
+    'updated_at_formatted',
+  ];
 
   /**
    * Get the attributes that should be cast.
@@ -103,6 +115,11 @@ class User extends Authenticatable
   public function userProfile(): HasOne
   {
     return $this->hasOne(UserProfile::class);
+  }
+
+  public function wallet(): HasOne
+  {
+    return $this->hasOne(Wallet::class);
   }
 
   public function orders(): HasMany

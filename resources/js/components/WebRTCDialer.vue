@@ -430,7 +430,7 @@ onMounted(() => {
         </div>
 
         <!-- Display -->
-        <div class="p-6 text-center">
+        <div class="text-center">
           <div v-if="isCallActive" class="mb-2 text-sm font-medium text-blue-600 dark:text-blue-400">
             {{ callDuration }}
           </div>

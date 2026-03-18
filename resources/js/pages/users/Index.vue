@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index, create, edit } from '@/routes/users';
+import { index, create, edit, show } from '@/routes/users';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../../components/PlaceholderPattern.vue';
@@ -109,7 +109,8 @@ const props = defineProps<{
                                 <div class="h-2.5 w-2.5 rounded-full me-2" :class="user.statusHtmlClass"></div> {{ user.statusLabel }}
                             </div>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 flex items-center gap-4">
+                            <Link :href="show({ user: user.id })" class="font-medium text-gray-600 dark:text-gray-400 hover:underline">View profile</Link>
                             <Link :href="edit({ user: user.id })" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit user</Link>
                         </td>
                     </tr>

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItem extends Model
 {
+  use HasHumanTimestamps;
+
   protected $fillable = [
     'order_id',
     'product_id',
@@ -19,6 +22,13 @@ class OrderItem extends Model
     'quantity'   => 'integer',
     'unit_price' => 'decimal:2',
     'subtotal'   => 'decimal:2',
+  ];
+
+  protected $appends = [
+    'created_at_human',
+    'created_at_formatted',
+    'updated_at_human',
+    'updated_at_formatted',
   ];
 
   public function order(): BelongsTo

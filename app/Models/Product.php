@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
@@ -11,7 +12,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class Product extends Model implements HasMedia
 {
-  use InteractsWithMedia, HasSlug;
+  use InteractsWithMedia, HasSlug, HasHumanTimestamps;
 
   protected $fillable = [
     'name',
@@ -44,7 +45,13 @@ class Product extends Model implements HasMedia
     'manage_stock' => 'boolean',
   ];
 
-  protected $appends = ['image_url'];
+  protected $appends = [
+    'image_url',
+    'created_at_human',
+    'created_at_formatted',
+    'updated_at_human',
+    'updated_at_formatted',
+  ];
 
   public function getImageUrlAttribute(): ?string
   {
@@ -62,7 +69,13 @@ class Product extends Model implements HasMedia
         if (is_string($name)) {
           $name = json_decode($name, true) ?? [];
         }
-        return $name['en'] ?? $name['uz'] ?? $name['ru'] ?? array_values((array) $name)[0] ?? 'product';
+        $locales = config('app.available_locales', ['ru', 'tg']);
+        foreach ($locales as $loc) {
+          if (!empty($name[$loc])) {
+            return $name[$loc];
+          }
+        }
+        return array_values((array) $name)[0] ?? 'product';
       })
       ->saveSlugsTo('slug');
   }

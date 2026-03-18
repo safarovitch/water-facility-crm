@@ -113,7 +113,7 @@ const toggleNewAddress = () => {
             </div>
             <div class="grid gap-2">
               <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time</Label>
-              <Input id="scheduled_delivery_at" type="datetime-local" v-model="form.scheduled_delivery_at" />
+              <Input id="scheduled_delivery_at" type="datetime-local" v-model="form.scheduled_delivery_at" step="60" />
               <InputError :message="form.errors.scheduled_delivery_at" />
             </div>
             <div class="grid gap-2 sm:col-span-2">

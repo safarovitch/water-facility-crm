@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminModeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -14,12 +16,20 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-  Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+  // /profile is the default landing for all users (named 'dashboard' so auth redirects still work)
+  Route::get('profile', [DashboardController::class, 'index'])->name('dashboard');
+  // /dashboard redirects to /profile for backward compatibility
+  Route::redirect('dashboard', '/profile');
+  // /admin is the admin-only statistics dashboard
+  Route::get('admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+  // Toggle admin mode on/off
+  Route::post('admin/switch-mode', [AdminModeController::class, 'switch'])->name('admin.switch-mode');
 
   Route::name('users.')->prefix('users')->group(function () {
     Route::get('index', [UserController::class, 'index'])->name('index');
     Route::get('create', [UserController::class, 'create'])->name('create');
     Route::post('store', [UserController::class, 'store'])->name('store');
+    Route::get('show/{user}', [UserController::class, 'show'])->name('show');
     Route::get('edit/{user}', [UserController::class, 'edit'])->name('edit');
     Route::post('update/{user}', [UserController::class, 'update'])->name('update');
     Route::get('check-email', [UserController::class, 'checkEmail'])->name('check-email');
@@ -57,6 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('edit/{client}',    [ClientController::class, 'edit'])->name('edit');
     Route::post('update/{client}', [ClientController::class, 'update'])->name('update');
     Route::delete('{client}',      [ClientController::class, 'destroy'])->name('destroy');
+    Route::get('{client}/orders',  [ClientController::class, 'orders'])->name('orders');
     // Address sub-routes
     Route::post('{client}/addresses',                       [UserAddressController::class, 'store'])->name('addresses.store');
     Route::post('{client}/addresses/{address}',             [UserAddressController::class, 'update'])->name('addresses.update');
@@ -73,7 +84,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('update/{order}',    [OrderController::class, 'update'])->name('update');
     Route::patch('{order}/cancel',   [OrderController::class, 'cancel'])->name('cancel');
     Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
+    Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
   });
+
+  Route::post('users/{user}/wallet/deposit', [\App\Http\Controllers\WalletController::class, 'adminDeposit'])->name('admin.wallet.deposit');
 
   Route::name('calls.')->prefix('calls')->group(function () {
     Route::get('/', [\App\Http\Controllers\CallLogController::class, 'index'])->name('index');

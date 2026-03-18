@@ -2,9 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index, create, edit } from '@/routes/products';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '../../components/PlaceholderPattern.vue';
-import { Link } from '@inertiajs/vue3';
+import { Head, usePage, Link } from '@inertiajs/vue3';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -38,6 +36,16 @@ interface Product {
 const props = defineProps<{
   products: Paginated<Product>
 }>();
+
+const availableLocales = usePage().props.available_locales as string[];
+
+const getLocalizedValue = (translations: Record<string, string> | null | undefined) => {
+  if (!translations) return '—';
+  for (const locale of availableLocales) {
+    if (translations[locale]) return translations[locale];
+  }
+  return Object.values(translations)[0] || '—';
+};
 
 </script>
 
@@ -105,14 +113,14 @@ const props = defineProps<{
                         </td> -->
             <td class="px-6 py-4">
               <div v-if="product.image_url" class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                <img :src="product.image_url" :alt="product.name?.en" class="w-full h-full object-cover" />
+                <img :src="product.image_url" :alt="getLocalizedValue(product.name)" class="w-full h-full object-cover" />
               </div>
               <div v-else class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-200 border border-gray-200 dark:border-gray-700">
-                {{ (product.name?.en ?? product.name?.uz ?? '?').charAt(0).toUpperCase() }}
+                {{ getLocalizedValue(product.name).charAt(0).toUpperCase() }}
               </div>
             </td>
             <td class="px-6 py-4">
-              <div class="text-base font-semibold text-gray-900 dark:text-white">{{ product.name?.en ?? product.name?.uz ?? '—' }}</div>
+              <div class="text-base font-semibold text-gray-900 dark:text-white">{{ getLocalizedValue(product.name) }}</div>
               <div class="text-xs font-mono text-gray-500">{{ product.sku }} / {{ product.slug }}</div>
             </td>
             <td class="px-6 py-4 text-right">
@@ -125,7 +133,7 @@ const props = defineProps<{
             </td>
             <td class="px-6 py-4">
               <div class="text-sm text-gray-500 line-clamp-2 max-w-xs">
-                {{ product.short_description?.en ?? product.short_description?.uz ?? '—' }}
+                {{ getLocalizedValue(product.short_description) }}
               </div>
             </td>
             <td class="px-6 py-4 text-center font-medium">

@@ -4,12 +4,16 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Traits\HasHumanTimestamps;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
+  use HasHumanTimestamps;
+
   protected $fillable = [
     'order_number',
     'user_id',
@@ -22,6 +26,7 @@ class Order extends Model
     'payment_status',
     'notes',
     'created_by',
+    'courier_id',
   ];
 
   protected $casts = [
@@ -33,7 +38,17 @@ class Order extends Model
     'paid_amount'           => 'decimal:2',
   ];
 
-  protected $appends = ['balance_due'];
+  protected $appends = [
+    'balance_due',
+    'created_at_human',
+    'created_at_formatted',
+    'updated_at_human',
+    'updated_at_formatted',
+    'scheduled_delivery_at_human',
+    'scheduled_delivery_at_formatted',
+    'actual_delivery_at_human',
+    'actual_delivery_at_formatted',
+  ];
 
   protected static function boot(): void
   {
@@ -57,9 +72,46 @@ class Order extends Model
     return (float) $this->total_amount - (float) $this->paid_amount;
   }
 
+  /**
+   * Get the human-readable scheduled_delivery_at timestamp.
+   */
+  protected function scheduledDeliveryAtHuman(): Attribute
+  {
+    return Attribute::get(fn() => $this->scheduled_delivery_at?->diffForHumans());
+  }
+
+  /**
+   * Get the formatted scheduled_delivery_at timestamp.
+   */
+  protected function scheduledDeliveryAtFormatted(): Attribute
+  {
+    return Attribute::get(fn() => $this->scheduled_delivery_at?->format('F j, Y H:i:s'));
+  }
+
+  /**
+   * Get the human-readable actual_delivery_at timestamp.
+   */
+  protected function actualDeliveryAtHuman(): Attribute
+  {
+    return Attribute::get(fn() => $this->actual_delivery_at?->diffForHumans());
+  }
+
+  /**
+   * Get the formatted actual_delivery_at timestamp.
+   */
+  protected function actualDeliveryAtFormatted(): Attribute
+  {
+    return Attribute::get(fn() => $this->actual_delivery_at?->format('F j, Y H:i:s'));
+  }
+
   public function client(): BelongsTo
   {
     return $this->belongsTo(User::class, 'user_id');
+  }
+
+  public function courier(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'courier_id');
   }
 
   public function creator(): BelongsTo

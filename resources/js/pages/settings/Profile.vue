@@ -30,6 +30,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user;
+const isClient = (user as any).roles?.includes('Client') && !(user as any).roles?.some((r: string) => ['Admin','Manager','Operator','Courier'].includes(r));
 </script>
 
 <template>
@@ -60,13 +61,13 @@ const user = page.props.auth.user;
             <InputError class="mt-2" :message="errors.phone" />
           </div>
 
-          <div class="grid gap-2">
+          <div v-if="!isClient" class="grid gap-2">
             <Label for="sip_extension">SIP Extension</Label>
             <Input id="sip_extension" class="mt-1 block w-full" name="sip_extension" :default-value="user.sip_extension" placeholder="e.g. 101" />
             <InputError class="mt-2" :message="errors.sip_extension" />
           </div>
 
-          <div class="grid gap-2">
+          <div v-if="!isClient" class="grid gap-2">
             <Label for="sip_password">SIP Password</Label>
             <Input id="sip_password" type="text" class="mt-1 block w-full" name="sip_password" :default-value="user.sip_password" placeholder="SIP Password" />
             <InputError class="mt-2" :message="errors.sip_password" />

@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+import { onClickOutside } from '@vueuse/core';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
 import { index, edit, cancel, updateStatus } from '@/routes/orders';
-import { computed } from 'vue';
+import { edit as editProduct } from '@/routes/products';
+import { Wallet, Check, ChevronDown, Loader2 } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -13,7 +15,7 @@ interface OrderItem {
   quantity: number;
   unit_price: string;
   subtotal: string;
-  product: { name: Record<string, string> | string };
+  product: { id: number; name: Record<string, string> | string; image_url: string | null; };
 }
 interface Order {
   id: number;
@@ -24,10 +26,16 @@ interface Order {
   paid_amount: string;
   balance_due: number;
   scheduled_delivery_at: string | null;
+  scheduled_delivery_at_human: string | null;
+  scheduled_delivery_at_formatted: string | null;
   actual_delivery_at: string | null;
+  actual_delivery_at_human: string | null;
+  actual_delivery_at_formatted: string | null;
   delivery_address: string | null;
   notes: string | null;
   created_at: string;
+  created_at_human: string;
+  created_at_formatted: string;
   client: { id: number; name: string; email: string; phone: string | null; user_profile: UserProfile | null };
   creator: { name: string } | null;
   items: OrderItem[];
@@ -60,17 +68,78 @@ const validTransitions: Record<string, string[]> = {
 
 const nextStatuses = computed(() => validTransitions[props.order.status] ?? []);
 
-const changeStatus = (status: string) => {
+const isUpdatingStatus = ref(false);
+const pendingStatus = ref<string | null>(null);
+const isDropdownOpen = ref(false);
+const dropdownContainer = ref<HTMLElement | null>(null);
+
+onClickOutside(dropdownContainer, () => {
+  isDropdownOpen.value = false;
+  pendingStatus.value = null;
+});
+
+const statusForm = ref({
+  status: '',
+  actual_delivery_at: ''
+});
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+  pendingStatus.value = null;
+};
+
+const selectStatus = (status: string) => {
+  pendingStatus.value = status;
+};
+
+const confirmStatusUpdate = (status: string) => {
   if (status === 'cancelled') {
-    if (!confirm('Cancel this order?')) return;
-    router.patch(cancel(props.order.id).url, {}, { preserveScroll: true });
-  } else if (status === 'delivered') {
-    const actual = prompt('Confirm Actual Delivery Date & Time:', new Date().toISOString().slice(0, 16).replace('T', ' '));
-    if (actual === null) return;
-    router.patch(updateStatus(props.order.id).url, { status, actual_delivery_at: actual }, { preserveScroll: true });
-  } else {
-    router.patch(updateStatus(props.order.id).url, { status }, { preserveScroll: true });
+    if (!confirm('Cancel this order?')) {
+      pendingStatus.value = null;
+      isDropdownOpen.value = false;
+      return;
+    }
+    router.patch(cancel(props.order.id).url, {}, { 
+      preserveScroll: true,
+      onSuccess: () => {
+        isDropdownOpen.value = false;
+        pendingStatus.value = null;
+      }
+    });
+    return;
   }
+  
+  if (status === 'delivered') {
+    statusForm.value.status = status;
+    statusForm.value.actual_delivery_at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
+    isUpdatingStatus.value = true;
+    isDropdownOpen.value = false;
+    pendingStatus.value = null;
+  } else {
+    router.patch(updateStatus(props.order.id).url, { status }, { 
+      preserveScroll: true,
+      onSuccess: () => {
+        isDropdownOpen.value = false;
+        pendingStatus.value = null;
+      }
+    });
+  }
+};
+
+const submitStatusUpdate = () => {
+  router.patch(updateStatus(props.order.id).url, statusForm.value, { 
+    preserveScroll: true,
+    onSuccess: () => {
+      isUpdatingStatus.value = false;
+    }
+  });
+};
+
+const payWithWallet = () => {
+  if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} from wallet?`)) return;
+  router.post(`/orders/${props.order.id}/pay`, {}, {
+    preserveScroll: true,
+  });
 };
 
 const resolveProductName = (name: Record<string, string> | string): string => {
@@ -96,19 +165,70 @@ const statusButtonClass = (s: string) => {
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-mono">{{ order.order_number }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Created {{ order.created_at }} by {{ order.creator?.name ?? 'System' }}</p>
+            <p class="text-sm text-gray-500 mt-1">
+              Created <span class="font-medium text-gray-700 dark:text-gray-300">{{ order.created_at_human }}</span>
+              <span class="text-xs ml-1">({{ order.created_at_formatted }})</span> by {{ order.creator?.name ?? 'System' }}
+            </p>
           </div>
-          <div class="flex items-center gap-3 flex-wrap">
-            <span class="text-sm font-medium px-3 py-1 rounded-full" :class="statusBadge[order.status]">
-              {{ order.status.replace('_', ' ') }}
-            </span>
-            <!-- Status transitions -->
-            <button v-for="s in nextStatuses" :key="s" @click="changeStatus(s)" class="text-sm px-3 py-1 rounded-lg font-medium capitalize transition-colors" :class="statusButtonClass(s)">
-              {{ s === 'in_production' ? 'Start Production' : s.replace('_', ' ') }}
-            </button>
-            <Link v-if="['pending', 'confirmed'].includes(order.status)" :href="edit(order.id).url" class="text-sm px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 font-medium">
-              Edit
+          <div class="flex items-center gap-3 flex-wrap" v-if="!isUpdatingStatus">
+            <div class="relative" ref="dropdownContainer">
+              <button 
+                @click="toggleDropdown"
+                class="group flex items-center gap-2 px-4 py-2 rounded-xl font-bold uppercase text-xs transition-all border shadow-sm"
+                :class="[
+                  statusBadge[order.status],
+                  isDropdownOpen ? 'ring-2 ring-primary ring-offset-2 scale-[1.02]' : ''
+                ]"
+              >
+                <span>{{ order.status.replace('_', ' ') }}</span>
+                <ChevronDown class="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+              </button>
+
+              <!-- Status Dropdown -->
+              <div v-if="isDropdownOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in duration-100">
+                <div class="px-4 py-2 border-b border-gray-50 dark:border-gray-700/50 mb-1">
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Order Status</p>
+                </div>
+                <div class="px-1">
+                  <button 
+                    v-for="status in statuses" 
+                    :key="status"
+                    @click="status === pendingStatus ? confirmStatusUpdate(status) : selectStatus(status)"
+                    class="flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-0.5"
+                    :class="[
+                      status === pendingStatus 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-[0.98]' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                    ]"
+                  >
+                    <span class="capitalize">{{ status.replace('_', ' ') }}</span>
+                    <div v-if="status === pendingStatus" class="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight">
+                      <Check class="w-3 h-3" />
+                      Confirm
+                    </div>
+                    <Check v-else-if="status === order.status" class="w-4 h-4 text-green-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Link v-if="['pending', 'confirmed'].includes(order.status)" :href="edit(order.id).url">
+              <Button variant="outline" size="sm" class="rounded-xl h-10 px-4">
+                <Edit class="w-4 h-4 mr-2" />
+                Edit Order
+              </Button>
             </Link>
+          </div>
+
+          <div v-else class="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800">
+            <div class="grid gap-1">
+              <label class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Actual Delivery Time</label>
+              <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div class="flex gap-2 self-end">
+              <Button size="sm" @click="submitStatusUpdate">Save Delivered</Button>
+              <Button size="sm" variant="ghost" @click="isUpdatingStatus = false">Cancel</Button>
+            </div>
           </div>
         </div>
       </div>
@@ -129,15 +249,19 @@ const statusButtonClass = (s: string) => {
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Delivery</h2>
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <span class="font-medium">Scheduled:</span> {{ order.scheduled_delivery_at ?? '—' }}
+            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">Scheduled:</span>
+            <span v-if="order.scheduled_delivery_at_human" class="block font-semibold text-base">{{ order.scheduled_delivery_at_human }}</span>
+            <span class="text-xs text-gray-500">{{ order.scheduled_delivery_at_formatted ?? order.scheduled_delivery_at ?? '—' }}</span>
           </p>
-          <p class="text-sm text-gray-700 dark:text-gray-300 mt-1" v-if="order.actual_delivery_at">
-            <span class="font-medium">Actual:</span> {{ order.actual_delivery_at }}
+          <p class="text-sm text-gray-700 dark:text-gray-300 mt-4" v-if="order.actual_delivery_at">
+            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">Actual:</span>
+            <span v-if="order.actual_delivery_at_human" class="block font-semibold text-base text-green-600">{{ order.actual_delivery_at_human }}</span>
+            <span class="text-xs text-gray-500">{{ order.actual_delivery_at_formatted ?? order.actual_delivery_at }}</span>
           </p>
-          <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
+          <p class="text-sm text-gray-700 dark:text-gray-300 mt-2">
             <span class="font-medium">Address:</span> {{ order.delivery_address ?? '—' }}
           </p>
-          <p class="text-sm text-gray-700 dark:text-gray-300 mt-1" v-if="order.notes">
+          <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">
             <span class="font-medium">Notes:</span> {{ order.notes }}
           </p>
         </div>
@@ -162,13 +286,21 @@ const statusButtonClass = (s: string) => {
             </div>
           </div>
           <div class="mt-2">
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full" :class="order.payment_status === 'paid'
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full capitalize" :class="order.payment_status === 'paid'
               ? 'bg-green-100 text-green-700'
               : order.payment_status === 'partial'
                 ? 'bg-yellow-100 text-yellow-700'
                 : 'bg-red-100 text-red-700'">
               {{ order.payment_status }}
             </span>
+          </div>
+
+          <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="order.balance_due > 0 && order.payment_status !== 'paid'">
+            <button @click="payWithWallet" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
+              <Wallet class="size-5" />
+              Pay with Wallet
+            </button>
+            <p class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest">Instant payment from your balance</p>
           </div>
         </div>
       </div>
@@ -189,7 +321,19 @@ const statusButtonClass = (s: string) => {
           </thead>
           <tbody>
             <tr v-for="item in order.items" :key="item.id" class="border-b dark:border-gray-700">
-              <td class="px-6 py-3 text-gray-900 dark:text-white">{{ resolveProductName(item.product.name) }}</td>
+              <td class="px-6 py-3">
+                <div class="flex items-center gap-3">
+                  <div v-if="item.product.image_url" class="w-10 h-10 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0">
+                    <img :src="item.product.image_url" :alt="resolveProductName(item.product.name)" class="w-full h-full object-cover" />
+                  </div>
+                  <div v-else class="w-10 h-10 rounded-md bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-200 border border-gray-200 dark:border-gray-700 shrink-0">
+                    {{ resolveProductName(item.product.name).charAt(0).toUpperCase() }}
+                  </div>
+                  <Link :href="editProduct(item.product.id).url" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                    {{ resolveProductName(item.product.name) }}
+                  </Link>
+                </div>
+              </td>
               <td class="px-6 py-3 text-right">{{ item.quantity }}</td>
               <td class="px-6 py-3 text-right">{{ item.unit_price }}</td>
               <td class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">{{ item.subtotal }}</td>

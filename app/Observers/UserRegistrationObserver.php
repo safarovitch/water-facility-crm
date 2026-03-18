@@ -15,6 +15,12 @@ class UserRegistrationObserver
         if ($user->roles()->count() === 0) {
             $user->assignRole('Client');
         }
+
+        // Create a wallet for the user
+        $user->wallet()->create([
+            'balance' => 0,
+            'currency' => 'TJS',
+        ]);
     }
 
     /**

@@ -19,7 +19,11 @@ interface Order {
   paid_amount: string;
   balance_due: number;
   delivery_date: string | null;
+  scheduled_delivery_at_human: string | null;
+  scheduled_delivery_at_formatted: string | null;
   created_at: string;
+  created_at_human: string;
+  created_at_formatted: string;
   client: { id: number; name: string; email: string };
   creator: { name: string } | null;
 }
@@ -110,7 +114,12 @@ const statusBadge: Record<string, string> = {
             <td class="px-6 py-4" :class="{ 'text-red-600 font-semibold': order.balance_due > 0 }">
               {{ order.balance_due > 0 ? order.balance_due.toFixed(2) : '—' }}
             </td>
-            <td class="px-6 py-4">{{ order.delivery_date ?? '—' }}</td>
+            <td class="px-6 py-4">
+              <div v-if="order.scheduled_delivery_at_human" class="font-medium text-gray-900 dark:text-white">
+                {{ order.scheduled_delivery_at_human }}
+              </div>
+              <div class="text-xs text-gray-500">{{ order.scheduled_delivery_at_formatted ?? order.delivery_date ?? '—' }}</div>
+            </td>
             <td class="px-6 py-4">
               <Link :href="show(order.id).url" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link>
             </td>

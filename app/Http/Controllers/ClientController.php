@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Enums\OrderStatus;
 use Spatie\Activitylog\Models\Activity;
 
 class ClientController extends Controller
@@ -51,34 +52,22 @@ class ClientController extends Controller
 
   /**
    * Display the specified client (Admin Show Page).
+   * Redirects to the unified users.show profile.
    */
   public function show(Request $request, User $client)
   {
-    // Load relation
-    $client->load(['userProfile', 'addresses', 'phones']);
+      return redirect()->route('users.show', $client);
+  }
 
-    // Fetch phone numbers for activity log lookup
-    $phoneNumbers = $client->phones->pluck('phone')->toArray();
-
-    // Fetch call history via Spatie activity log based on phone properties
-    $calls = collect([]);
-    if (!empty($phoneNumbers)) {
-      $callsQuery = Activity::where('log_name', 'call')
-        ->where(function ($query) use ($phoneNumbers) {
-          foreach ($phoneNumbers as $phone) {
-            $query->orWhereJsonContains('properties->phone', $phone);
-          }
-        });
-
-      // Limit to recent 50 for the show timeline
-      $calls = $callsQuery->latest()->limit(50)->get();
-    }
-
-    return Inertia::render('clients/Show', [
-      'client' => $client,
-      'calls' => $calls,
-      // 'orders' => $client->orders()->latest()->get() // Future relationship stub
-    ]);
+  /**
+   * Fetch paginated orders for a client (JSON for infinite scroll).
+   */
+  public function orders(User $client)
+  {
+    return $client->orders()
+      ->with(['items.product'])
+      ->latest()
+      ->paginate(15);
   }
 
   public function create(): Response
