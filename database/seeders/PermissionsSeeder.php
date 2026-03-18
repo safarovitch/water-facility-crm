@@ -65,6 +65,10 @@ class PermissionsSeeder extends Seeder
         'view orders',
         'cancel orders',
       ],
+      'Currier' => [
+        'view orders',
+        'manage order status',
+      ],
     ];
 
     foreach ($map as $roleName => $rolePermissions) {

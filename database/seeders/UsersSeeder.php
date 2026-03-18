@@ -12,17 +12,21 @@ class UsersSeeder extends Seeder
    */
   public function run(): void
   {
-    $user = [
+    $userData = [
       'name' => 'Admin User',
       'email' => 'r.safarovitch@gmail.com',
-      'phone' => '+992884238383',
       'password' => bcrypt('password'),
       'status' => \App\Enums\UserStatus::Active,
       'sip_extension' => '1001',
       'sip_password' => '08230a0d9912bbdb',
     ];
 
-    $user = \App\Models\User::updateOrCreate(['email' => $user['email']], $user);
+    $user = \App\Models\User::updateOrCreate(['email' => $userData['email']], $userData);
+
+    $user->phones()->updateOrCreate(
+        ['phone' => '+992884238383'],
+        ['label' => 'Primary', 'is_default' => true]
+    );
 
     if ($user->roles()->count() === 0) {
       $user->assignRole('Admin');
