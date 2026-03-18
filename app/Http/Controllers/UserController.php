@@ -52,6 +52,15 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $user = User::create($data);
+        
+        if (isset($data['phone'])) {
+            $user->phones()->create([
+                'phone' => $data['phone'],
+                'label' => 'Primary',
+                'is_default' => true,
+            ]);
+        }
+
         if (isset($data['roles'])) {
             $user->assignRole($data['roles']);
         }
@@ -85,6 +94,13 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        if (isset($data['phone'])) {
+            $user->phones()->updateOrCreate(
+                ['is_default' => true],
+                ['phone' => $data['phone'], 'label' => 'Primary']
+            );
+        }
 
         if (isset($data['roles'])) {
             $user->syncRoles($data['roles']);
