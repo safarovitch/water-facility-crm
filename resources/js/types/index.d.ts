@@ -44,6 +44,7 @@ export interface User {
     name: string;
     email: string;
     phone: string;
+    status: string;
     avatar?: string;
     avatar_url: string;
     roles: string[];
@@ -81,10 +82,25 @@ export interface Order {
     paid_amount: string | number;
     payment_status: string;
     notes?: string;
-    courier_id?: number;
-    courier?: User;
+    delivery_address?: string | null;
+    courier_id?: number | null;
+    courier?: User | null;
+    client?: {
+        id: number;
+        name: string;
+        email: string;
+        phone: string | null;
+        user_profile?: {
+            company_name: string | null;
+            region: string | null;
+        } | null;
+    };
+    creator?: {
+        id: number;
+        name: string;
+    } | null;
     items?: OrderItem[];
-    created_at_human?: string; // Correcting from my previous thought of formatted
+    created_at_human?: string;
     created_at_formatted?: string;
     updated_at: string;
 }

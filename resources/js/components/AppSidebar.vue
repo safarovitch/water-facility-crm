@@ -14,7 +14,7 @@ import { index as rolesIndex } from '@/routes/roles';
 import { index as permissionsIndex } from '@/routes/permissions';
 import { index as productsIndex } from '@/routes/products';
 import { index as clientsIndex } from '@/routes/clients';
-import { index as ordersIndex } from '@/routes/orders';
+import { index as ordersIndex, assignments as assignmentsIndex } from '@/routes/orders';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -60,6 +60,11 @@ const mainNavItems = computed((): NavItem[] => {
             title: 'Orders',
             href: ordersIndex(),
             icon: ShoppingCart,
+          },
+          {
+            title: 'Courier Assignments',
+            href: assignmentsIndex(),
+            icon: ClipboardList,
           },
         ],
       },

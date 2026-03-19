@@ -52,6 +52,31 @@ class OrderController extends Controller
     ]);
   }
 
+  public function assignments(): Response
+  {
+    $couriers = User::role('Courier')->withCount(['orders' => function ($q) {
+      $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
+    }])->get();
+
+    $unassignedOrders = Order::whereNull('courier_id')
+      ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+      ->with(['client', 'items.product'])
+      ->latest()
+      ->get();
+
+    $assignedOrders = Order::whereNotNull('courier_id')
+      ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+      ->with(['client', 'courier', 'items.product'])
+      ->latest()
+      ->get();
+
+    return Inertia::render('orders/Assignments', [
+      'couriers'         => $couriers,
+      'unassignedOrders' => $unassignedOrders,
+      'assignedOrders'   => $assignedOrders,
+    ]);
+  }
+
   public function create(): Response
   {
     return Inertia::render('orders/Create')->with([
@@ -114,6 +139,7 @@ class OrderController extends Controller
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
       'statuses' => OrderStatus::getValues(),
+      'couriers' => User::role('Courier')->get(['id', 'name']),
     ]);
   }
 
@@ -203,5 +229,23 @@ class OrderController extends Controller
     } catch (\Exception $e) {
       return back()->with('error', $e->getMessage());
     }
+  }
+
+  public function assignCourier(Order $order)
+  {
+      $data = request()->validate([
+          'courier_id' => ['nullable', 'exists:users,id'],
+      ]);
+
+      if ($data['courier_id']) {
+          $courier = User::findOrFail($data['courier_id']);
+          if (!$courier->hasRole('Courier')) {
+              return back()->with('error', 'The selected user is not a courier.');
+          }
+      }
+
+      $order->update(['courier_id' => $data['courier_id']]);
+
+      return back()->with('success', 'Courier assigned successfully.');
   }
 }

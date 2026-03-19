@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
-import { index, edit, cancel, updateStatus } from '@/routes/orders';
+import { index, edit, cancel, updateStatus, assign as assignRoute } from '@/routes/orders';
 import { edit as editProduct } from '@/routes/products';
 import { Wallet, Check, ChevronDown, Loader2 } from 'lucide-vue-next';
 
@@ -36,12 +36,14 @@ interface Order {
   created_at: string;
   created_at_human: string;
   created_at_formatted: string;
+  courier_id: number | null;
+  courier: { id: number; name: string } | null;
   client: { id: number; name: string; email: string; phone: string | null; user_profile: UserProfile | null };
   creator: { name: string } | null;
   items: OrderItem[];
 }
 
-const props = defineProps<{ order: Order; statuses: string[]; }>();
+const props = defineProps<{ order: Order; statuses: string[]; couriers: { id: number; name: string }[]; }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Orders', href: index().url },
@@ -138,6 +140,14 @@ const submitStatusUpdate = () => {
 const payWithWallet = () => {
   if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} from wallet?`)) return;
   router.post(`/orders/${props.order.id}/pay`, {}, {
+    preserveScroll: true,
+  });
+};
+
+const assignCourier = (courierId: string | number | null) => {
+  router.patch(assignRoute({ order: props.order.id }).url, {
+    courier_id: courierId ? Number(courierId) : null,
+  }, {
     preserveScroll: true,
   });
 };
@@ -264,6 +274,26 @@ const statusButtonClass = (s: string) => {
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">
             <span class="font-medium">Notes:</span> {{ order.notes }}
           </p>
+
+          <div class="mt-4 pt-4 border-t dark:border-gray-700">
+            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Courier Assignment</label>
+            <div class="flex items-center gap-2">
+              <select 
+                :value="order.courier_id ?? ''" 
+                @change="(e) => assignCourier((e.target as HTMLSelectElement).value || null)"
+                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
+              >
+                <option value="">Unassigned</option>
+                <option v-for="courier in couriers" :key="courier.id" :value="courier.id">
+                  {{ courier.name }}
+                </option>
+              </select>
+            </div>
+            <p v-if="order.courier" class="text-[10px] text-green-600 mt-2 font-bold flex items-center gap-1">
+              <Check class="w-3 h-3" />
+              Currently: {{ order.courier.name }}
+            </p>
+          </div>
         </div>
 
         <!-- Payment summary -->
