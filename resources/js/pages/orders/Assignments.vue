@@ -28,7 +28,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Orders', href: '/orders/index' },
-  { title: 'Courier Assignments', href: '/orders/assignments' },
+  { title: 'Currier Assignments', href: '/orders/assignments' },
 ];
 
 const selectedOrderForAssignment = ref<number | null>(null);
@@ -68,7 +68,7 @@ const statusColor = (status: string) => {
     <div class="p-6 max-w-screen-2xl mx-auto space-y-8">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Courier Assignments</h1>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Currier Assignments</h1>
           <p class="text-muted-foreground mt-1 text-sm font-medium">Manage order distribution across your delivery team.</p>
         </div>
         
@@ -78,7 +78,7 @@ const statusColor = (status: string) => {
                     <Users2 class="h-4 w-4" />
                 </div>
                 <div>
-                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Couriers</p>
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Curriers</p>
                     <p class="text-sm font-black">{{ couriers.length }}</p>
                 </div>
             </div>
@@ -142,7 +142,7 @@ const statusColor = (status: string) => {
                   @change="(e) => handleAssign(order.id, (e.target as HTMLSelectElement).value || null)"
                   class="w-full h-9 px-3 text-[11px] font-bold rounded-xl border border-dashed border-sidebar-border bg-transparent outline-none focus:ring-1 focus:ring-primary transition-all"
                 >
-                  <option value="">Assign to courier...</option>
+                  <option value="">Assign to currier...</option>
                   <option v-for="courier in couriers" :key="courier.id" :value="courier.id">
                     {{ courier.name }}
                   </option>

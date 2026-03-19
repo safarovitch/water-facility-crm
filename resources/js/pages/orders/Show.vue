@@ -144,7 +144,7 @@ const payWithWallet = () => {
   });
 };
 
-const assignCourier = (courierId: string | number | null) => {
+const assignCurrier = (courierId: string | number | null) => {
   router.patch(assignRoute({ order: props.order.id }).url, {
     courier_id: courierId ? Number(courierId) : null,
   }, {
@@ -276,12 +276,12 @@ const statusButtonClass = (s: string) => {
           </p>
 
           <div class="mt-4 pt-4 border-t dark:border-gray-700">
-            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Courier Assignment</label>
+            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
             <div class="flex items-center gap-2">
               <select 
                 :value="order.courier_id ?? ''" 
-                @change="(e) => assignCourier((e.target as HTMLSelectElement).value || null)"
-                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
+                @change="(e) => assignCurrier((e.target as HTMLSelectElement).value || null)"
+                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-800 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
               >
                 <option value="">Unassigned</option>
                 <option v-for="courier in couriers" :key="courier.id" :value="courier.id">

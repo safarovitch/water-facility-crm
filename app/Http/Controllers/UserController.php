@@ -141,8 +141,8 @@ class UserController extends Controller
             $user->load('wallet');
         }
 
-        $isClient = $user->hasRole('Client') && ! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Courier']);
-        $isCourier = $user->hasRole('Courier');
+        $isClient = $user->hasRole('Client') && ! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier']);
+        $isCourier = $user->hasRole('Currier');
 
         $thisMonth = now()->startOfMonth();
         $lastMonth = now()->subMonth()->startOfMonth();

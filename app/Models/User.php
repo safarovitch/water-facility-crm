@@ -142,8 +142,8 @@ class User extends Authenticatable
     return $this->hasRole('Client');
   }
 
-  public function isCourier(): bool
+  public function isCurrier(): bool
   {
-    return $this->hasRole('Courier');
+    return $this->hasRole('Currier');
   }
 }

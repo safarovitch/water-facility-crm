@@ -54,7 +54,7 @@ class OrderController extends Controller
 
   public function assignments(): Response
   {
-    $couriers = User::role('Courier')->withCount(['orders' => function ($q) {
+    $couriers = User::role('Currier')->withCount(['orders' => function ($q) {
       $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
     }])->get();
 
@@ -231,7 +231,7 @@ class OrderController extends Controller
     }
   }
 
-  public function assignCourier(Order $order)
+  public function assignCurrier(Order $order)
   {
       $data = request()->validate([
           'courier_id' => ['nullable', 'exists:users,id'],
@@ -239,13 +239,13 @@ class OrderController extends Controller
 
       if ($data['courier_id']) {
           $courier = User::findOrFail($data['courier_id']);
-          if (!$courier->hasRole('Courier')) {
-              return back()->with('error', 'The selected user is not a courier.');
+          if (!$courier->hasRole('Currier')) {
+              return back()->with('error', 'The selected user is not a currier.');
           }
       }
 
       $order->update(['courier_id' => $data['courier_id']]);
 
-      return back()->with('success', 'Courier assigned successfully.');
+      return back()->with('success', 'Currier assigned successfully.');
   }
 }

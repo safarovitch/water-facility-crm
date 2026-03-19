@@ -86,7 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
     Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
     Route::get('assignments',        [OrderController::class, 'assignments'])->name('assignments');
-    Route::patch('{order}/assign',   [OrderController::class, 'assignCourier'])->name('assign');
+    Route::patch('{order}/assign',   [OrderController::class, 'assignCurrier'])->name('assign');
   });
 
   Route::post('users/{user}/wallet/deposit', [\App\Http\Controllers\WalletController::class, 'adminDeposit'])->name('admin.wallet.deposit');

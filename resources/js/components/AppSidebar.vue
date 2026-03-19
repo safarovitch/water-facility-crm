@@ -62,7 +62,7 @@ const mainNavItems = computed((): NavItem[] => {
             icon: ShoppingCart,
           },
           {
-            title: 'Courier Assignments',
+            title: 'Currier Assignments',
             href: assignmentsIndex(),
             icon: ClipboardList,
           },
