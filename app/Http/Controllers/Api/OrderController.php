@@ -16,10 +16,13 @@ class OrderController extends Controller
         $orders = Order::where('courier_id', $request->user()->id)
             ->when($status, function($q) use ($status) {
                 $q->where('status', $status);
+            }, function($q) {
+                // By default, only show active (not delivered/cancelled) orders
+                $q->whereNotIn('status', ['delivered', 'cancelled']);
             })
             ->with(['client', 'items.product'])
             ->latest()
-            ->paginate(15);
+            ->get();
 
         return response()->json($orders);
     }
