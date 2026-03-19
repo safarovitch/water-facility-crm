@@ -55,4 +55,20 @@ class OrderController extends Controller
             'order' => $order,
         ]);
     }
+
+    public function reject(Request $request, $id)
+    {
+        $order = Order::where('courier_id', $request->user()->id)
+            ->findOrFail($id);
+
+        $order->update([
+            'courier_id' => null,
+            'status' => OrderStatus::Pending,
+        ]);
+
+        return response()->json([
+            'message' => 'Order rejected successfully.',
+            'order' => $order,
+        ]);
+    }
 }

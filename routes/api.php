@@ -24,6 +24,7 @@ Route::prefix('v1/currier')->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    Route::post('/orders/{id}/reject', [OrderController::class, 'reject']);
 
     // Profile & Stats
     Route::get('/profile', [ProfileController::class, 'index']);

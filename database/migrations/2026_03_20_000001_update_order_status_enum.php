@@ -13,13 +13,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // For MySQL/PostgreSQL, we need to update the enum column.
-        // Since Laravel's $table->enum() doesn't support easy 'change()',
-        // we use a raw statement for MySQL if applicable, or just re-define it.
-        // Note: DB::statement is more reliable for ENUM updates.
-        
-        $values = "'" . implode("','", OrderStatus::getValues()) . "'";
-        DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM($values) NOT NULL DEFAULT 'pending'");
+        // For MySQL, we need to update the enum column.
+        if (DB::getDriverName() === 'mysql') {
+            $values = "'" . implode("','", OrderStatus::getValues()) . "'";
+            DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM($values) NOT NULL DEFAULT 'pending'");
+        }
+        // For SQLite, it's already a string/enum without hard constraints in many cases,
+        // but if it has a check constraint, we'd need to recreate the table.
+        // Usually Laravel's sqlite enum is just a string.
     }
 
     /**
