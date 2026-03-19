@@ -19,6 +19,24 @@ class AuthController extends Controller
     ]);
 
     $identifier = $this->normalizeIdentifier($request->identifier);
+
+    // Ensure user exists before sending OTP
+    if (str_contains($identifier, '@')) {
+      $user = User::where('email', $identifier)->first();
+    } else {
+      $user = User::whereHas('phones', function ($q) use ($identifier) {
+        $q->where('phone', $identifier);
+      })->first();
+    }
+
+    if (!$user) {
+      return response()->json(['message' => 'User not registered.'], 404);
+    }
+
+    if (!$user->hasRole('Currier')) {
+      return response()->json(['message' => 'User not registered.'], 404);
+    }
+
     $code = (string) rand(100000, 999999);
 
     // In a real app, we would send this via SMS/Email
@@ -65,8 +83,8 @@ class AuthController extends Controller
       })->first();
     }
 
-    if (!$user) {
-      return response()->json(['message' => 'User not found.'], 404);
+    if (!$user || !$user->hasRole('Currier')) {
+      return response()->json(['message' => 'User not registered.'], 404);
     }
 
     $otp->delete();
