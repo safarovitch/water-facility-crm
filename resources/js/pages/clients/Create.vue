@@ -28,7 +28,6 @@ const form = useForm({
   company_name: '',
   region: '',
   notes: '',
-  credit_limit: 0,
   // Addresses array
   addresses: [] as (AddressData & { label: string })[],
 });
@@ -194,10 +193,6 @@ watchDebounced(
               <Label for="company_name">Company Name</Label>
               <Input id="company_name" v-model="form.company_name" />
               <InputError :message="form.errors.company_name" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="credit_limit">Credit Limit</Label>
-              <Input id="credit_limit" type="number" min="0" v-model.number="form.credit_limit" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
               <div class="flex items-center justify-between mb-2">

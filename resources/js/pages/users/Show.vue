@@ -52,7 +52,6 @@ interface ProfileUser {
         company_name: string | null;
         region: string | null;
         notes: string | null;
-        credit_limit: number;
     } | null;
     addresses: UserAddress[];
     phones: UserPhone[];

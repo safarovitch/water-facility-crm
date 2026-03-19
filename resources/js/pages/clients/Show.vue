@@ -106,7 +106,6 @@ interface Client {
     company_name: string | null;
     region: string | null;
     notes: string | null;
-    credit_limit: number;
   } | null;
   phones: ClientPhone[];
   addresses: UserAddress[];

@@ -33,7 +33,6 @@ interface Client {
     company_name: string | null;
     region: string | null;
     notes: string | null;
-    credit_limit: number;
   } | null;
   phones: { id: number; label: string; phone: string; is_default: boolean }[];
   addresses: UserAddress[];
@@ -53,7 +52,6 @@ const form = useForm({
   company_name: props.client.user_profile?.company_name ?? '',
   region: props.client.user_profile?.region ?? '',
   notes: props.client.user_profile?.notes ?? '',
-  credit_limit: props.client.user_profile?.credit_limit ?? 0,
   phones: (props.client.phones?.length ? props.client.phones : [{ label: 'Mobile', phone: props.client.phone ?? '', is_default: true }]).map((p: any) => ({
     id: p.id,
     label: p.label || 'Mobile',
@@ -185,10 +183,6 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
             <div v-if="isCompany" class="grid gap-2">
               <Label for="company_name">Company Name</Label>
               <Input id="company_name" v-model="form.company_name" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="credit_limit">Credit Limit</Label>
-              <Input id="credit_limit" type="number" min="0" v-model.number="form.credit_limit" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
               <div class="flex items-center justify-between mb-2">

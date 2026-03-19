@@ -107,7 +107,6 @@ class ClientController extends Controller
           'company_name' => $request->company_name,
           'region'       => $request->region,
           'notes'        => $request->notes,
-          'credit_limit' => $request->credit_limit ?? 0,
         ]
       );
 
@@ -164,7 +163,6 @@ class ClientController extends Controller
           'company_name' => $request->company_name,
           'region'       => $request->region,
           'notes'        => $request->notes,
-          'credit_limit' => $request->credit_limit ?? 0,
         ]
       );
 

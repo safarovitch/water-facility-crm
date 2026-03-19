@@ -151,7 +151,7 @@ class UserController extends Controller
         // ── Client profile stats ──────────────────────────────────────────────
         $clientStats = null;
         if ($user->hasRole('Client')) {
-            $ordersQuery = Order::where('client_id', $user->id);
+            $ordersQuery = Order::where('user_id', $user->id);
             $clientStats = [
                 'totalOrders'        => (clone $ordersQuery)->count(),
                 'totalSpent'         => (float) (clone $ordersQuery)->sum('total_amount'),

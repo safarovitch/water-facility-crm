@@ -34,7 +34,6 @@ class UpdateClientRequest extends FormRequest
       'region'       => ['nullable', 'string', 'max:255'],
       'address'      => ['nullable', 'string'],
       'notes'        => ['nullable', 'string'],
-      'credit_limit' => ['nullable', 'numeric', 'min:0'],
     ];
   }
 }

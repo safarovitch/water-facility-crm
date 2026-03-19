@@ -18,12 +18,10 @@ class UserProfile extends Model
     'region',
     'address',
     'notes',
-    'credit_limit',
   ];
 
   protected $casts = [
     'type'         => ClientType::class,
-    'credit_limit' => 'decimal:2',
   ];
 
   protected $appends = [
