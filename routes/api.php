@@ -5,8 +5,11 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\CommunicationController;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Route;
 
-Route::prefix('currier')->group(function () {
+Route::prefix('v1')->group(function () {
+  Route::prefix('currier')->group(function () {
     // Auth
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/verify', [AuthController::class, 'verify']);
@@ -14,22 +17,23 @@ Route::prefix('currier')->group(function () {
 
     // Protected Routes
     Route::middleware(['auth:sanctum', 'role:Currier'])->group(function () {
-        Route::get('/user', function (Request $request) {
-            return $request->user();
-        });
-        
-        // Orders
-        Route::get('/orders', [OrderController::class, 'index']);
-        Route::get('/orders/{id}', [OrderController::class, 'show']);
-        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+      Route::get('/user', function (Request $request) {
+        return $request->user();
+      });
 
-        // Profile & Stats
-        Route::get('/profile', [ProfileController::class, 'index']);
+      // Orders
+      Route::get('/orders', [OrderController::class, 'index']);
+      Route::get('/orders/{id}', [OrderController::class, 'show']);
+      Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
 
-        // Courier Location tracking
-        Route::post('/courier/location', [LocationController::class, 'update']);
+      // Profile & Stats
+      Route::get('/profile', [ProfileController::class, 'index']);
 
-        // Masked Calling
-        Route::post('/communication/call', [CommunicationController::class, 'call']);
+      // Courier Location tracking
+      Route::post('/courier/location', [LocationController::class, 'update']);
+
+      // Masked Calling
+      Route::post('/communication/call', [CommunicationController::class, 'call']);
     });
+  });
 });
