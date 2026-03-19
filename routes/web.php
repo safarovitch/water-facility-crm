@@ -77,6 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
   Route::name('orders.')->prefix('orders')->group(function () {
     Route::get('index',              [OrderController::class, 'index'])->name('index');
+    Route::get('assignments',        [OrderController::class, 'assignments'])->name('assignments');
     Route::get('create',             [OrderController::class, 'create'])->name('create');
     Route::post('store',             [OrderController::class, 'store'])->name('store');
     Route::get('{order}',            [OrderController::class, 'show'])->name('show');
@@ -85,7 +86,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('{order}/cancel',   [OrderController::class, 'cancel'])->name('cancel');
     Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
     Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
-    Route::get('assignments',        [OrderController::class, 'assignments'])->name('assignments');
     Route::patch('{order}/assign',   [OrderController::class, 'assignCurrier'])->name('assign');
   });
 
