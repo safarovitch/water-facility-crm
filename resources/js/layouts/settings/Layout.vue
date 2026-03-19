@@ -13,7 +13,7 @@ import { computed } from 'vue';
 
 const page = usePage();
 const user = page.props.auth.user as any;
-const isClient = user?.roles?.includes('Client') && !user?.roles?.some((r: string) => ['Admin','Manager','Operator','Courier'].includes(r));
+const isClient = user?.roles?.includes('Client') && !user?.roles?.some((r: string) => ['Admin','Manager','Operator','Currier'].includes(r));
 
 const sidebarNavItems = computed((): NavItem[] => [
     { title: 'Profile',     href: edit() },

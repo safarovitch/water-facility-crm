@@ -25,7 +25,7 @@ class CommunicationController extends Controller
         $user = $request->user();
 
         if (empty($user->sip_extension)) {
-            return response()->json(['message' => 'Courier SIP extension not configured'], 422);
+            return response()->json(['message' => 'Currier SIP extension not configured'], 422);
         }
 
         try {
@@ -37,7 +37,7 @@ class CommunicationController extends Controller
                 $clientPhone,
                 'from-internal',
                 1,
-                "Courier <{$user->sip_extension}>"
+                "Currier <{$user->sip_extension}>"
             );
 
             $amiService->logoff();

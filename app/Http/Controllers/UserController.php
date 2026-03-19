@@ -256,7 +256,7 @@ class UserController extends Controller
                 'avatar_url'  => $user->avatar_url,
                 'is_client'   => $user->hasRole('Client'),
                 'is_courier'  => $isCourier,
-                'is_staff'    => $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Courier']),
+                'is_staff'    => $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier']),
                 'is_self'     => auth()->id() === $user->id,
             ],
             'clientStats'  => $clientStats,

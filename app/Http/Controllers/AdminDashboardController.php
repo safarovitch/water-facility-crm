@@ -18,7 +18,7 @@ class AdminDashboardController extends Controller
         $user = $request->user();
 
         // Only non-client (admin/staff) users with admin mode enabled can access the admin dashboard
-        if (! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Courier'])) {
+        if (! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
             return redirect()->route('dashboard'); // not a staff user → go to /profile
         }
 

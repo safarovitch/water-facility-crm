@@ -63,7 +63,7 @@ const statusColor = (status: string) => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Courier Assignments" />
+    <Head title="Currier Assignments" />
 
     <div class="p-6 max-w-screen-2xl mx-auto space-y-8">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

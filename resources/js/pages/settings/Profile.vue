@@ -30,7 +30,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user;
-const isClient = (user as any).roles?.includes('Client') && !(user as any).roles?.some((r: string) => ['Admin','Manager','Operator','Courier'].includes(r));
+const isClient = (user as any).roles?.includes('Client') && !(user as any).roles?.some((r: string) => ['Admin','Manager','Operator','Currier'].includes(r));
 </script>
 
 <template>

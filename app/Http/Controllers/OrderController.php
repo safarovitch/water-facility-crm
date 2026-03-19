@@ -139,7 +139,7 @@ class OrderController extends Controller
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
       'statuses' => OrderStatus::getValues(),
-      'couriers' => User::role('Courier')->get(['id', 'name']),
+      'couriers' => User::role('Currier')->get(['id', 'name']),
     ]);
   }
 
