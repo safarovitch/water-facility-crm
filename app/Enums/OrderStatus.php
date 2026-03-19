@@ -20,6 +20,8 @@ final class OrderStatus extends Enum
   const Confirmed    = 'confirmed';
   const InProduction = 'in_production';
   const Ready        = 'ready';
+  const Accepted     = 'accepted';
+  const InTransit    = 'in_transit';
   const Delivered    = 'delivered';
   const Cancelled    = 'cancelled';
 }
