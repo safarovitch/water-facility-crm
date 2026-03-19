@@ -44,7 +44,8 @@ class UserPhone extends Model
     }
 
     try {
-      $this->attributes['phone'] = (string) phone($value, ['AZ', 'US', 'RU'], 'E164');
+      // Include TJ for the primary region
+      $this->attributes['phone'] = (string) phone($value, ['TJ', 'AZ', 'US', 'RU'], 'E164');
     } catch (\Exception $e) {
       $this->attributes['phone'] = preg_replace('/[^\d+]/', '', $value);
     }

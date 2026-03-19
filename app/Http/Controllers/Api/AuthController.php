@@ -99,8 +99,8 @@ class AuthController extends Controller
 
     try {
       // Use laravel-phone to normalize. If + is present, it auto-detects.
-      // Default to AZ if no plus, but if + is present it will correctly handle US (+1) etc.
-      return (string) phone($identifier, ['AZ', 'US', 'RU'], 'E164');
+      // Explicitly include TJ (Tajikistan) as it is the primary region.
+      return (string) phone($identifier, ['TJ', 'AZ', 'US', 'RU'], 'E164');
     } catch (\Exception $e) {
       // Strip everything but numbers and + for a basic cleanup if library fails
       return preg_replace('/[^\d+]/', '', $identifier);

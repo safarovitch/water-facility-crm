@@ -31,5 +31,41 @@ class UsersSeeder extends Seeder
     if ($user->roles()->count() === 0) {
       $user->assignRole('Admin');
     }
+
+    // Add John Courier
+    $courier = \App\Models\User::updateOrCreate(
+        ['email' => 'courier@example.com'],
+        [
+            'name' => 'John Courier',
+            'password' => bcrypt('password'),
+            'status' => \App\Enums\UserStatus::Active,
+            'sip_extension' => '1002',
+            'sip_password' => 'secret123',
+        ]
+    );
+    $courier->phones()->updateOrCreate(
+        ['phone' => '+14768661517'], // The number the user was testing with
+        ['label' => 'Mobile', 'is_default' => true]
+    );
+    if (!$courier->hasRole('Currier')) {
+        $courier->assignRole('Currier');
+    }
+
+    // Add Test Client
+    $client = \App\Models\User::updateOrCreate(
+        ['email' => 'client@example.com'],
+        [
+            'name' => 'Test Client',
+            'password' => bcrypt('password'),
+            'status' => \App\Enums\UserStatus::Active,
+        ]
+    );
+    $client->phones()->updateOrCreate(
+        ['phone' => '+992178605005'],
+        ['label' => 'Mobile', 'is_default' => true]
+    );
+    if (!$client->hasRole('Client')) {
+        $client->assignRole('Client');
+    }
   }
 }
