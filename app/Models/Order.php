@@ -27,6 +27,8 @@ class Order extends Model
     'notes',
     'created_by',
     'courier_id',
+    'lat',
+    'lng',
   ];
 
   protected $casts = [
@@ -36,6 +38,8 @@ class Order extends Model
     'actual_delivery_at'    => 'datetime',
     'total_amount'          => 'decimal:2',
     'paid_amount'           => 'decimal:2',
+    'lat'                   => 'float',
+    'lng'                   => 'float',
   ];
 
   protected $appends = [

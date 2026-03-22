@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
                                             {{ new Date(currier.last_active_at || currier.last_location.created_at).toLocaleTimeString() }}
                                         </span>
                                         <span v-if="currier.last_location" class="text-[10px] text-muted-foreground font-bold">
-                                            {{ currier.last_location.lat.toFixed(4) }}, {{ currier.last_location.lng.toFixed(4) }}
+                                            {{ Number(currier.last_location.lat).toFixed(4) }}, {{ Number(currier.last_location.lng).toFixed(4) }}
                                         </span>
                                     </div>
                                     <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">No Data</span>

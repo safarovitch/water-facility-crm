@@ -12,6 +12,11 @@ class CurrierLocation extends Model
         'lng',
     ];
 
+    protected $casts = [
+        'lat' => 'float',
+        'lng' => 'float',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
