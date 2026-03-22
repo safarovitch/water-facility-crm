@@ -73,7 +73,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-4 md:p-6">
+        <div class="flex flex-col gap-6">
 
             <!-- KPI Cards Row 1 -->
             <div class="grid grid-cols-2 gap-4 md:grid-cols-4">

@@ -94,7 +94,7 @@ const toggleNewAddress = () => {
   <Head title="New Order" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="relative overflow-x-auto sm:rounded-lg">
-      <div class="p-4 pb-6 bg-white dark:bg-gray-900">
+      <div class="pb-6 bg-white dark:bg-gray-900 px-4 py-5 sm:px-6 rounded-t-lg">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Create New Order</h1>
       </div>
 

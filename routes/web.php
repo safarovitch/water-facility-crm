@@ -88,6 +88,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
     Route::patch('{order}/assign',   [OrderController::class, 'assignCurrier'])->name('assign');
   });
+  
+  Route::name('curriers.')->prefix('curriers')->group(function () {
+    Route::get('activities', [\App\Http\Controllers\CurrierActivityController::class, 'index'])->name('activities');
+  });
 
   Route::post('users/{user}/wallet/deposit', [\App\Http\Controllers\WalletController::class, 'adminDeposit'])->name('admin.wallet.deposit');
 

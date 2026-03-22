@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone } from 'lucide-vue-next';
+import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone, Activity } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { index as usersIndex } from '@/routes/users';
 import { index as rolesIndex } from '@/routes/roles';
@@ -15,6 +15,7 @@ import { index as permissionsIndex } from '@/routes/permissions';
 import { index as productsIndex } from '@/routes/products';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as ordersIndex, assignments as assignmentsIndex } from '@/routes/orders';
+import curriersIndex from '@/routes/curriers';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -65,6 +66,11 @@ const mainNavItems = computed((): NavItem[] => {
             title: 'Currier Assignments',
             href: assignmentsIndex(),
             icon: ClipboardList,
+          },
+          {
+            title: 'Currier Activities',
+            href: curriersIndex.activities.url(),
+            icon: Activity,
           },
         ],
       },

@@ -189,7 +189,7 @@ const formatDate = (dateString: string) => {
 
   <Head :title="client.name" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-6 max-w-screen-2xl mx-auto space-y-8">
+    <div class="space-y-8">
 
       <!-- Header Section -->
       <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">

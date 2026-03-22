@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\CurrierLocation;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -36,7 +37,8 @@ class User extends Authenticatable
     'avatar',
     'status',
     'sip_extension',
-    'sip_password'
+    'sip_password',
+    'last_active_at',
   ];
 
   /**
@@ -70,7 +72,8 @@ class User extends Authenticatable
     return [
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
-      'status' => UserStatus::class
+      'status' => UserStatus::class,
+      'last_active_at' => 'datetime',
     ];
   }
 
@@ -145,5 +148,15 @@ class User extends Authenticatable
   public function isCurrier(): bool
   {
     return $this->hasRole('Currier');
+  }
+
+  public function locations(): HasMany
+  {
+      return $this->hasMany(CurrierLocation::class);
+  }
+
+  public function lastLocation(): HasOne
+  {
+      return $this->hasOne(CurrierLocation::class)->latestOfMany();
   }
 }

@@ -15,7 +15,7 @@ Route::prefix('v1/currier')->group(function () {
   Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
   // Protected Routes
-  Route::middleware(['auth:sanctum', 'role:Currier'])->group(function () {
+  Route::middleware(['auth:sanctum', 'role:Currier', \App\Http\Middleware\UpdateCurrierLastActive::class])->group(function () {
     Route::get('/user', function (Request $request) {
       return $request->user();
     });
@@ -29,8 +29,9 @@ Route::prefix('v1/currier')->group(function () {
     // Profile & Stats
     Route::get('/profile', [ProfileController::class, 'index']);
 
-    // Courier Location tracking
-    Route::post('/courier/location', [LocationController::class, 'update']);
+    // Currier Location tracking
+    Route::post('/location', [LocationController::class, 'update']);
+    Route::post('/ping', [LocationController::class, 'ping']);
 
     // Masked Calling
     Route::post('/communication/call', [CommunicationController::class, 'call']);

@@ -225,7 +225,7 @@ const maxDeliveries = props.staffStats
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head :title="`${profileUser.name} — Profile`" />
 
-        <div class="p-6 max-w-screen-2xl mx-auto space-y-8">
+        <div class="space-y-8">
 
             <!-- ── Profile Header ────────────────────────────────────────── -->
             <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 bg-white dark:bg-sidebar p-6 rounded-2xl shadow-sm border border-sidebar-border/60">

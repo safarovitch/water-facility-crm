@@ -12,17 +12,20 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $status = $request->query('status');
-        
-        $orders = Order::where('courier_id', $request->user()->id)
-            ->when($status, function($q) use ($status) {
-                $q->where('status', $status);
-            }, function($q) {
-                // By default, only show active (not delivered/cancelled) orders
-                $q->whereNotIn('status', ['delivered', 'cancelled']);
-            })
-            ->with(['client', 'items.product'])
-            ->latest()
-            ->get();
+        $history = $request->boolean('history');
+
+        $query = Order::where('courier_id', $request->user()->id)
+            ->with(['client', 'items.product']);
+
+        if ($status) {
+            $query->where('status', $status);
+        } elseif ($history) {
+            $query->whereIn('status', ['delivered', 'cancelled']);
+        } else {
+            $query->whereNotIn('status', ['delivered', 'cancelled']);
+        }
+
+        $orders = $query->latest()->get();
 
         return response()->json($orders);
     }

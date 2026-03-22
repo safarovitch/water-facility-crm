@@ -144,8 +144,8 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
   <Head :title="`Edit ${client.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="relative overflow-x-auto sm:rounded-lg xl:w-2/3">
-      <div class="p-4 pb-6 bg-white dark:bg-gray-900">
+    <div class="relative overflow-x-auto sm:rounded-lg">
+      <div class="pb-6 bg-white dark:bg-gray-900 px-4 py-5 sm:px-6 rounded-t-lg">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Client</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ client.email }}</p>
       </div>

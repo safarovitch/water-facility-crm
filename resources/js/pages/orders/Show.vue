@@ -168,7 +168,7 @@ const statusButtonClass = (s: string) => {
 
   <Head :title="order.order_number" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="space-y-6 p-4">
+    <div class="space-y-6">
 
       <!-- Header -->
       <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">

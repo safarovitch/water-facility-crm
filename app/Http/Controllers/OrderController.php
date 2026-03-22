@@ -56,24 +56,21 @@ class OrderController extends Controller
   {
     $couriers = User::role('Currier')->withCount(['orders' => function ($q) {
       $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
-    }])->get();
+    }])->get(['id', 'name']);
 
-    $unassignedOrders = Order::whereNull('courier_id')
-      ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
-      ->with(['client', 'items.product'])
-      ->latest()
-      ->get();
-
-    $assignedOrders = Order::whereNotNull('courier_id')
-      ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+    $orders = Order::whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
       ->with(['client', 'courier', 'items.product'])
       ->latest()
       ->get();
 
+    $statuses = OrderStatus::asArray();
+    // Exclude delivered/cancelled from the list of selectable filters
+    unset($statuses['Delivered'], $statuses['Cancelled']);
+
     return Inertia::render('orders/Assignments', [
-      'couriers'         => $couriers,
-      'unassignedOrders' => $unassignedOrders,
-      'assignedOrders'   => $assignedOrders,
+      'couriers' => $couriers,
+      'orders'   => $orders,
+      'statuses' => $statuses,
     ]);
   }
 
