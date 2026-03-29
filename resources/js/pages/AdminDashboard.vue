@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
 import {
     ShoppingCart, TrendingUp, Users2, Package,
@@ -32,7 +32,7 @@ interface RecentOrder {
     total_amount: number;
     paid_amount: number;
     payment_status: string;
-    created_at: string;
+    created_at_formatted: string;
 }
 
 interface TopProduct {
@@ -54,7 +54,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { t } = useLocale();
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
-const fmtCurrency = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TJS', maximumFractionDigits: 0 }).format(n);
+const fmtCurrency = (n: number) => {
+    const currency = (usePage().props.currency as string) || 'USD';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+};
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
     pending:      { label: 'Pending',      color: 'text-amber-500   bg-amber-500/10',   icon: Clock },
@@ -260,7 +263,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                                         {{ fmtCurrency(order.paid_amount) }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-3 text-right text-xs text-muted-foreground">{{ order.created_at }}</td>
+                                <td class="px-5 py-3 text-right text-xs text-muted-foreground">{{ order.created_at_formatted }}</td>
                             </tr>
                         </tbody>
                     </table>

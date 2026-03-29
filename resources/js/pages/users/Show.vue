@@ -45,7 +45,8 @@ interface ProfileUser {
     is_staff: boolean;
     is_courier: boolean;
     is_self: boolean;
-    created_at: string;
+    created_at_human: string;
+    created_at_formatted: string;
     sip_extension?: string;
     user_profile?: {
         type: string;
@@ -96,7 +97,8 @@ interface Transaction {
     amount: string | number;
     status: string;
     notes?: string;
-    created_at: string;
+    created_at_human: string;
+    created_at_formatted: string;
 }
 
 interface OrderItem {
@@ -266,7 +268,7 @@ const maxDeliveries = props.staffStats
                             </Badge>
                             <span class="text-[10px] font-bold text-muted-foreground ml-1 uppercase tracking-widest flex items-center gap-1.5 opacity-60">
                                 <Calendar class="h-3 w-3" />
-                                Since {{ profileUser.created_at }}
+                                Since {{ profileUser.created_at_human }}
                             </span>
                         </div>
                     </div>
@@ -411,7 +413,7 @@ const maxDeliveries = props.staffStats
                                             </div>
                                             <div>
                                                 <p class="text-xs font-black capitalize">{{ tx.type }}</p>
-                                                <p class="text-[9px] text-muted-foreground">{{ tx.created_at }}</p>
+                                                <p class="text-[9px] text-muted-foreground">{{ tx.created_at_human }}</p>
                                             </div>
                                         </div>
                                         <p class="text-xs font-black" :class="tx.type === 'deposit' ? 'text-green-600' : 'text-red-500'">
@@ -576,7 +578,7 @@ const maxDeliveries = props.staffStats
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-5 text-right font-black text-sm tabular-nums">
-                                                    {{ order.total_amount }} <span class="text-[10px] text-muted-foreground font-bold">TJS</span>
+                                                    {{ order.total_amount }} <span class="text-[10px] text-muted-foreground font-bold">{{ ($page.props.currency as string) || 'USD' }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -683,7 +685,7 @@ const maxDeliveries = props.staffStats
                     </CardHeader>
                     <CardContent class="pt-6 space-y-6">
                         <div class="space-y-2.5">
-                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Deposit Amount ({{ profileUser.wallet?.currency || 'TJS' }})</label>
+                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Deposit Amount ({{ profileUser.wallet?.currency || ($page.props.currency as string) || 'TJS' }})</label>
                             <div class="relative">
                                 <Plus class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <input v-model="depositForm.amount" type="number" step="1" min="1" class="w-full text-4xl font-black p-6 pl-12 bg-muted/30 border-2 border-sidebar-border rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all" />

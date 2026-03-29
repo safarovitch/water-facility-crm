@@ -3,11 +3,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { index as ordersIndex } from '@/routes/orders';
 import { index, create, edit, destroy } from '@/routes/clients';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
-import { Phone, Eye, Pencil, Trash2 } from 'lucide-vue-next';
+import { Head, router, Link } from '@inertiajs/vue3';
+import { Phone, Eye, Pencil, Trash2, PlusCircle, Search, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
 import Button from '@/components/ui/button/Button.vue';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Clients', href: index().url },
@@ -44,7 +47,7 @@ const props = defineProps<{
 const search = ref('');
 
 const doSearch = () => {
-  router.get(index().url, { search: search.value }, { preserveState: true });
+  router.get(index().url, { search: search.value }, { preserveState: true, preserveScroll: true });
 };
 
 const deleteClient = (client: Client) => {
@@ -60,85 +63,116 @@ const initiateCall = (phone: string | null) => {
 </script>
 
 <template>
-
   <Head title="Clients" />
+  
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="relative overflow-x-auto sm:rounded-lg">
-      <div class="p-4 flex items-center justify-between flex-wrap gap-3 pb-4 bg-white dark:bg-gray-900">
-        <div class="flex gap-2">
-          <Link :href="create().url" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
-            + Add Client
-          </Link>
+    <div class="space-y-6 container mx-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Clients</h1>
+          <p class="text-sm text-muted-foreground mt-1">Manage external customers and their profiles.</p>
         </div>
-        <div class="relative">
-          <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-            </svg>
-          </div>
-          <input v-model="search" @keyup.enter="doSearch" type="text" class="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-72 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Search clients..." />
-        </div>
+        <Link :href="create().url">
+          <Button class="gap-2 shadow-sm font-semibold rounded-xl">
+            <PlusCircle class="h-4 w-4" /> Add Client
+          </Button>
+        </Link>
       </div>
 
-      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-          <tr>
-            <th scope="col" class="px-6 py-3">Name</th>
-            <th scope="col" class="px-6 py-3">Type</th>
-            <th scope="col" class="px-6 py-3">Phone</th>
-            <th scope="col" class="px-6 py-3">Region</th>
-            <th scope="col" class="px-6 py-3">Status</th>
-            <th scope="col" class="px-6 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="client in props.clients.data" :key="client.id" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-              <img class="w-10 h-10 rounded-full" :src="client.avatar_url" :alt="client.name">
-              <div class="ps-3">
-                <Link :href="`/clients/${client.id}`" class="text-base font-semibold hover:underline hover:text-blue-600 transition-colors">{{ client.name }}</Link>
-                <div class="font-normal text-gray-500">{{ client.email }}</div>
-              </div>
-            </th>
-            <td class="px-6 py-4 capitalize">
-              {{ client.user_profile?.company_name ?? client.user_profile?.type ?? '—' }}
-            </td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <span>{{ client.phone ?? '—' }}</span>
-                <Button v-if="client.phone" variant="outline" size="icon" class="h-8 w-8" @click.prevent="initiateCall(client.phone)" title="Call">
-                  <Phone class="w-3.5 h-3.5 text-green-600 dark:text-green-500" />
-                </Button>
-              </div>
-            </td>
-            <td class="px-6 py-4">{{ client.user_profile?.region ?? '—' }}</td>
-            <td class="px-6 py-4">
-              <div class="flex items-center">
-                <div class="h-2.5 w-2.5 rounded-full me-2" :class="client.statusHtmlClass"></div>
-                {{ client.statusLabel }}
-              </div>
-            </td>
-            <td class="px-6 py-4 flex items-center gap-2">
-              <Button variant="outline" size="icon" as-child title="View Profile">
-                <Link :href="`/clients/${client.id}`">
-                  <Eye class="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="icon" as-child title="Edit">
-                <Link :href="edit(client.id).url">
-                  <Pencil class="w-4 h-4 text-blue-600 dark:text-blue-500" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="icon" title="Delete" @click="deleteClient(client)">
-                <Trash2 class="w-4 h-4 text-red-600 dark:text-red-500" />
-              </Button>
-            </td>
-          </tr>
-          <tr v-if="props.clients.data.length === 0">
-            <td colspan="6" class="px-6 py-10 text-center text-gray-400">No clients found.</td>
-          </tr>
-        </tbody>
-      </table>
+      <Card class="shadow-sm">
+        <CardContent class="p-0">
+            <!-- Filters -->
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-64 flex-1 max-w-sm">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+                    <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
+                    <Input v-model="search" placeholder="Search accounts..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
+                </div>
+                <div class="flex gap-2">
+                    <Button @click="doSearch" variant="secondary" size="sm" class="h-9">Search</Button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="relative overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold">Client</th>
+                            <th class="px-6 py-4 font-semibold">Type</th>
+                            <th class="px-6 py-4 font-semibold">Phone</th>
+                            <th class="px-6 py-4 font-semibold">Region</th>
+                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
+                        <tr v-for="client in clients.data" :key="client.id" class="hover:bg-muted/40 transition-colors group">
+                            <td class="px-6 py-4 flex items-center gap-3">
+                                <img class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700" :src="client.avatar_url" :alt="client.name">
+                                <div>
+                                    <Link :href="`/clients/${client.id}`" class="font-bold text-gray-900 dark:text-white hover:underline">{{ client.name }}</Link>
+                                    <div class="text-xs text-muted-foreground object-contain mt-0.5">{{ client.email }}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 capitalize font-medium text-gray-700 dark:text-gray-300">
+                                {{ client.user_profile?.company_name ?? client.user_profile?.type ?? '—' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-2">
+                                  <span class="font-medium font-mono text-gray-900 dark:text-gray-100">{{ client.phone ?? '—' }}</span>
+                                  <Button v-if="client.phone" variant="outline" size="icon" class="h-8 w-8 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30" @click.prevent="initiateCall(client.phone)" title="Call">
+                                    <Phone class="w-3.5 h-3.5 text-green-600 dark:text-green-500 group-hover:block" />
+                                  </Button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs font-medium">{{ client.user_profile?.region ?? '—' }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <Badge :variant="client.status === 'active' ? 'default' : (client.status === 'pending' ? 'secondary' : 'destructive')" class="capitalize">
+                                   {{ client.statusLabel }}
+                                </Badge>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Link :href="`/clients/${client.id}`" title="View Profile">
+                                      <Button variant="ghost" size="icon" class="h-8 w-8 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                                          <Eye class="h-4 w-4" />
+                                      </Button>
+                                    </Link>
+                                    <Link :href="edit(client.id).url" title="Edit">
+                                      <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40">
+                                          <Pencil class="h-4 w-4" />
+                                      </Button>
+                                    </Link>
+                                    <Button @click="deleteClient(client)" variant="ghost" size="icon" class="h-8 w-8 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/40" title="Delete">
+                                        <Trash2 class="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="clients.data.length === 0">
+                            <td colspan="6" class="px-6 py-12 text-center text-muted-foreground">
+                                <div class="flex flex-col items-center justify-center opacity-60">
+                                    <Users class="h-10 w-10 mb-3 text-gray-400" />
+                                    <p class="font-medium text-sm">No clients found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="clients.meta?.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
+                <template v-for="(link, key) in clients.meta.links" :key="key">
+                    <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
+                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
+                </template>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   </AppLayout>
 </template>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { type BreadcrumbItem, type Order, type User } from '@/types';
 import { assign as assignRoute } from '@/routes/orders';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader as DHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Users2, 
   Package, 
@@ -16,13 +17,21 @@ import {
   ChevronDown,
   X,
   User as UserIcon,
-  Truck
+  Truck,
+  Box
 } from 'lucide-vue-next';
-import { ref, computed, watch } from 'vue';
-import { onClickOutside } from '@vueuse/core';
+import { ref, computed } from 'vue';
+
+interface CourierOption extends User {
+  avatar_url: string;
+  statusLabel: string;
+  statusHtmlClass: string;
+  orders_count: number;
+  last_active_at: string | null;
+}
 
 const props = defineProps<{
-  couriers: User[];
+  couriers: CourierOption[];
   orders: Order[];
   statuses: Record<string, string>;
 }>();
@@ -61,9 +70,8 @@ const statusColor = (status: string) => {
 
 // ── Searchable Currier Select State ──────────────────────────────────────────
 
-const activeOrderId = ref<number | null>(null);
+const assignModalOrderId = ref<number | null>(null);
 const courierSearch = ref('');
-const selectRefs = ref<Record<number, HTMLElement>>({});
 
 const filteredCouriers = computed(() => {
   if (!courierSearch.value) return props.couriers;
@@ -72,34 +80,40 @@ const filteredCouriers = computed(() => {
   );
 });
 
-const openSelect = (orderId: number) => {
-  if (activeOrderId.value === orderId) {
-    activeOrderId.value = null;
-  } else {
-    activeOrderId.value = orderId;
-    courierSearch.value = '';
-  }
+const isCurrierOnline = (courier: CourierOption) => {
+  const lastActive = courier.last_active_at ? new Date(courier.last_active_at) : null;
+  if (!lastActive) return false;
+  return (new Date().getTime() - lastActive.getTime()) < 5 * 60 * 1000;
 };
 
-const handleAssign = (orderId: number, courierId: number | null) => {
-  router.patch(assignRoute({ order: orderId }).url, {
+const openSelect = (orderId: number) => {
+  assignModalOrderId.value = orderId;
+  courierSearch.value = '';
+};
+
+const handleAssign = (courierId: number | null) => {
+  if (!assignModalOrderId.value) return;
+  
+  router.patch(assignRoute({ order: assignModalOrderId.value }).url, {
     courier_id: courierId,
   }, {
     preserveScroll: true,
     onSuccess: () => {
-      activeOrderId.value = null;
+      assignModalOrderId.value = null;
     }
   });
 };
 
-const clickOutsideTarget = ref<HTMLElement | null>(null);
-onClickOutside(clickOutsideTarget, (event) => {
-    // Prevent closing if we clicked the trigger of the active order
-    const triggerClass = 'select-trigger-' + activeOrderId.value;
-    if (event.target instanceof HTMLElement && event.target.closest('.' + triggerClass)) {
-        return;
-    }
-    activeOrderId.value = null;
+const currentOrderToAssign = computed(() => {
+  if (!assignModalOrderId.value) return null;
+  return props.orders.find(o => o.id === assignModalOrderId.value) || null;
+});
+
+const isModalOpen = computed({
+  get: () => assignModalOrderId.value !== null,
+  set: (val) => {
+    if (!val) assignModalOrderId.value = null;
+  }
 });
 
 </script>
@@ -112,7 +126,7 @@ onClickOutside(clickOutsideTarget, (event) => {
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Currier Assignments</h1>
-          <p class="text-muted-foreground mt-1 text-sm font-medium">Manage and monitor active delivery assignments in real-time.</p>
+          <p class="text-muted-foreground mt-1 text-sm font-medium">Manage and monitor active delivery assignments.</p>
         </div>
         
         <div class="flex items-center gap-4 bg-white dark:bg-sidebar p-2 px-3 rounded-2xl shadow-sm border border-sidebar-border/60">
@@ -188,7 +202,7 @@ onClickOutside(clickOutsideTarget, (event) => {
                         </div>
                     </td>
                 </tr>
-                <tr v-for="order in filteredOrders" :key="order.id" class="bg-white dark:bg-sidebar hover:bg-muted/5 transition-colors" :class="{ 'z-50 relative': activeOrderId === order.id }">
+                <tr v-for="order in filteredOrders" :key="order.id" class="bg-white dark:bg-sidebar hover:bg-muted/5 transition-colors">
                   <td class="px-6 py-4">
                     <div class="flex flex-col">
                       <span class="font-black text-foreground">#{{ order.order_number }}</span>
@@ -207,65 +221,21 @@ onClickOutside(clickOutsideTarget, (event) => {
                     </Badge>
                   </td>
                   <td class="px-6 py-4">
-                    <div class="relative w-48" :ref="el => { if (el) selectRefs[order.id] = el as HTMLElement }">
-                        <!-- Searchable Select Trigger -->
-                        <div 
-                          @click="openSelect(order.id)"
-                          :class="['flex items-center justify-between h-9 px-3 border border-sidebar-border/60 rounded-xl cursor-pointer hover:border-primary/50 transition-all bg-white/50 dark:bg-sidebar/50 shadow-sm', 'select-trigger-' + order.id]"
+                    <div class="relative w-56">
+                        <!-- Pop-up Trigger -->
+                        <Button
+                          @click="openSelect(order.id)" 
+                          variant="outline" 
+                          class="w-full justify-between h-9 px-3 rounded-xl hover:border-primary/50 transition-all font-normal shadow-none" 
+                          :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20' : ''"
                         >
-                            <span class="text-[11px] font-bold truncate">
-                                {{ order.courier?.name ?? 'Select Currier...' }}
-                            </span>
-                            <ChevronDown class="h-3 w-3 opacity-40" />
-                        </div>
-
-                        <!-- Searchable Select Dropdown -->
-                        <div 
-                          v-if="activeOrderId === order.id" 
-                          ref="clickOutsideTarget"
-                          class="absolute z-[100] top-11 left-0 w-64 bg-white dark:bg-sidebar border border-sidebar-border shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-150"
-                        >
-                            <div class="p-2 border-b bg-muted/20 flex items-center gap-2">
-                                <div class="relative flex-1">
-                                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                                    <input 
-                                      v-model="courierSearch"
-                                      autoFocus
-                                      placeholder="Search..."
-                                      class="w-full h-8 pl-8 pr-3 text-xs bg-transparent border-none outline-none focus:ring-0 font-bold"
-                                    />
-                                </div>
-                                <button @click="activeOrderId = null" class="p-1 hover:bg-muted rounded-lg text-muted-foreground transition-colors">
-                                    <X class="h-4 w-4" />
-                                </button>
-                            </div>
-                            <div class="max-h-60 overflow-y-auto p-1 py-2">
-                                <button
-                                    @click="handleAssign(order.id, null)"
-                                    class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
-                                >
-                                    <X class="h-3 w-3" />
-                                    Unassign Order
-                                </button>
-                                <div class="h-px bg-sidebar-border/40 my-1"></div>
-                                <button
-                                    v-for="courier in filteredCouriers"
-                                    :key="courier.id"
-                                    @click="handleAssign(order.id, courier.id)"
-                                    class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold hover:bg-primary/10 hover:text-primary rounded-xl transition-colors group"
-                                    :class="{ 'bg-primary/5 text-primary': order.courier_id === courier.id }"
-                                >
-                                    <div class="flex items-center gap-2">
-                                        <UserIcon class="h-3 w-3 opacity-40 group-hover:opacity-100" />
-                                        <span>{{ courier.name }}</span>
-                                    </div>
-                                    <Check v-if="order.courier_id === courier.id" class="h-3 w-3" />
-                                </button>
-                                <div v-if="filteredCouriers.length === 0" class="py-4 text-center text-[10px] font-bold text-muted-foreground uppercase opacity-40">
-                                    No curriers found
-                                </div>
-                            </div>
-                        </div>
+                          <span v-if="order.courier" class="flex items-center gap-2 truncate text-xs">
+                            <span class="w-1.5 h-1.5 min-w-[6px] rounded-full bg-blue-500"></span>
+                            <span class="font-bold truncate">{{ order.courier.name }}</span>
+                          </span>
+                          <span v-else class="text-xs">Assign...</span>
+                          <ChevronDown class="h-3 w-3 opacity-40 flex-shrink-0 ml-1" />
+                        </Button>
                     </div>
                   </td>
                 </tr>
@@ -274,6 +244,91 @@ onClickOutside(clickOutsideTarget, (event) => {
           </div>
         </CardContent>
       </Card>
+      
+      <!-- Courier Assignment Modal -->
+      <Dialog v-model:open="isModalOpen">
+        <DialogContent class="sm:max-w-xl">
+          <DHeader>
+            <DialogTitle class="text-xl font-bold">Assign Currier</DialogTitle>
+            <DialogDescription v-if="currentOrderToAssign">
+              Select an available currier to process Order #<span class="font-bold text-foreground">{{ currentOrderToAssign.order_number }}</span>.
+            </DialogDescription>
+          </DHeader>
+          
+          <div class="py-2 space-y-2 lg:max-h-[60vh] sm:max-h-[80vh] overflow-y-auto pr-2">
+            <!-- Modal Internal Search -->
+            <div class="relative mb-3">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                v-model="courierSearch" 
+                placeholder="Search curriers by name..." 
+                class="pl-9 h-10 w-full rounded-xl bg-muted/40"
+              />
+            </div>
+
+            <!-- Unassign option -->
+            <button 
+              @click="handleAssign(null)"
+              class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all text-left"
+              :class="{ 'opacity-50 pointer-events-none': currentOrderToAssign && !currentOrderToAssign.courier_id }"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <Box class="w-5 h-5 text-gray-400" />
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900 dark:text-gray-100">Unassign Order</p>
+                  <p class="text-xs text-gray-500">Remove currently assigned currier.</p>
+                </div>
+              </div>
+            </button>
+
+            <!-- Currier list -->
+            <button 
+              v-for="courier in filteredCouriers" 
+              :key="courier.id"
+              @click="handleAssign(courier.id)"
+              class="w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left relative overflow-hidden group"
+              :class="(currentOrderToAssign && currentOrderToAssign.courier_id === courier.id) ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 dark:bg-gray-800/50 dark:hover:bg-gray-800'"
+            >
+              <!-- Selection indicator -->
+              <div v-if="currentOrderToAssign && currentOrderToAssign.courier_id === courier.id" class="absolute top-0 right-0 w-12 h-12 flex items-start justify-end p-1.5 opacity-20 bg-blue-500 rounded-bl-[100%]">
+                <Check class="w-4 h-4 text-white translate-x-1 -translate-y-1" />
+              </div>
+
+              <div class="flex items-center gap-4 relative z-10 w-full">
+                <!-- Avatar with status indicator -->
+                <div class="relative">
+                  <img :src="courier.avatar_url" :alt="courier.name" class="w-12 h-12 rounded-full object-cover border-2 shadow-sm" :class="(currentOrderToAssign && currentOrderToAssign.courier_id === courier.id) ? 'border-blue-500' : 'border-white dark:border-gray-900'" />
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? 'Online' : 'Offline'"></span>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-2">
+                    {{ courier.name }}
+                    <span v-if="currentOrderToAssign && currentOrderToAssign.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">Current</span>
+                  </p>
+                  <div class="flex items-center gap-3 mt-1">
+                    <span class="text-xs font-medium text-gray-500 flex items-center gap-1">
+                      <div class="w-2 h-2 rounded-full" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'"></div>
+                      {{ isCurrierOnline(courier) ? 'Online' : 'Offline' }}
+                    </span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" :class="courier.orders_count > 0 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'">
+                      <Box class="w-3 h-3" />
+                      {{ courier.orders_count }} active tasks
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </button>
+            
+            <div v-if="filteredCouriers.length === 0" class="py-8 text-center bg-gray-50 dark:bg-gray-800/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                <Users2 class="h-8 w-8 mx-auto text-gray-400 mb-2 opacity-50" />
+                <p class="text-sm font-bold text-muted-foreground">No curriers found</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
 </template>

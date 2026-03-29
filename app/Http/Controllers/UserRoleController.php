@@ -13,17 +13,24 @@ class UserRoleController extends Controller
 {
     public function index(): Response
     {
+        $query = Role::with(['permissions']);
+
+        if (request()->filled('search')) {
+            $query->where('name', 'like', '%' . request()->search . '%');
+        }
+
         $pagination = request()->has('pagination')
             ? request()->input('pagination')
             : ['limit' => 50, 'page' => 1];
 
         return Inertia::render('roles/Index')->with([
-            'roles' => Role::with(['permissions'])->paginate(
+            'roles' => $query->paginate(
                 $pagination['limit'],
                 ['*'],
                 'page',
                 $pagination['page']
-            )
+            )->withQueryString(),
+            'filters' => request()->only(['search']),
         ]);
     }
 

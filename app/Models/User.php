@@ -19,6 +19,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
@@ -56,11 +58,29 @@ class User extends Authenticatable
     'statusLabel',
     'statusHtmlClass',
     'phone',
+    'last_active_at_human',
+    'last_active_at_formatted',
     'created_at_human',
     'created_at_formatted',
     'updated_at_human',
     'updated_at_formatted',
   ];
+
+  /**
+   * Get the human-readable last_active_at.
+   */
+  protected function lastActiveAtHuman(): Attribute
+  {
+    return Attribute::get(fn() => $this->last_active_at?->diffForHumans());
+  }
+
+  /**
+   * Get the formatted last_active_at.
+   */
+  protected function lastActiveAtFormatted(): Attribute
+  {
+    return Attribute::get(fn() => $this->last_active_at?->format('F j, Y H:i:s'));
+  }
 
   /**
    * Get the attributes that should be cast.

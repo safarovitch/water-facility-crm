@@ -5,6 +5,12 @@ import { Head, router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { index, create, show } from '@/routes/orders';
 import { ref } from 'vue';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PlusCircle, Search, Eye, ShoppingCart } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Orders', href: index().url },
@@ -46,89 +52,140 @@ const applyFilter = () => {
   router.get(index().url, {
     status: statusFilter.value || undefined,
     search: search.value || undefined,
-  }, { preserveState: true });
+  }, { preserveState: true, preserveScroll: true });
 };
 
 const statusBadge: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  in_production: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  ready: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-  delivered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  pending: 'secondary',
+  confirmed: 'default',
+  in_production: 'default',
+  ready: 'default',
+  delivered: 'default', // Actually let's use tailwind classes explicitly or map to badge variants
+  cancelled: 'destructive',
+};
+
+const statusBadgeClass: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80 dark:bg-yellow-900/40 dark:text-yellow-400',
+  confirmed: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900/40 dark:text-blue-400',
+  in_production: 'bg-purple-100 text-purple-800 hover:bg-purple-100/80 dark:bg-purple-900/40 dark:text-purple-400',
+  ready: 'bg-cyan-100 text-cyan-800 hover:bg-cyan-100/80 dark:bg-cyan-900/40 dark:text-cyan-400',
+  delivered: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900/40 dark:text-green-400',
+  cancelled: 'bg-red-100 text-red-800 hover:bg-red-100/80 dark:bg-red-900/40 dark:text-red-400',
 };
 </script>
 
 <template>
-
   <Head title="Orders" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="relative overflow-x-auto sm:rounded-lg">
-      <div class="p-4 flex items-center justify-between flex-wrap gap-3 pb-4 bg-white dark:bg-gray-900">
-        <div class="flex gap-2 flex-wrap">
-          <Link :href="create().url" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
-            + New Order
-          </Link>
-          <select v-model="statusFilter" @change="applyFilter" class="border border-gray-300 rounded-lg text-sm px-3 py-1.5 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 capitalize">
-            <option value="">All Statuses</option>
-            <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ s.replace('_', ' ') }}</option>
-          </select>
+    <div class="space-y-6 container mx-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Orders</h1>
+          <p class="text-sm text-muted-foreground mt-1">Manage processing, ready, and delivered orders.</p>
         </div>
-        <div class="relative">
-          <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-            <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-            </svg>
-          </div>
-          <input v-model="search" @keyup.enter="applyFilter" type="text" placeholder="Search client..." class="block p-2 ps-10 text-sm border border-gray-300 rounded-lg w-64 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-        </div>
+        <Link :href="create().url">
+          <Button class="gap-2 shadow-sm font-semibold rounded-xl">
+            <PlusCircle class="h-4 w-4" /> New Order
+          </Button>
+        </Link>
       </div>
 
-      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-          <tr>
-            <th class="px-6 py-3">Order #</th>
-            <th class="px-6 py-3">Client</th>
-            <th class="px-6 py-3">Status</th>
-            <th class="px-6 py-3">Total</th>
-            <th class="px-6 py-3">Balance Due</th>
-            <th class="px-6 py-3">Delivery</th>
-            <th class="px-6 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in props.orders.data" :key="order.id" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <td class="px-6 py-4 font-mono font-semibold text-gray-900 dark:text-white">
-              {{ order.order_number }}
-            </td>
-            <td class="px-6 py-4">
-              <div class="font-medium text-gray-900 dark:text-white">{{ order.client?.name }}</div>
-              <div class="text-xs text-gray-500">{{ order.client?.email }}</div>
-            </td>
-            <td class="px-6 py-4">
-              <span class="text-xs font-medium px-2.5 py-0.5 rounded-full" :class="statusBadge[order.status] ?? ''">
-                {{ order.status.replace('_', ' ') }}
-              </span>
-            </td>
-            <td class="px-6 py-4">{{ order.total_amount }}</td>
-            <td class="px-6 py-4" :class="{ 'text-red-600 font-semibold': order.balance_due > 0 }">
-              {{ order.balance_due > 0 ? order.balance_due.toFixed(2) : '—' }}
-            </td>
-            <td class="px-6 py-4">
-              <div v-if="order.scheduled_delivery_at_human" class="font-medium text-gray-900 dark:text-white">
-                {{ order.scheduled_delivery_at_human }}
-              </div>
-              <div class="text-xs text-gray-500">{{ order.scheduled_delivery_at_formatted ?? order.delivery_date ?? '—' }}</div>
-            </td>
-            <td class="px-6 py-4">
-              <Link :href="show(order.id).url" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link>
-            </td>
-          </tr>
-          <tr v-if="props.orders.data.length === 0">
-            <td colspan="7" class="px-6 py-10 text-center text-gray-400">No orders found.</td>
-          </tr>
-        </tbody>
-      </table>
+      <Card class="shadow-sm">
+        <CardContent class="p-0">
+            <!-- Filters -->
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-64 flex-1 max-w-sm">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+                    <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
+                    <Input v-model="search" placeholder="Search order # or client..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilter" />
+                </div>
+                <div class="space-y-1 w-48">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
+                    <select v-model="statusFilter" @change="applyFilter" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">All Statuses</option>
+                        <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ s.replace('_', ' ') }}</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <Button @click="applyFilter" variant="secondary" size="sm" class="h-9">Apply Filters</Button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="relative overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold">Order #</th>
+                            <th class="px-6 py-4 font-semibold">Client</th>
+                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold text-right">Total</th>
+                            <th class="px-6 py-4 font-semibold text-right">Balance Due</th>
+                            <th class="px-6 py-4 font-semibold">Delivery</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
+                        <tr v-for="order in orders.data" :key="order.id" class="hover:bg-muted/40 transition-colors group">
+                            <td class="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">
+                                {{ order.order_number }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900 dark:text-white">{{ order.client?.name }}</div>
+                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.client?.email }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <Badge variant="outline" class="capitalize border-transparent relative font-semibold" :class="statusBadgeClass[order.status]">
+                                    {{ order.status.replace('_', ' ') }}
+                                </Badge>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-bold text-gray-900 dark:text-white">{{ order.total_amount }}</span>
+                                <span class="text-[10px] text-muted-foreground ml-1">{{ $page.props.currency }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-bold" :class="order.balance_due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'">
+                                    {{ order.balance_due > 0 ? order.balance_due.toFixed(2) : '—' }}
+                                </span>
+                                <span v-if="order.balance_due > 0" class="text-[10px] text-muted-foreground ml-1">{{ $page.props.currency }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div v-if="order.scheduled_delivery_at_human" class="font-medium text-gray-900 dark:text-white">
+                                    {{ order.scheduled_delivery_at_human }}
+                                </div>
+                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.scheduled_delivery_at_formatted ?? order.delivery_date ?? '—' }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Link :href="show(order.id).url">
+                                      <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" title="View Order">
+                                          <Eye class="h-4 w-4" />
+                                      </Button>
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="orders.data.length === 0">
+                            <td colspan="7" class="px-6 py-12 text-center text-muted-foreground">
+                                <div class="flex flex-col items-center justify-center opacity-60">
+                                    <ShoppingCart class="h-10 w-10 mb-3 text-gray-400" />
+                                    <p class="font-medium text-sm">No orders found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="orders.meta?.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
+                <template v-for="(link, key) in orders.meta.links" :key="key">
+                    <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
+                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { status: statusFilter, search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
+                </template>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   </AppLayout>
 </template>

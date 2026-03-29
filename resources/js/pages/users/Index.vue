@@ -2,9 +2,15 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index, create, edit, show } from '@/routes/users';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '../../components/PlaceholderPattern.vue';
+import { Head, router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PlusCircle, Search, Eye, Pencil, Users } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -15,8 +21,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Paginated<T> {
     data: T[];
-    links: Record<string, any>;
-    meta: Record<string, any>;
+    links: Record<string, any> | any[];
+    meta?: Record<string, any>;
+    last_page?: number;
 }
 
 interface User {
@@ -38,85 +45,114 @@ interface Role {
 }
 
 const props = defineProps<{
-    users: Paginated<User>
+    users: Paginated<User>;
+    filters?: { search?: string };
 }>();
 
+const search = ref(props.filters?.search || '');
+
+const doSearch = () => {
+  router.get(index().url, { search: search.value }, { preserveState: true, preserveScroll: true });
+};
 </script>
 
 <template>
+  <Head title="Users" />
+  
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="space-y-6 container mx-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Users</h1>
+          <p class="text-sm text-muted-foreground mt-1">Manage system access, roles, and administrative profiles.</p>
+        </div>
+        <Link :href="create().url">
+          <Button class="gap-2 shadow-sm font-semibold rounded-xl">
+            <PlusCircle class="h-4 w-4" /> Add User
+          </Button>
+        </Link>
+      </div>
 
-    <Head title="Users" />
-
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="relative overflow-x-auto sm:rounded-lg">
-            <div class="p-4 flex items-center justify-between flex-column flex-wrap md:flex-row space-y-4 md:space-y-0 pb-4 bg-white dark:bg-gray-900">
-                <div>
-                    <Link :href="create().url" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 me-2">
-                    Add user
-                    </Link>
+      <Card class="shadow-sm">
+        <CardContent class="p-0">
+            <!-- Filters -->
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-64 flex-1 max-w-sm">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+                    <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
+                    <Input v-model="search" placeholder="Search by name or email..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
                 </div>
-                <label for="table-search" class="sr-only">Search</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                        </svg>
-                    </div>
-                    <input type="text" id="table-search-users" class="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for users">
+                <div class="flex gap-2">
+                    <Button @click="doSearch" variant="secondary" size="sm" class="h-9">Search</Button>
                 </div>
             </div>
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                    <tr>
-                        <!-- <th scope="col" class="p-4">
-                            <div class="flex items-center">
-                                <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="checkbox-all-search" class="sr-only">checkbox</label>
-                            </div>
-                        </th> -->
-                        <th scope="col" class="px-6 py-3">
-                            Name
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Role
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Status
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Action
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600" v-for="user in props.users.data">
-                        <!-- <td class="w-4 p-4">
-                            <div class="flex items-center">
-                                <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-                            </div>
-                        </td> -->
-                        <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                            <img class="w-10 h-10 rounded-full" :src="user.avatar_url" :alt="user.name">
-                            <div class="ps-3">
-                                <div class="text-base font-semibold">{{ user.name }}</div>
-                                <div class="font-normal text-gray-500">{{ user.email }}</div>
-                            </div>
-                        </th>
-                        <td class="px-6 py-4" v-html="user.roles.map(r => r.name).join('</br> ')"></td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="h-2.5 w-2.5 rounded-full me-2" :class="user.statusHtmlClass"></div> {{ user.statusLabel }}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 flex items-center gap-4">
-                            <Link :href="show({ user: user.id })" class="font-medium text-gray-600 dark:text-gray-400 hover:underline">View profile</Link>
-                            <Link :href="edit({ user: user.id })" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit user</Link>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
 
-    </AppLayout>
+            <!-- Table -->
+            <div class="relative overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold">User Profile</th>
+                            <th class="px-6 py-4 font-semibold">Role</th>
+                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
+                        <tr v-for="user in users.data" :key="user.id" class="hover:bg-muted/40 transition-colors group">
+                            <td class="px-6 py-4 flex items-center gap-3">
+                                <img class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700" :src="user.avatar_url" :alt="user.name">
+                                <div>
+                                    <Link :href="show({ user: user.id })" class="font-bold text-gray-900 dark:text-white hover:underline">{{ user.name }}</Link>
+                                    <div class="text-xs text-muted-foreground object-contain mt-0.5">{{ user.email }}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 capitalize font-medium text-gray-700 dark:text-gray-300">
+                                <div class="flex flex-wrap gap-1">
+                                    <Badge v-for="role in user.roles" :key="role.id" variant="outline" class="font-normal">{{ role.name }}</Badge>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <Badge :variant="user.status === 'active' ? 'default' : (user.status === 'pending' ? 'secondary' : 'destructive')" class="capitalize">
+                                   {{ user.statusLabel }}
+                                </Badge>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Link :href="show({ user: user.id })" title="View Profile">
+                                      <Button variant="ghost" size="icon" class="h-8 w-8 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                                          <Eye class="h-4 w-4" />
+                                      </Button>
+                                    </Link>
+                                    <Link :href="edit({ user: user.id })" title="Edit">
+                                      <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40">
+                                          <Pencil class="h-4 w-4" />
+                                      </Button>
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="users.data.length === 0">
+                            <td colspan="4" class="px-6 py-12 text-center text-muted-foreground">
+                                <div class="flex flex-col items-center justify-center opacity-60">
+                                    <Users class="h-10 w-10 mb-3 text-gray-400" />
+                                    <p class="font-medium text-sm">No users found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="(users.meta?.last_page || users.last_page) > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
+                <template v-for="(link, key) in (users.meta?.links || users.links)" :key="key">
+                    <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
+                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
+                </template>
+            </div>
+        </CardContent>
+      </Card>
+    </div>
+  </AppLayout>
 </template>

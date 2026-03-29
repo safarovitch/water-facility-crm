@@ -68,7 +68,8 @@ class AdminDashboardController extends Controller
                 'total_amount'   => (float) $order->total_amount,
                 'paid_amount'    => (float) $order->paid_amount,
                 'payment_status' => $order->payment_status->value ?? $order->payment_status,
-                'created_at'     => $order->created_at_formatted,
+                'created_at'     => $order->created_at,
+                'created_at_formatted' => $order->created_at_formatted,
             ]);
 
         // ------- Top products by order count -------

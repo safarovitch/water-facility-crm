@@ -15,19 +15,20 @@ class ProductController extends Controller
   /**
    * Display a listing of the resource.
    */
-  public function index(): Response
+  public function index(Request $request): Response
   {
-    $pagination = request()->has('pagination')
-      ? request()->input('pagination')
-      : ['limit' => 50, 'page' => 1];
+    $query = Product::query();
+
+    if ($request->filled('search')) {
+      $query->where('sku', 'like', '%' . $request->search . '%')
+            ->orWhere('name', 'like', '%' . $request->search . '%');
+    }
+
+    $products = $query->latest()->paginate(50)->withQueryString();
 
     return Inertia::render('products/Index')->with([
-      'products' => Product::query()->paginate(
-        $pagination['limit'],
-        ['*'],
-        'page',
-        $pagination['page']
-      )
+      'products' => $products,
+      'filters'  => $request->only(['search']),
     ]);
   }
 
@@ -39,6 +40,7 @@ class ProductController extends Controller
     return Inertia::render('products/Create')->with([
       'statuses'       => ProductStatus::asSelectArray(),
       'lowStockActions' => ProductLowStockAction::asSelectArray(),
+      'availableRawMaterials' => \App\Models\RawMaterial::select('id', 'name', 'unit', 'sku')->get(),
     ]);
   }
 
@@ -57,7 +59,7 @@ class ProductController extends Controller
       'cost'                => 'nullable|numeric|min:0',
       'weight'              => 'nullable|numeric|min:0',
       'quantity'            => 'required|integer|min:0',
-      'currency'            => 'required|string|max:10',
+      'currency'            => 'nullable|string|max:10',
       'manage_stock'        => 'boolean',
       'low_stock_threshold' => 'nullable|integer|min:0',
       'low_stock_action'    => 'nullable|string',
@@ -65,6 +67,9 @@ class ProductController extends Controller
       'short_description'   => 'nullable|array',
       'description'         => 'nullable|array',
       'dimensions'          => 'nullable|array',
+      'raw_materials'       => 'nullable|array',
+      'raw_materials.*.id'  => 'required|exists:raw_materials,id',
+      'raw_materials.*.quantity' => 'required|numeric|min:0.0001',
     ];
 
     foreach ($locales as $locale) {
@@ -79,8 +84,17 @@ class ProductController extends Controller
     $validated['low_stock_threshold'] = $validated['low_stock_threshold'] ?? 0;
     $validated['low_stock_action']    = $validated['low_stock_action']    ?? ProductLowStockAction::None;
     $validated['dimensions']  = $validated['dimensions']  ?? [];
+    $validated['currency']    = $validated['currency'] ?? config('app.currency', env('APP_CURRENCY', 'UZS'));
 
     $product = Product::create($validated);
+
+    if ($request->has('raw_materials') && is_array($request->raw_materials)) {
+      $syncData = [];
+      foreach ($request->raw_materials as $rm) {
+        $syncData[$rm['id']] = ['quantity' => $rm['quantity']];
+      }
+      $product->rawMaterials()->sync($syncData);
+    }
 
     if ($request->hasFile('image')) {
       $product->addMediaFromRequest('image')->toMediaCollection('image');
@@ -95,10 +109,12 @@ class ProductController extends Controller
    */
   public function edit(Product $product): Response
   {
+    $product->load('rawMaterials');
     return Inertia::render('products/Edit')->with([
       'product'        => $product,
       'statuses'       => ProductStatus::asSelectArray(),
       'lowStockActions' => ProductLowStockAction::asSelectArray(),
+      'availableRawMaterials' => \App\Models\RawMaterial::select('id', 'name', 'unit', 'sku')->get(),
     ]);
   }
 
@@ -117,7 +133,7 @@ class ProductController extends Controller
       'cost'                => 'nullable|numeric|min:0',
       'weight'              => 'nullable|numeric|min:0',
       'quantity'            => 'required|integer|min:0',
-      'currency'            => 'required|string|max:10',
+      'currency'            => 'nullable|string|max:10',
       'manage_stock'        => 'boolean',
       'low_stock_threshold' => 'nullable|integer|min:0',
       'low_stock_action'    => 'nullable|string',
@@ -125,6 +141,9 @@ class ProductController extends Controller
       'short_description'   => 'nullable|array',
       'description'         => 'nullable|array',
       'dimensions'          => 'nullable|array',
+      'raw_materials'       => 'nullable|array',
+      'raw_materials.*.id'  => 'required|exists:raw_materials,id',
+      'raw_materials.*.quantity' => 'required|numeric|min:0.0001',
     ];
 
     foreach ($locales as $locale) {
@@ -132,8 +151,20 @@ class ProductController extends Controller
     }
 
     $validated = $request->validate($rules);
+    
+    $validated['currency'] = $validated['currency'] ?? config('app.currency', env('APP_CURRENCY', 'UZS'));
 
     $product->update($validated);
+
+    if ($request->has('raw_materials') && is_array($request->raw_materials)) {
+      $syncData = [];
+      foreach ($request->raw_materials as $rm) {
+        $syncData[$rm['id']] = ['quantity' => $rm['quantity']];
+      }
+      $product->rawMaterials()->sync($syncData);
+    } else {
+      $product->rawMaterials()->sync([]);
+    }
 
     if ($request->hasFile('image')) {
       $product->clearMediaCollection('image');

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
@@ -83,5 +84,12 @@ class Product extends Model implements HasMedia
   public function orderItems(): HasMany
   {
     return $this->hasMany(OrderItem::class);
+  }
+
+  public function rawMaterials(): BelongsToMany
+  {
+    return $this->belongsToMany(RawMaterial::class)
+      ->withPivot('quantity')
+      ->withTimestamps();
   }
 }

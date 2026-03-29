@@ -3,11 +3,12 @@ import { computed, ref } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, Link } from '@inertiajs/vue3';
+import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
 import { index, edit, cancel, updateStatus, assign as assignRoute } from '@/routes/orders';
 import { edit as editProduct } from '@/routes/products';
-import { Wallet, Check, ChevronDown, Loader2 } from 'lucide-vue-next';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Wallet, Check, ChevronDown, Loader2, Box } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -43,7 +44,22 @@ interface Order {
   items: OrderItem[];
 }
 
-const props = defineProps<{ order: Order; statuses: string[]; couriers: { id: number; name: string }[]; }>();
+interface CourierOption {
+  id: number;
+  name: string;
+  avatar_url: string;
+  status: string;
+  statusLabel: string;
+  statusHtmlClass: string;
+  orders_count: number;
+  last_active_at: string | null;
+}
+
+const props = defineProps<{ 
+  order: Order; 
+  statuses: string[]; 
+  couriers: CourierOption[]; 
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Orders', href: index().url },
@@ -138,10 +154,20 @@ const submitStatusUpdate = () => {
 };
 
 const payWithWallet = () => {
-  if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} from wallet?`)) return;
+  const currency = (usePage().props.currency as string) || 'USD';
+  if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} ${currency} from wallet?`)) return;
   router.post(`/orders/${props.order.id}/pay`, {}, {
     preserveScroll: true,
   });
+};
+
+const isAssignModalOpen = ref(false);
+
+const isCurrierOnline = (courier: CourierOption) => {
+  const lastActive = courier.last_active_at ? new Date(courier.last_active_at) : null;
+  if (!lastActive) return false;
+  // Online if active within the last 5 minutes
+  return (new Date().getTime() - lastActive.getTime()) < 5 * 60 * 1000;
 };
 
 const assignCurrier = (courierId: string | number | null) => {
@@ -149,6 +175,7 @@ const assignCurrier = (courierId: string | number | null) => {
     courier_id: courierId ? Number(courierId) : null,
   }, {
     preserveScroll: true,
+    onSuccess: () => isAssignModalOpen.value = false,
   });
 };
 
@@ -247,7 +274,11 @@ const statusButtonClass = (s: string) => {
         <!-- Client info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Client</h2>
-          <p class="font-semibold text-gray-900 dark:text-white">{{ order.client.name }}</p>
+          <p class="font-semibold text-gray-900 dark:text-white">
+            <Link :href="`/clients/${order.client.id}`" class="hover:underline hover:text-blue-600 transition-colors">
+              {{ order.client.name }}
+            </Link>
+          </p>
           <p class="text-sm text-gray-500">{{ order.client.email }}</p>
           <p class="text-sm text-gray-500" v-if="order.client.phone">{{ order.client.phone }}</p>
           <p class="text-sm text-gray-500 mt-1" v-if="order.client.user_profile?.region">
@@ -278,21 +309,15 @@ const statusButtonClass = (s: string) => {
           <div class="mt-4 pt-4 border-t dark:border-gray-700">
             <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
             <div class="flex items-center gap-2">
-              <select 
-                :value="order.courier_id ?? ''" 
-                @change="(e) => assignCurrier((e.target as HTMLSelectElement).value || null)"
-                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-800 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
-              >
-                <option value="">Unassigned</option>
-                <option v-for="courier in couriers" :key="courier.id" :value="courier.id">
-                  {{ courier.name }}
-                </option>
-              </select>
+              <Button @click="isAssignModalOpen = true" variant="outline" class="w-full justify-between font-normal h-12" :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 shadow-none' : ''">
+                <span v-if="order.courier" class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/40"></span>
+                  Assigned to: <span class="font-bold">{{ order.courier.name }}</span>
+                </span>
+                <span v-else>Click to assign currier...</span>
+                <ChevronDown class="w-4 h-4 opacity-50" />
+              </Button>
             </div>
-            <p v-if="order.courier" class="text-[10px] text-green-600 mt-2 font-bold flex items-center gap-1">
-              <Check class="w-3 h-3" />
-              Currently: {{ order.courier.name }}
-            </p>
           </div>
         </div>
 
@@ -311,7 +336,7 @@ const statusButtonClass = (s: string) => {
             <div class="flex justify-between border-t dark:border-gray-700 pt-1 mt-1">
               <span class="text-gray-700 dark:text-gray-300 font-medium">Balance due</span>
               <span :class="order.balance_due > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
-                {{ order.balance_due.toFixed(2) }}
+                {{ order.balance_due.toFixed(2) }} <span class="text-[10px] uppercase ml-1 opacity-60">{{ ($page.props.currency as string) || 'USD' }}</span>
               </span>
             </div>
           </div>
@@ -378,6 +403,75 @@ const statusButtonClass = (s: string) => {
         </table>
       </div>
 
+      <!-- Courier Assignment Modal -->
+      <Dialog v-model:open="isAssignModalOpen">
+        <DialogContent class="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Assign Currier</DialogTitle>
+            <DialogDescription>
+              Select an available currier to process this order.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div class="py-2 space-y-2 lg:max-h-[60vh] sm:max-h-[80vh] overflow-y-auto pr-2">
+            <!-- Unassign option -->
+            <button 
+              @click="assignCurrier(null)"
+              class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all text-left"
+              :class="{ 'opacity-50 pointer-events-none': !order.courier_id }"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <Box class="w-5 h-5 text-gray-400" />
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900 dark:text-gray-100">Unassign Order</p>
+                  <p class="text-xs text-gray-500">Remove currently assigned currier.</p>
+                </div>
+              </div>
+            </button>
+
+            <!-- Currier list -->
+            <button 
+              v-for="courier in couriers" 
+              :key="courier.id"
+              @click="assignCurrier(courier.id)"
+              class="w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left relative overflow-hidden group"
+              :class="order.courier_id === courier.id ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 dark:bg-gray-800/50 dark:hover:bg-gray-800'"
+            >
+              <!-- Selection indicator -->
+              <div v-if="order.courier_id === courier.id" class="absolute top-0 right-0 w-12 h-12 flex items-start justify-end p-1.5 opacity-20 bg-blue-500 rounded-bl-[100%]">
+                <Check class="w-4 h-4 text-white translate-x-1 -translate-y-1" />
+              </div>
+
+              <div class="flex items-center gap-4 relative z-10 w-full">
+                <!-- Avatar with status indicator -->
+                <div class="relative">
+                  <img :src="courier.avatar_url" :alt="courier.name" class="w-12 h-12 rounded-full object-cover border-2 shadow-sm" :class="order.courier_id === courier.id ? 'border-blue-500' : 'border-white dark:border-gray-900'" />
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? 'Online' : 'Offline'"></span>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-2">
+                    {{ courier.name }}
+                    <span v-if="order.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">Current</span>
+                  </p>
+                  <div class="flex items-center gap-3 mt-1">
+                    <span class="text-xs font-medium text-gray-500 flex items-center gap-1">
+                      <div class="w-2 h-2 rounded-full" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'"></div>
+                      {{ isCurrierOnline(courier) ? 'Online' : 'Offline' }}
+                    </span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" :class="courier.orders_count > 0 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'">
+                      <Box class="w-3 h-3" />
+                      {{ courier.orders_count }} active tasks
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
 </template>

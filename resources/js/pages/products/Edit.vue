@@ -9,7 +9,16 @@ import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
 import { index, update } from '@/routes/products';
 import { computed, ref } from 'vue';
+import { PlusCircle, Trash2, Box } from 'lucide-vue-next';
 import { usePage } from '@inertiajs/vue3';
+
+interface RawMaterialCombo {
+  id: number;
+  name: string;
+  unit: string;
+  sku: string | null;
+  pivot?: { quantity: string };
+}
 
 interface Product {
   id: number;
@@ -20,19 +29,20 @@ interface Product {
   cost: string;
   weight: string;
   quantity: number;
-  currency: string;
   manage_stock: boolean;
   low_stock_threshold: number;
   low_stock_action: string;
   status: string;
   short_description: Record<string, string> | null;
   image_url: string | null;
+  raw_materials?: RawMaterialCombo[];
 }
 
 const props = defineProps<{
   product: Product;
   statuses: Record<string, string>;
   lowStockActions: Record<string, string>;
+  availableRawMaterials: RawMaterialCombo[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -50,13 +60,13 @@ const form = useForm({
   cost: props.product.cost,
   weight: props.product.weight,
   quantity: props.product.quantity,
-  currency: props.product.currency,
   manage_stock: props.product.manage_stock,
   low_stock_threshold: props.product.low_stock_threshold,
   low_stock_action: props.product.low_stock_action,
   status: props.product.status,
   short_description: Object.fromEntries(availableLocales.map(l => [l, props.product.short_description?.[l] ?? ''])),
   image: null as File | null,
+  raw_materials: props.product.raw_materials?.map(rm => ({ id: rm.id, quantity: Number(rm.pivot?.quantity ?? 1) })) ?? [],
 });
 
 const languageLabels: Record<string, string> = {
@@ -76,6 +86,14 @@ const currentLang = ref<LanguageCode>('ru');
 
 const submitForm = () => {
   form.post(update(props.product.id).url);
+};
+
+const addRawMaterial = () => {
+  form.raw_materials.push({ id: props.availableRawMaterials[0]?.id || 0, quantity: 1 });
+};
+
+const removeRawMaterial = (index: number) => {
+  form.raw_materials.splice(index, 1);
 };
 
 const handleFileChange = (e: Event) => {
@@ -166,15 +184,11 @@ const selectClass = cn(
               <Input id="sku" v-model="form.sku" required />
               <InputError :message="form.errors.sku" />
             </div>
-            <div class="grid gap-2">
+            <div class="grid gap-2 sm:col-span-2">
               <Label for="status">Status *</Label>
               <select id="status" v-model="form.status" :class="selectClass">
                 <option v-for="(label, value) in props.statuses" :key="value" :value="value">{{ label }}</option>
               </select>
-            </div>
-            <div class="grid gap-2">
-              <Label for="currency">Currency *</Label>
-              <Input id="currency" v-model="form.currency" maxlength="10" />
             </div>
             <!-- Multilingual Short description -->
             <div class="grid gap-2 sm:col-span-2">
@@ -234,6 +248,46 @@ const selectClass = cn(
                 </select>
               </div>
             </template>
+          </div>
+        </div>
+
+        <!-- Bill of Materials (BOM) -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6 mt-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-semibold text-gray-900 dark:text-white">Bill of Materials (BOM)</h2>
+              <p class="text-sm text-gray-500">Define the raw materials consumed when this product is produced.</p>
+            </div>
+            <Button type="button" @click="addRawMaterial" variant="outline" size="sm" class="gap-2">
+              <PlusCircle class="w-4 h-4" /> Add Material
+            </Button>
+          </div>
+
+          <div v-if="form.raw_materials.length === 0" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+            <Box class="w-8 h-8 mx-auto text-gray-400 mb-2" />
+            <p class="text-sm text-gray-500">No raw materials attached.</p>
+            <Button type="button" variant="link" @click="addRawMaterial" class="p-0 h-auto text-blue-600">Add first material</Button>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div v-for="(rm, index) in form.raw_materials" :key="index" class="flex items-end gap-3 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="flex-1 space-y-1">
+                <Label>Raw Material</Label>
+                <select v-model="rm.id" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-800 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                  <option v-for="material in props.availableRawMaterials" :key="material.id" :value="material.id">
+                    {{ material.name }} (Measured in {{ material.unit }})
+                  </option>
+                </select>
+              </div>
+              <div class="w-40 space-y-1">
+                <Label>Quantity Consumed</Label>
+                <Input v-model="rm.quantity" type="number" step="0.0001" min="0" required class="bg-white dark:bg-gray-800" />
+              </div>
+              <Button type="button" @click="removeRawMaterial(index)" variant="ghost" size="icon" class="h-9 w-9 text-red-500 hover:text-red-700 dark:hover:bg-red-900/30">
+                <Trash2 class="w-4 h-4" />
+              </Button>
+            </div>
+            <InputError :message="form.errors.raw_materials" />
           </div>
         </div>
 

@@ -100,6 +100,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/', [\App\Http\Controllers\CallLogController::class, 'store'])->name('store');
     Route::post('/originate', [\App\Http\Controllers\CallLogController::class, 'originate'])->name('originate');
   });
+
+  Route::name('financial.')->prefix('financial-records')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FinancialRecordController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\FinancialRecordController::class, 'store'])->name('store');
+    Route::post('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'update'])->name('update');
+    Route::delete('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'destroy'])->name('destroy');
+  });
+
+  Route::name('inventory.')->prefix('inventory-items')->group(function () {
+    Route::get('/', [\App\Http\Controllers\InventoryItemController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\InventoryItemController::class, 'store'])->name('store');
+    Route::post('{inventoryItem}', [\App\Http\Controllers\InventoryItemController::class, 'update'])->name('update');
+    Route::delete('{inventoryItem}', [\App\Http\Controllers\InventoryItemController::class, 'destroy'])->name('destroy');
+  });
+
+  Route::name('raw_materials.')->prefix('raw-materials')->group(function () {
+    Route::get('/', [\App\Http\Controllers\RawMaterialController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\RawMaterialController::class, 'store'])->name('store');
+    Route::post('{rawMaterial}', [\App\Http\Controllers\RawMaterialController::class, 'update'])->name('update');
+    Route::delete('{rawMaterial}', [\App\Http\Controllers\RawMaterialController::class, 'destroy'])->name('destroy');
+  });
 });
 
 require __DIR__ . '/settings.php';

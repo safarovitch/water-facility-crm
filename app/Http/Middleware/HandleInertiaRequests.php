@@ -64,6 +64,7 @@ class HandleInertiaRequests extends Middleware
         'error'   => $request->session()->get('error'),
       ],
       'adminMode' => $request->session()->get('admin_mode', false),
+      'currency' => config('app.currency'),
     ];
   }
 }

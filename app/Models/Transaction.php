@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
+use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Transaction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasHumanTimestamps;
 
     protected $fillable = [
         'wallet_id',
@@ -28,6 +29,13 @@ class Transaction extends Model
         'type' => TransactionType::class,
         'status' => TransactionStatus::class,
         'meta' => 'array',
+    ];
+
+    protected $appends = [
+        'created_at_human',
+        'created_at_formatted',
+        'updated_at_human',
+        'updated_at_formatted',
     ];
 
     public function wallet(): BelongsTo

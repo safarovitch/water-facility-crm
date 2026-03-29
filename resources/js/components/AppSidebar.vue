@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone, Activity } from 'lucide-vue-next';
+import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone, Activity, Wallet, Wrench, Truck, Box } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { index as usersIndex } from '@/routes/users';
 import { index as rolesIndex } from '@/routes/roles';
@@ -16,6 +16,8 @@ import { index as productsIndex } from '@/routes/products';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as ordersIndex, assignments as assignmentsIndex } from '@/routes/orders';
 import curriersIndex from '@/routes/curriers';
+import { index as financialIndex } from '@/routes/financial';
+import { index as inventoryIndex } from '@/routes/inventory';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -53,6 +55,16 @@ const mainNavItems = computed((): NavItem[] => {
         icon: ClipboardList,
         children: [
           {
+            title: 'Products',
+            href: productsIndex(),
+            icon: Package,
+          },
+          {
+            title: 'Raw Materials',
+            href: '/raw-materials',
+            icon: Box,
+          },
+          {
             title: 'Clients',
             href: clientsIndex(),
             icon: Users2,
@@ -62,6 +74,13 @@ const mainNavItems = computed((): NavItem[] => {
             href: ordersIndex(),
             icon: ShoppingCart,
           },
+        ],
+      },
+      {
+        title: 'Delivery',
+        href: '#',
+        icon: Truck,
+        children: [
           {
             title: 'Currier Assignments',
             href: assignmentsIndex(),
@@ -97,9 +116,14 @@ const mainNavItems = computed((): NavItem[] => {
         ]
       },
       {
-        title: 'Products',
-        href: productsIndex(),
-        icon: Package,
+        title: 'Accounting',
+        href: financialIndex().url,
+        icon: Wallet,
+      },
+      {
+        title: 'Inventory',
+        href: inventoryIndex().url,
+        icon: Wrench,
       }
     );
   } else if (isOnlyClient.value || (isStaff.value && !adminMode.value)) {

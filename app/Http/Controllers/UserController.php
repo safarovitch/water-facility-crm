@@ -23,17 +23,28 @@ class UserController extends Controller
 {
     public function index(): Response
     {
+        $query = User::query()->excludeSelf()->with('roles');
+
+        if (request()->filled('search')) {
+            $search = request()->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         $pagination = request()->has('pagination')
             ? request()->input('pagination')
             : ['limit' => 50, 'page' => 1];
 
         return Inertia::render('users/Index')->with([
-            'users' => User::query()->excludeSelf()->with('roles')->paginate(
+            'users' => $query->paginate(
                 $pagination['limit'],
                 ['*'],
                 'page',
                 $pagination['page']
-            ),
+            )->withQueryString(),
+            'filters' => request()->only(['search']),
             'roles' => Role::all(),
             'statuses' => UserStatus::asArray(),
             'activityStatuses' => UserActivityStatus::asArray(),

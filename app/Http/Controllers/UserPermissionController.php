@@ -12,17 +12,24 @@ class UserPermissionController extends Controller
 {
     public function index(): Response
     {
+        $query = Permission::query();
+
+        if (request()->filled('search')) {
+            $query->where('name', 'like', '%' . request()->search . '%');
+        }
+
         $pagination = request()->has('pagination')
             ? request()->input('pagination')
             : ['limit' => 50, 'page' => 1];
 
         return Inertia::render('permissions/Index')->with([
-            'permissions' => Permission::query()->paginate(
+            'permissions' => $query->paginate(
                 $pagination['limit'],
                 ['*'],
                 'page',
                 $pagination['page']
-            )
+            )->withQueryString(),
+            'filters' => request()->only(['search']),
         ]);
     }
 

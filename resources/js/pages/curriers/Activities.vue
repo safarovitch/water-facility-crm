@@ -20,7 +20,7 @@ import {
   MapPin,
   Truck
 } from 'lucide-vue-next';
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 
 const props = defineProps<{
   curriers: any[];
@@ -45,7 +45,7 @@ const filteredCurriers = computed(() => {
 
 const mapEl = ref<HTMLElement | null>(null);
 let mapInstance: any = null;
-let markers: any[] = [];
+let markers: { id: number, marker: any }[] = [];
 
 function loadLeaflet(): Promise<void> {
   if ((window as any).L) return Promise.resolve();
@@ -105,7 +105,7 @@ function updateMarkers() {
   const L = (window as any).L;
 
   // Clear existing markers
-  markers.forEach(m => m.remove());
+  markers.forEach(m => m.marker.remove());
   markers = [];
 
   props.curriers.forEach(currier => {
@@ -152,8 +152,13 @@ function updateMarkers() {
                     <span class="text-muted-foreground uppercase tracking-wider">Active Tasks:</span>
                     <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded">${activeOrders.length}</span>
                 </div>
+                <!-- Time recorded -->
+                <div class="flex items-center justify-between text-[10px] font-bold">
+                    <span class="text-muted-foreground uppercase tracking-wider">Recorded:</span>
+                    <span class="text-orange-500">${currier.last_location?.created_at_human || 'Unknown'}</span>
+                </div>
                 ${activeOrders.length > 0 ? `
-                    <div class="p-2 rounded-lg bg-muted/50 border border-sidebar-border/40">
+                    <div class="p-2 rounded-lg bg-muted/50 border border-sidebar-border/40 mt-1">
                         <p class="text-[10px] font-black uppercase tracking-wider mb-1">Current Route:</p>
                         <div class="flex items-start gap-1.5 min-w-0">
                             <i class="lucide-navigation h-3 w-3 text-primary mt-0.5"></i>
@@ -165,7 +170,7 @@ function updateMarkers() {
         </div>
     `, { className: 'custom-leaflet-popup' });
 
-    markers.push(marker);
+    markers.push({ id: currier.id, marker });
   });
 }
 
@@ -183,6 +188,31 @@ onBeforeUnmount(() => {
     if (mapInstance) mapInstance.remove();
 });
 
+const focusOnMap = async (currier: any) => {
+    if (!currier.last_location) return;
+    
+    viewMode.value = 'map';
+    
+    await nextTick();
+    if (!mapInstance) {
+        await initMap();
+    }
+    
+    // Allow leaf map size bindings to catch up when display toggle triggers
+    setTimeout(() => {
+        if (!mapInstance) return;
+        mapInstance.invalidateSize();
+        mapInstance.flyTo([currier.last_location.lat, currier.last_location.lng], 16, {
+            animate: true,
+            duration: 1
+        });
+        
+        const m = markers.find(m => m.id === currier.id);
+        if (m) {
+            m.marker.openPopup();
+        }
+    }, 200);
+};
 </script>
 
 <template>
@@ -235,6 +265,7 @@ onBeforeUnmount(() => {
                                 <th class="px-6 py-4">Active Tasks</th>
                                 <th class="px-6 py-4">Current Route</th>
                                 <th class="px-6 py-4">Last Activity</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-sidebar-border/40">
@@ -272,13 +303,18 @@ onBeforeUnmount(() => {
                                 <td class="px-6 py-4">
                                     <div v-if="currier.last_active_at || currier.last_location" class="flex flex-col">
                                         <span class="text-xs font-bold text-foreground">
-                                            {{ new Date(currier.last_active_at || currier.last_location.created_at).toLocaleTimeString() }}
+                                            {{ currier.last_active_at_human || currier.last_location?.created_at_human }}
                                         </span>
-                                        <span v-if="currier.last_location" class="text-[10px] text-muted-foreground font-bold">
-                                            {{ Number(currier.last_location.lat).toFixed(4) }}, {{ Number(currier.last_location.lng).toFixed(4) }}
+                                        <span v-if="currier.last_active_at" class="text-[9px] text-muted-foreground font-mono">
+                                            {{ currier.last_active_at_formatted }}
                                         </span>
                                     </div>
-                                    <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">No Data</span>
+                                     <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">No Data</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <Button v-if="currier.last_location" @click="focusOnMap(currier)" size="icon" variant="ghost" class="h-8 w-8 text-primary hover:bg-primary/10 transition-colors" title="Show on Map">
+                                        <MapPin class="h-4 w-4" />
+                                    </Button>
                                 </td>
                             </tr>
                         </tbody>
