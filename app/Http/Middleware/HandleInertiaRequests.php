@@ -65,6 +65,9 @@ class HandleInertiaRequests extends Middleware
       ],
       'adminMode' => $request->session()->get('admin_mode', false),
       'currency' => config('app.currency'),
+      'shouldRegisterPasskey' => $request->user()
+        ? $request->user()->passkeys()->count() === 0
+        : false,
     ];
   }
 }
