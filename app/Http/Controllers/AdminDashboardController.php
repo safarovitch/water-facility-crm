@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\RawMaterial;
+use App\Enums\OrderStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +83,57 @@ class AdminDashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // ------- Facility Performance -------
+        $totalCouriers = User::role('Currier')->count();
+        $activeCouriers = User::role('Currier')
+            ->where(function ($query) {
+                // Tracking online statuses within last hour
+                $query->where('last_active_at', '>=', now()->subMinutes(60))
+                      ->orWhereHas('lastLocation', function ($q) {
+                          $q->where('created_at', '>=', now()->subMinutes(60));
+                      });
+            })->count();
+
+        $deliveredToday = Order::where('status', OrderStatus::Delivered)
+            ->whereDate('actual_delivery_at', '>=', $today)
+            ->select('created_at', 'actual_delivery_at')
+            ->get();
+
+        $avgDeliveryMinutes = 0;
+        if ($deliveredToday->isNotEmpty()) {
+            $totalMins = $deliveredToday->sum(function ($order) {
+                return $order->actual_delivery_at->diffInMinutes($order->created_at);
+            });
+            $avgDeliveryMinutes = round($totalMins / $deliveredToday->count());
+        }
+
+        // ------- Unassigned Orders (Fast Dispatch) -------
+        $unassignedOrders = Order::whereNull('courier_id')
+            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+            ->with('client:id,name')
+            ->latest()
+            ->limit(6)
+            ->get()
+            ->map(fn($o) => [
+                'id' => $o->id,
+                'order_number' => $o->order_number,
+                'client_name' => $o->client?->name ?? '—',
+                'status' => $o->status->value ?? $o->status,
+                'created_at_human' => $o->created_at_human,
+            ]);
+
+        // ------- Early Inventory Warnings -------
+        $lowStockProducts = Product::where('manage_stock', true)
+            ->whereColumn('quantity', '<=', 'low_stock_threshold')
+            ->select('id', 'name', 'sku', 'quantity', 'low_stock_threshold')
+            ->limit(6)
+            ->get();
+
+        $lowStockRawMaterials = RawMaterial::orderBy('current_stock', 'asc')
+            ->select('id', 'name', 'sku', 'current_stock', 'unit')
+            ->limit(6)
+            ->get();
+
         return Inertia::render('AdminDashboard', [
             'stats' => [
                 'totalOrders'      => $totalOrders,
@@ -97,6 +150,15 @@ class AdminDashboardController extends Controller
             ],
             'recentOrders' => $recentOrders,
             'topProducts'  => $topProducts,
+            'performance' => [
+                'activeCouriers' => $activeCouriers,
+                'totalCouriers' => $totalCouriers,
+                'avgDeliveryMinutes' => $avgDeliveryMinutes,
+                'fulfillmentsToday' => $deliveredToday->count(),
+            ],
+            'unassignedOrders' => $unassignedOrders,
+            'lowStockProducts' => $lowStockProducts,
+            'lowStockRawMaterials' => $lowStockRawMaterials,
         ]);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
@@ -24,48 +23,51 @@ class UsersSeeder extends Seeder
     $user = \App\Models\User::updateOrCreate(['email' => $userData['email']], $userData);
 
     $user->phones()->updateOrCreate(
-        ['phone' => '+992884238383'],
-        ['label' => 'Primary', 'is_default' => true]
+      ['phone' => '+992884238383'],
+      ['label' => 'Primary', 'is_default' => true]
     );
 
     if ($user->roles()->count() === 0) {
       $user->assignRole('Admin');
     }
 
-    // Add John Courier
-    $courier = \App\Models\User::updateOrCreate(
+    if (app()->environment() !== 'production') {
+
+      // Add John Courier
+      $courier = \App\Models\User::updateOrCreate(
         ['email' => 'courier@example.com'],
         [
-            'name' => 'John Courier',
-            'password' => bcrypt('password'),
-            'status' => \App\Enums\UserStatus::Active,
-            'sip_extension' => '1002',
-            'sip_password' => 'secret123',
+          'name' => 'John Courier',
+          'password' => bcrypt('password'),
+          'status' => \App\Enums\UserStatus::Active,
+          'sip_extension' => '1002',
+          'sip_password' => 'secret123',
         ]
-    );
-    $courier->phones()->updateOrCreate(
-        ['phone' => '+14768661517'], // The number the user was testing with
-        ['label' => 'Mobile', 'is_default' => true]
-    );
-    if (!$courier->hasRole('Currier')) {
-        $courier->assignRole('Currier');
-    }
-
-    // Add Test Client
-    $client = \App\Models\User::updateOrCreate(
-        ['email' => 'client@example.com'],
-        [
-            'name' => 'Test Client',
-            'password' => bcrypt('password'),
-            'status' => \App\Enums\UserStatus::Active,
-        ]
-    );
-    $client->phones()->updateOrCreate(
+      );
+      $courier->phones()->updateOrCreate(
         ['phone' => '+992178605005'],
         ['label' => 'Mobile', 'is_default' => true]
-    );
-    if (!$client->hasRole('Client')) {
+      );
+      if (!$courier->hasRole('Currier')) {
+        $courier->assignRole('Currier');
+      }
+
+      // Add Test Client
+      $client = \App\Models\User::updateOrCreate(
+        ['email' => 'client@example.com'],
+        [
+          'name' => 'Test Client',
+          'password' => bcrypt('password'),
+          'status' => \App\Enums\UserStatus::Active,
+        ]
+      );
+      $client->phones()->updateOrCreate(
+        ['phone' => '+992178605005'],
+        ['label' => 'Mobile', 'is_default' => true]
+      );
+      if (!$client->hasRole('Client')) {
         $client->assignRole('Client');
+      }
     }
   }
 }
