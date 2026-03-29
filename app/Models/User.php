@@ -21,11 +21,12 @@ use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasPasskeys
 {
   /** @use HasFactory<\Database\Factories\UserFactory> */
-  use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasHumanTimestamps, HasApiTokens;
+  use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasHumanTimestamps, HasApiTokens, \Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 
   /**
    * The attributes that are mass assignable.

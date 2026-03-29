@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+Route::passkeys();
+
 Route::middleware(['auth', 'verified'])->group(function () {
   // /profile is the default landing for all users (named 'dashboard' so auth redirects still work)
   Route::get('profile', [DashboardController::class, 'index'])->name('dashboard');

@@ -18,6 +18,7 @@ const isClient = user?.roles?.includes('Client') && !user?.roles?.some((r: strin
 const sidebarNavItems = computed((): NavItem[] => [
     { title: 'Profile',     href: edit() },
     { title: 'Password',    href: editPassword() },
+    { title: 'Passkeys',    href: '/settings/passkeys' },
     ...(!isClient ? [{ title: 'Two-Factor Auth', href: show() }] : []),
     { title: 'Appearance',  href: appearance() },
 ]);

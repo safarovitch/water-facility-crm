@@ -20,6 +20,7 @@
         "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-medialibrary": "^11.14",
+        "spatie/laravel-passkeys": "^1.6",
         "spatie/laravel-permission": "^6.21",
         "spatie/laravel-sluggable": "^3.7"
     },
