@@ -44,7 +44,7 @@ const iconStyles = {
 </script>
 
 <template>
-  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 w-full max-w-sm pointer-events-none mt-[env(safe-area-inset-top)] md:mt-0">
     <TransitionGroup
       enter-active-class="transition duration-300 ease-out"
       enter-from-class="transform translate-y-[-20px] opacity-0 scale-95"
