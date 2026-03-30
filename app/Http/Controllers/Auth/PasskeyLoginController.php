@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Spatie\LaravelPasskeys\Http\Requests\AuthenticateUsingPasskeysRequest;
 use Illuminate\Support\Facades\Session;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
 use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
@@ -37,11 +37,8 @@ class PasskeyLoginController extends Controller
     /**
      * Authenticate using the passkey credential from the browser.
      */
-    public function authenticate(Request $request): RedirectResponse
+    public function authenticate(AuthenticateUsingPasskeysRequest $request): RedirectResponse
     {
-        $request->validate([
-            'start_authentication_response' => ['required', 'json'],
-        ]);
 
         $findPasskey = Config::getAction(
             'find_passkey',
