@@ -6,7 +6,7 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
-import { index, store } from '@/routes/orders';
+import { index, store } from '@/routes/admin/orders';
 import { computed, ref } from 'vue';
 
 interface UserProfile { company_name: string | null; type: string; }

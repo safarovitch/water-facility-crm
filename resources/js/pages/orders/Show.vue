@@ -5,7 +5,15 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
-import { index, edit, cancel, updateStatus, assign as assignRoute } from '@/routes/orders';
+import { index as guestIndex, show as guestShow, pay as guestPay } from '@/routes/orders';
+import { 
+  index as adminIndex, 
+  show as adminShow, 
+  edit as adminEdit, 
+  cancel as adminCancel, 
+  updateStatus as adminUpdateStatus, 
+  assign as adminAssignRoute 
+} from '@/routes/admin/orders';
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Wallet, Check, ChevronDown, Loader2, Box } from 'lucide-vue-next';
@@ -61,8 +69,17 @@ const props = defineProps<{
   couriers: CourierOption[]; 
 }>();
 
+const adminMode = computed(() => !!usePage().props.adminMode);
+
+const indexRoute = computed(() => adminMode.value ? adminIndex : guestIndex);
+const showRoute = computed(() => adminMode.value ? adminShow : guestShow);
+const editRoute = computed(() => adminMode.value ? adminEdit : null);
+const cancelRoute = computed(() => adminMode.value ? adminCancel : null);
+const updateStatusRoute = computed(() => adminMode.value ? adminUpdateStatus : null);
+const assignRoute = computed(() => adminMode.value ? adminAssignRoute : null);
+
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Orders', href: index().url },
+  { title: 'Orders', href: indexRoute.value().url },
   { title: props.order.order_number, href: '#' },
 ];
 
@@ -117,7 +134,7 @@ const confirmStatusUpdate = (status: string) => {
       isDropdownOpen.value = false;
       return;
     }
-    router.patch(cancel(props.order.id).url, {}, { 
+    router.patch(cancelRoute.value!(props.order.id).url, {}, { 
       preserveScroll: true,
       onSuccess: () => {
         isDropdownOpen.value = false;
@@ -134,7 +151,7 @@ const confirmStatusUpdate = (status: string) => {
     isDropdownOpen.value = false;
     pendingStatus.value = null;
   } else {
-    router.patch(updateStatus(props.order.id).url, { status }, { 
+    router.patch(updateStatusRoute.value!(props.order.id).url, { status }, { 
       preserveScroll: true,
       onSuccess: () => {
         isDropdownOpen.value = false;
@@ -145,7 +162,7 @@ const confirmStatusUpdate = (status: string) => {
 };
 
 const submitStatusUpdate = () => {
-  router.patch(updateStatus(props.order.id).url, statusForm.value, { 
+  router.patch(updateStatusRoute.value!(props.order.id).url, statusForm.value, { 
     preserveScroll: true,
     onSuccess: () => {
       isUpdatingStatus.value = false;
@@ -171,7 +188,7 @@ const isCurrierOnline = (courier: CourierOption) => {
 };
 
 const assignCurrier = (courierId: string | number | null) => {
-  router.patch(assignRoute({ order: props.order.id }).url, {
+  router.patch(assignRoute.value!({ order: props.order.id }).url, {
     courier_id: courierId ? Number(courierId) : null,
   }, {
     preserveScroll: true,
@@ -249,7 +266,7 @@ const statusButtonClass = (s: string) => {
               </div>
             </div>
 
-            <Link v-if="['pending', 'confirmed'].includes(order.status)" :href="edit(order.id).url">
+            <Link v-if="editRoute && ['pending', 'confirmed'].includes(order.status)" :href="editRoute(order.id).url">
               <Button variant="outline" size="sm" class="rounded-xl h-10 px-4">
                 <Edit class="w-4 h-4 mr-2" />
                 Edit Order

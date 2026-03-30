@@ -9,7 +9,7 @@ import Label from '@/components/ui/label/Label.vue';
 import AddressMapPicker from '@/components/AddressMapPicker.vue';
 import type { AddressData } from '@/components/AddressMapPicker.vue';
 import { index, store } from '@/routes/admin/clients';
-import users from '@/routes/users';
+import users from '@/routes/admin/users';
 import { computed, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { Info, AlertCircle } from 'lucide-vue-next';

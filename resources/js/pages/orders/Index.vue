@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import { index, create, show } from '@/routes/orders';
-import { ref } from 'vue';
+import { index as guestIndex, show as guestShow } from '@/routes/orders';
+import { index as adminIndex, show as adminShow, create as adminCreate } from '@/routes/admin/orders';
+import { computed, ref } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Eye, ShoppingCart } from 'lucide-vue-next';
 
+const adminMode = computed(() => !!usePage().props.adminMode);
+
+const indexRoute = computed(() => adminMode.value ? adminIndex : guestIndex);
+const showRoute = computed(() => adminMode.value ? adminShow : guestShow);
+const createRoute = computed(() => adminMode.value ? adminCreate : null);
+
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Orders', href: index().url },
+  { title: 'Orders', href: indexRoute.value().url },
 ];
 
 interface Order {
@@ -49,7 +56,7 @@ const statusFilter = ref('');
 const search = ref('');
 
 const applyFilter = () => {
-  router.get(index().url, {
+  router.get(indexRoute.value().url, {
     status: statusFilter.value || undefined,
     search: search.value || undefined,
   }, { preserveState: true, preserveScroll: true });
@@ -83,7 +90,7 @@ const statusBadgeClass: Record<string, string> = {
           <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Orders</h1>
           <p class="text-sm text-muted-foreground mt-1">Manage processing, ready, and delivered orders.</p>
         </div>
-        <Link :href="create().url" class="w-full md:w-auto">
+        <Link v-if="createRoute" :href="createRoute().url" class="w-full md:w-auto">
           <Button class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
             <PlusCircle class="h-4 w-4" /> New Order
           </Button>
@@ -157,7 +164,7 @@ const statusBadgeClass: Record<string, string> = {
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Link :href="show(order.id).url">
+                                    <Link :href="showRoute(order.id).url">
                                       <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" title="View Order">
                                           <Eye class="h-4 w-4" />
                                       </Button>
@@ -202,7 +209,7 @@ const statusBadgeClass: Record<string, string> = {
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Delivery</span>
                             <span class="text-xs text-gray-700 dark:text-gray-300">{{ order.scheduled_delivery_at_human || 'Not scheduled' }}</span>
                         </div>
-                        <Link :href="show(order.id).url">
+                        <Link :href="showRoute(order.id).url">
                           <Button variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
                               <Eye class="h-4 w-4 mr-1.5" /> View
                           </Button>
