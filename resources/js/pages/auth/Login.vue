@@ -37,9 +37,10 @@ const loginWithPasskey = async () => {
     passkeyLoading.value = true;
 
     try {
-        // 1. Get authentication options from Spatie's route
+        // 1. Get authentication options from our custom controller
         const optionsResponse = await fetch('/passkeys/authentication-options', {
             headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin', // ensure session cookie is sent
         });
 
         if (!optionsResponse.ok) {
@@ -51,13 +52,16 @@ const loginWithPasskey = async () => {
         // 2. Prompt device biometric (Face ID / Touch ID / Fingerprint)
         const credential = await startAuthentication({ optionsJSON });
 
-        // 3. Submit to Spatie's authenticate route
+        // 3. Submit to our custom authenticate route
         router.post('/passkeys/authenticate', {
             start_authentication_response: JSON.stringify(credential),
             remember: true,
         }, {
-            onError: () => {
-                passkeyError.value = 'Authentication failed. The passkey may not be registered.';
+            onSuccess: () => {
+                passkeyLoading.value = false;
+            },
+            onError: (errors) => {
+                passkeyError.value = errors.passkey || 'Authentication failed. The passkey may not be registered.';
                 passkeyLoading.value = false;
             },
         });

@@ -15,7 +15,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::passkeys();
+// Custom passkey routes (replaces Route::passkeys()) to fix Session::flash() issue
+Route::prefix('passkeys')->group(function () {
+    Route::get('authentication-options', [\App\Http\Controllers\Auth\PasskeyLoginController::class, 'authenticationOptions'])
+        ->name('passkeys.authentication_options');
+    Route::post('authenticate', [\App\Http\Controllers\Auth\PasskeyLoginController::class, 'authenticate'])
+        ->name('passkeys.login');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
   // /profile is the default landing for all users (named 'dashboard' so auth redirects still work)

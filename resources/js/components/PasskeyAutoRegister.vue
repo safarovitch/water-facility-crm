@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser';
 
+const STORAGE_KEY = 'passkey-auto-register-dismissed';
+
 const page = usePage();
-const prompted = ref(false);
 
 onMounted(async () => {
     const shouldRegister = (page.props as any).shouldRegisterPasskey;
 
-    if (!shouldRegister || !browserSupportsWebAuthn() || prompted.value) return;
+    if (!shouldRegister || !browserSupportsWebAuthn()) return;
+
+    // Don't prompt again if user already dismissed or registered
+    if (localStorage.getItem(STORAGE_KEY)) return;
 
     // Small delay so the page renders first
     await new Promise(r => setTimeout(r, 800));
-
-    prompted.value = true;
 
     try {
         // 1. Get registration options
@@ -32,7 +34,7 @@ onMounted(async () => {
         // 3. Store the passkey
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-        await fetch('/settings/passkeys', {
+        const storeResponse = await fetch('/settings/passkeys', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -45,8 +47,16 @@ onMounted(async () => {
                 passkey_options: JSON.stringify(options),
             }),
         });
+
+        if (storeResponse.ok) {
+            // Mark as done so we don't prompt again
+            localStorage.setItem(STORAGE_KEY, 'registered');
+            // Reload props so shouldRegisterPasskey becomes false
+            router.reload({ only: ['shouldRegisterPasskey'] });
+        }
     } catch (e) {
-        // User cancelled or error — silently ignore, they can register later
+        // User cancelled or error — mark as dismissed so we don't keep nagging
+        localStorage.setItem(STORAGE_KEY, 'dismissed');
     }
 });
 
