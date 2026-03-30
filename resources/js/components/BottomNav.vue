@@ -17,7 +17,7 @@ const navItems = computed(() => {
   if (adminMode.value) {
     return [
       { title: 'Home', href: '/admin', icon: LayoutGrid },
-      { title: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+      { title: 'Orders', href: '/admin/orders/index', icon: ShoppingCart },
       { title: 'Finance', href: '/admin/financial-records', icon: Wallet },
       { title: 'Inventory', href: '/admin/inventory-items', icon: Wrench }
     ];
@@ -25,7 +25,7 @@ const navItems = computed(() => {
   
   return [
     { title: 'Home', href: '/dashboard', icon: LayoutGrid },
-    { title: 'Orders', href: '/orders', icon: ShoppingCart },
+    { title: 'Orders', href: '/orders/index', icon: ShoppingCart },
   ];
 });
 
