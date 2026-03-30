@@ -17,12 +17,14 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppShell variant="sidebar">
-        <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden pb-20 md:pb-0 transition-[padding] duration-200">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <slot />
-        </AppContent>
-        <BottomNav />
-    </AppShell>
+    <div class="flex min-h-svh flex-col">
+        <AppShell variant="sidebar">
+            <AppSidebar />
+            <AppContent variant="sidebar" class="overflow-x-hidden pb-20 md:pb-0 transition-[padding] duration-200">
+                <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+                <slot />
+            </AppContent>
+            <BottomNav />
+        </AppShell>
+    </div>
 </template>
