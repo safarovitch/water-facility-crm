@@ -56,7 +56,7 @@ class ClientController extends Controller
    */
   public function show(Request $request, User $client)
   {
-      return redirect()->route('users.show', $client);
+      return redirect()->route('admin.users.show', $client);
   }
 
   /**
@@ -135,7 +135,7 @@ class ClientController extends Controller
       }
     });
 
-    return redirect()->route('clients.index')
+    return redirect()->route('admin.clients.index')
       ->with('success', 'Client created successfully.');
   }
 
@@ -226,7 +226,7 @@ class ClientController extends Controller
       $client->addresses()->whereNotIn('id', $incomingIds)->delete();
     });
 
-    return redirect()->route('clients.index')
+    return redirect()->route('admin.clients.index')
       ->with('success', 'Client updated successfully.');
   }
 
@@ -239,7 +239,7 @@ class ClientController extends Controller
 
     $client->delete();
 
-    return redirect()->route('clients.index')
+    return redirect()->route('admin.clients.index')
       ->with('success', 'Client deleted successfully.');
   }
 }

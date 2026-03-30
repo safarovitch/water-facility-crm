@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Form, useForm } from '@inertiajs/vue3';
 import { BreadcrumbItem } from '@/types';
 import { computed } from 'vue';
-import { index, store } from '@/routes/permissions/';
+import { index, store } from '@/routes/admin/permissions/';
 import { cn } from '@/lib/utils';
 
 const form = useForm({

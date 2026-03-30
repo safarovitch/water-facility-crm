@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { edit } from '@/routes/clients';
+import { edit } from '@/routes/admin/clients';
 import { useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import { useIntersectionObserver, onClickOutside } from '@vueuse/core';

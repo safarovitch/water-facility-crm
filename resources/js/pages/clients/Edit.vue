@@ -9,7 +9,7 @@ import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import AddressMapPicker from '@/components/AddressMapPicker.vue';
 import type { AddressData } from '@/components/AddressMapPicker.vue';
-import { index, update } from '@/routes/clients';
+import { index, update } from '@/routes/admin/clients';
 import { computed, ref } from 'vue';
 
 interface UserAddress {

@@ -125,7 +125,7 @@ class OrderController extends Controller
       return $order;
     });
 
-    return redirect()->route('orders.show', $order)
+    return redirect()->route('admin.orders.show', $order)
       ->with('success', 'Order created successfully.');
   }
 
@@ -181,7 +181,7 @@ class OrderController extends Controller
       $order->items()->createMany($items->toArray());
     });
 
-    return redirect()->route('orders.show', $order)
+    return redirect()->route('admin.orders.show', $order)
       ->with('success', 'Order updated successfully.');
   }
 

@@ -82,7 +82,7 @@ class UserController extends Controller
             $user->save();
         }
 
-        return redirect()->route('users.index')->with('success', __('User created successfully'));
+        return redirect()->route('admin.users.index')->with('success', __('User created successfully'));
     }
 
     public function edit(User $user): Response
@@ -130,7 +130,7 @@ class UserController extends Controller
             Cache::forget('avatar_url' . $user->id);
         }
 
-        return redirect()->route('users.index')->with('success', __('User updated successfully'));
+        return redirect()->route('admin.users.index')->with('success', __('User updated successfully'));
     }
 
     public function show(User $user): Response

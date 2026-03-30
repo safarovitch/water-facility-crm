@@ -7,17 +7,21 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, LayoutGrid, UsersIcon, UserCheck2, Package, Users2, ShoppingCart, ClipboardList, Phone, Activity, Wallet, Wrench, Truck, Box } from 'lucide-vue-next';
+import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
-import { index as usersIndex } from '@/routes/users';
-import { index as rolesIndex } from '@/routes/roles';
-import { index as permissionsIndex } from '@/routes/permissions';
-import { index as productsIndex } from '@/routes/products';
-import { index as clientsIndex } from '@/routes/clients';
-import { index as ordersIndex, assignments as assignmentsIndex } from '@/routes/orders';
-import curriersIndex from '@/routes/curriers';
-import { index as financialIndex } from '@/routes/financial';
-import { index as inventoryIndex } from '@/routes/inventory';
+
+// Use route() helper where possible or update hardcoded paths
+const routeUsersIndex = () => '/admin/users/index';
+const routeRolesIndex = () => '/admin/roles/index';
+const routePermissionsIndex = () => '/admin/permissions/index';
+const routeProductsIndex = () => '/admin/products/index';
+const routeClientsIndex = () => '/admin/clients/index';
+const routeOrdersIndexAdmin = () => '/admin/orders/index';
+const routeOrdersAssignments = () => '/admin/orders/assignments';
+const routeCurriersActivities = () => '/admin/curriers/activities';
+const routeFinancialIndex = () => '/admin/financial-records';
+const routeInventoryIndex = () => '/admin/inventory-items';
+const routeRawMaterialsIndex = () => '/admin/raw-materials';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -56,22 +60,22 @@ const mainNavItems = computed((): NavItem[] => {
         children: [
           {
             title: 'Products',
-            href: productsIndex(),
+            href: routeProductsIndex(),
             icon: Package,
           },
           {
             title: 'Raw Materials',
-            href: '/raw-materials',
+            href: routeRawMaterialsIndex(),
             icon: Box,
           },
           {
             title: 'Clients',
-            href: clientsIndex(),
+            href: routeClientsIndex(),
             icon: Users2,
           },
           {
             title: 'Orders',
-            href: ordersIndex(),
+            href: routeOrdersIndexAdmin(),
             icon: ShoppingCart,
           },
         ],
@@ -83,12 +87,12 @@ const mainNavItems = computed((): NavItem[] => {
         children: [
           {
             title: 'Currier Assignments',
-            href: assignmentsIndex(),
+            href: routeOrdersAssignments(),
             icon: ClipboardList,
           },
           {
             title: 'Currier Activities',
-            href: curriersIndex.activities.url(),
+            href: routeCurriersActivities(),
             icon: Activity,
           },
         ],
@@ -100,29 +104,29 @@ const mainNavItems = computed((): NavItem[] => {
         children: [
           {
             title: 'All users',
-            href: usersIndex(),
+            href: routeUsersIndex(),
             icon: UsersIcon,
           },
           {
             title: 'Roles',
-            href: rolesIndex(),
+            href: routeRolesIndex(),
             icon: UserX,
           },
           {
             title: 'Permissions',
-            href: permissionsIndex(),
+            href: routePermissionsIndex(),
             icon: UserCheck2,
           },
         ]
       },
       {
         title: 'Accounting',
-        href: financialIndex().url,
+        href: routeFinancialIndex(),
         icon: Wallet,
       },
       {
         title: 'Inventory',
-        href: inventoryIndex().url,
+        href: routeInventoryIndex(),
         icon: Wrench,
       }
     );
@@ -130,7 +134,7 @@ const mainNavItems = computed((): NavItem[] => {
     // In user mode (including admins in user mode): show My Orders
     items.push({
       title: 'My Orders',
-      href: ordersIndex(),
+      href: '/orders/index',
       icon: ShoppingCart,
     });
   }

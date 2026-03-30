@@ -60,7 +60,7 @@ class UserRoleController extends Controller
         if ($request->has('permissions')) {
             $role->syncPermissions($request->input('permissions'));
         }
-        return to_route('roles.index')->with('success', __('Role created successfully'));
+        return to_route('admin.roles.index')->with('success', __('Role created successfully'));
     }
 
     public function edit(Role $role): Response
@@ -91,6 +91,6 @@ class UserRoleController extends Controller
         if ($request->has('permissions')) {
             $role->syncPermissions($request->input('permissions'));
         }
-        return to_route('roles.index')->with('success', __('Role updated successfully'));
+        return to_route('admin.roles.index')->with('success', __('Role updated successfully'));
     }
 }

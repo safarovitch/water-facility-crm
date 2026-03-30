@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Form, useForm } from '@inertiajs/vue3';
 import { BreadcrumbItem } from '@/types';
 import { computed } from 'vue';
-import permissions, { index, update } from '@/routes/permissions/';
+import permissions, { index, update } from '@/routes/admin/permissions/';
 import { cn } from '@/lib/utils';
 
 const props = defineProps<{

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as ordersIndex } from '@/routes/orders';
-import { index, create, edit, destroy } from '@/routes/clients';
+import { index, create, edit, destroy } from '@/routes/admin/clients';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { Phone, Eye, Pencil, Trash2, PlusCircle, Search, Users } from 'lucide-vue-next';

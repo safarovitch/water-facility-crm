@@ -7,7 +7,7 @@ import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
-import { index, store } from '@/routes/products';
+import { index, store } from '@/routes/admin/products';
 import { computed, ref } from 'vue';
 import { PlusCircle, Trash2, Box } from 'lucide-vue-next';
 import { usePage } from '@inertiajs/vue3';

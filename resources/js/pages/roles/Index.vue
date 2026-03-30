@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index, create, edit } from '@/routes/roles';
+import { index, create, edit } from '@/routes/admin/roles';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';

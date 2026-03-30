@@ -375,20 +375,24 @@ onMounted(() => {
         initializeSIP();
       }
     };
+    // @ts-ignore
+    window.toggleDialpad = () => {
+      toggleDialpad();
+    };
   }
 });
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
-      <!-- Floating Action Button -->
-      <Button v-if="!dialpadOpen" @click="toggleDialpad" class="rounded-full shadow-xl h-16 w-16 bg-blue-600 hover:bg-blue-700 text-white transition-all transform hover:scale-110 hover:shadow-blue-500/40 outline-none ring-4 ring-blue-500/20" style="bottom: 1.5rem; right: 1.5rem;">
+    <div v-if="user?.sip_extension" class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end max-md:bottom-20">
+      <!-- Floating Action Button - Hidden on mobile, shown on desktop -->
+      <Button v-if="!dialpadOpen" @click="toggleDialpad" class="hidden md:flex rounded-full shadow-xl h-16 w-16 bg-blue-600 hover:bg-blue-700 text-white transition-all transform hover:scale-110 hover:shadow-blue-500/40 outline-none ring-4 ring-blue-500/20">
         <Phone class="h-7 w-7" />
       </Button>
 
       <!-- Dialer Widget -->
-      <div v-if="dialpadOpen" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-80 overflow-hidden transform transition-all duration-300" :class="isCallActive ? 'scale-100 opacity-100' : 'scale-100 opacity-100'">
+      <div v-if="dialpadOpen" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-80 overflow-hidden transform transition-all duration-300 max-md:w-[90vw] max-md:mx-auto" :class="isCallActive ? 'scale-100 opacity-100' : 'scale-100 opacity-100'">
         <!-- Header -->
         <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 flex justify-between items-center border-b border-gray-100 dark:border-gray-800">
           <div class="flex items-center space-x-2">

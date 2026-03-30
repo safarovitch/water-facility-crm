@@ -10,7 +10,7 @@ import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
-import { index, update } from '@/routes/users';
+import { index, update } from '@/routes/admin/users';
 
 const props = defineProps<{
   user: UserObject,

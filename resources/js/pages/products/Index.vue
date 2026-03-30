@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index, create, edit } from '@/routes/products';
+import { index, create, edit } from '@/routes/admin/products';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import { Card, CardContent } from '@/components/ui/card';

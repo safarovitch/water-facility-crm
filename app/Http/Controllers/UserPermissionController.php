@@ -53,7 +53,7 @@ class UserPermissionController extends Controller
             'guard_name' => $request->input('guard_name'),
         ]);
 
-        return to_route('permissions.index')->with('success', __('Permission created successfully'));
+        return to_route('admin.permissions.index')->with('success', __('Permission created successfully'));
     }
 
     public function edit(Permission $permission): Response
@@ -77,6 +77,6 @@ class UserPermissionController extends Controller
             'guard_name' => $request->input('guard_name'),
         ]);
 
-        return to_route('permissions.index')->with('success', __('Permission updated successfully'));
+        return to_route('admin.permissions.index')->with('success', __('Permission updated successfully'));
     }
 }

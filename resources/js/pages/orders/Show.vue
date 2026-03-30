@@ -6,7 +6,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
 import { index, edit, cancel, updateStatus, assign as assignRoute } from '@/routes/orders';
-import { edit as editProduct } from '@/routes/products';
+import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Wallet, Check, ChevronDown, Loader2, Box } from 'lucide-vue-next';
 

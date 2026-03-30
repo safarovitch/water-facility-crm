@@ -9,7 +9,7 @@ import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
-import { index, store } from '@/routes/roles';
+import { index, store } from '@/routes/admin/roles';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

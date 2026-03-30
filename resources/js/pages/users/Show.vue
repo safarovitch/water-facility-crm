@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { index, edit, show } from '@/routes/users';
+import { index, edit, show } from '@/routes/admin/users';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
