@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle, Search, Edit, Trash2, Camera, MapPin, Database, Wrench } from 'lucide-vue-next';
 
 interface InventoryItem {
@@ -77,6 +78,7 @@ const form = useForm({
   purchase_price: '',
   notes: '',
   photo: null as File | null,
+  add_to_expense: false,
 });
 
 const filterForm = useForm({
@@ -97,6 +99,7 @@ const resetFilters = () => {
 const openCreateModal = () => {
   editingRecord.value = null;
   form.reset();
+  form.add_to_expense = false;
   form.clearErrors();
   isDialogOpen.value = true;
 };
@@ -114,6 +117,7 @@ const openEditModal = (item: InventoryItem) => {
   form.purchase_price = item.purchase_price || '';
   form.notes = item.notes || '';
   form.photo = null;
+  form.add_to_expense = false;
   form.clearErrors();
   isDialogOpen.value = true;
 };
@@ -387,6 +391,21 @@ const statusBadgeClass = (status: string) => {
               <div class="space-y-2">
                  <Label for="purchase_price">Purchase Value ({{ ($page.props.currency as string) || 'USD' }})</Label>
                  <Input v-model="form.purchase_price" type="number" step="0.01" min="0" id="purchase_price" placeholder="0.00" />
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2 bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30">
+              <Checkbox id="add_to_expense" v-model:checked="form.add_to_expense" />
+              <div class="grid gap-1.5 leading-none">
+                <Label
+                  for="add_to_expense"
+                  class="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Add to expenses
+                </Label>
+                <p class="text-xs text-muted-foreground italic">
+                  Create a record in the financial system for this purchase.
+                </p>
               </div>
             </div>
 

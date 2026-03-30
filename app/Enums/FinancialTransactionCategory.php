@@ -13,6 +13,7 @@ use BenSampo\Enum\Enum;
  * @method static static Sales()
  * @method static static Maintenance()
  * @method static static Utilities()
+ * @method static static Inventory()
  * @method static static Other()
  */
 final class FinancialTransactionCategory extends Enum
@@ -23,5 +24,6 @@ final class FinancialTransactionCategory extends Enum
     const Sales         = 'sales';
     const Maintenance   = 'maintenance';
     const Utilities     = 'utilities';
+    const Inventory     = 'inventory';
     const Other         = 'other';
 }

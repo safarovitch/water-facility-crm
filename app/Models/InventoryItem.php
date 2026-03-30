@@ -41,4 +41,9 @@ class InventoryItem extends Model implements HasMedia
         'created_at_human',
         'created_at_formatted',
     ];
+
+    public function financialRecords(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(FinancialRecord::class, 'recordable');
+    }
 }

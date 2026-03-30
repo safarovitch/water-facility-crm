@@ -23,6 +23,8 @@ class FinancialRecord extends Model implements HasMedia
         'description',
         'transaction_date',
         'recorded_by_id',
+        'recordable_id',
+        'recordable_type',
     ];
 
     protected $casts = [
@@ -68,5 +70,10 @@ class FinancialRecord extends Model implements HasMedia
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_id');
+    }
+
+    public function recordable(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    {
+        return $this->morphTo();
     }
 }
