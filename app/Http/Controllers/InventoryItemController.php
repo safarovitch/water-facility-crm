@@ -68,15 +68,13 @@ class InventoryItemController extends Controller
         $item = InventoryItem::create($data);
 
         if ($request->boolean('add_to_expense') && $item->purchase_price > 0) {
-            FinancialRecord::create([
+            $item->financialRecords()->create([
                 'amount'           => $item->purchase_price,
                 'type'             => FinancialTransactionType::Expense,
                 'category'         => FinancialTransactionCategory::Inventory,
                 'description'      => "Purchased inventory: " . $item->name,
                 'transaction_date' => $item->purchase_date ?? now(),
                 'recorded_by_id'   => auth()->id(),
-                'recordable_id'    => $item->id,
-                'recordable_type'  => get_class($item),
             ]);
         }
 
@@ -108,6 +106,7 @@ class InventoryItemController extends Controller
         $inventoryItem->update($data);
 
         if ($request->boolean('add_to_expense') && $inventoryItem->purchase_price > 0) {
+            // Use relationship to ensure recordable_id and recordable_type are set
             $exists = $inventoryItem->financialRecords()->exists();
             
             if (!$exists) {

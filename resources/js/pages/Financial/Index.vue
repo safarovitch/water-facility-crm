@@ -214,34 +214,38 @@ const formatCurrency = (value: number) => {
         </CardHeader>
         <CardContent class="p-0">
             <!-- Filters -->
-            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
-                <div class="space-y-1">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Type</Label>
-                    <select v-model="filterForm.type" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                        <option value="">All Types</option>
-                        <option v-for="(label, value) in types" :key="value" :value="value">{{ label }}</option>
-                    </select>
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 grid grid-cols-1 md:flex md:flex-wrap gap-3 items-end border-b">
+                <div class="grid grid-cols-2 gap-3 w-full md:flex md:gap-3 md:w-auto">
+                    <div class="space-y-1 md:w-40">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">Type</Label>
+                        <select v-model="filterForm.type" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="">All Types</option>
+                            <option v-for="(label, value) in types" :key="value" :value="value">{{ label }}</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1 md:w-48">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
+                        <Input v-model="filterForm.category" list="category-suggestions" placeholder="All" class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm" />
+                    </div>
                 </div>
-                <div class="space-y-1">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
-                    <Input v-model="filterForm.category" list="category-suggestions" placeholder="All Categories" class="h-9 w-full bg-transparent border-input shadow-sm transition-colors" />
+                <div class="grid grid-cols-2 gap-3 w-full md:flex md:gap-3 md:w-auto">
+                    <div class="space-y-1 md:w-40">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">From</Label>
+                        <Input v-model="filterForm.from" type="date" class="h-10 md:h-9" />
+                    </div>
+                    <div class="space-y-1 md:w-40">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">To</Label>
+                        <Input v-model="filterForm.to" type="date" class="h-10 md:h-9" />
+                    </div>
                 </div>
-                <div class="space-y-1">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">From</Label>
-                    <Input v-model="filterForm.from" type="date" class="h-9" />
-                </div>
-                <div class="space-y-1">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">To</Label>
-                    <Input v-model="filterForm.to" type="date" class="h-9" />
-                </div>
-                <div class="flex gap-2">
-                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-9">Apply</Button>
-                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-9 text-muted-foreground">Reset</Button>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Apply</Button>
+                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-10 md:h-9 flex-1 md:flex-none text-muted-foreground">Reset</Button>
                 </div>
             </div>
 
-            <!-- Table -->
-            <div class="relative overflow-x-auto">
+            <!-- Table (Desktop) -->
+            <div class="hidden md:block relative overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
@@ -273,7 +277,7 @@ const formatCurrency = (value: number) => {
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right font-bold" :class="record.type === 'income' ? 'text-green-600' : 'text-red-600'">
                                 <span v-if="record.type === 'income'">+</span><span v-else>-</span>{{ formatCurrency(parseFloat(record.amount)) }}
-                            </td>
+                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <a v-if="record.receipt_url" :href="record.receipt_url" target="_blank" class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all">
                                     <Tag class="h-4 w-4" />
@@ -291,14 +295,58 @@ const formatCurrency = (value: number) => {
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="records.data.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center text-muted-foreground">
-                                <Tag class="h-10 w-10 mx-auto mb-2 opacity-20" />
-                                <p>No financial records found for the given filters.</p>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Card View (Mobile) -->
+            <div class="md:hidden divide-y divide-border/60">
+                <div v-for="record in records.data" :key="record.id" class="p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-muted-foreground font-mono">{{ record.transaction_date_formatted }}</span>
+                            <Badge :class="categoryBadgeClass(record.category)" variant="outline" class="mt-1 w-fit">
+                                {{ categories[record.category] || record.category }}
+                            </Badge>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-lg" :class="record.type === 'income' ? 'text-green-600 font-black' : 'text-red-500 font-black'">
+                                <span v-if="record.type === 'income'">+</span><span v-else>-</span>{{ formatCurrency(parseFloat(record.amount)) }}
+                            </div>
+                            <div class="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{{ record.type }}</div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3">
+                        {{ record.description || 'No description provided' }}
+                    </p>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-dashed border-border/60">
+                        <div class="flex items-center gap-2">
+                            <div class="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                                {{ record.recorder?.name?.charAt(0) || '?' }}
+                            </div>
+                            <span class="text-xs text-muted-foreground">{{ record.recorder?.name || 'Unknown' }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a v-if="record.receipt_url" :href="record.receipt_url" target="_blank" class="h-9 w-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Tag class="h-4 w-4" />
+                            </a>
+                            <Button @click="openEditDialog(record)" variant="secondary" size="sm" class="h-9 rounded-lg">
+                                <Edit class="h-4 w-4" />
+                            </Button>
+                            <Button @click="deleteRecord(record.id)" variant="ghost" size="icon" class="h-9 w-9 text-red-500 bg-red-50/50 dark:bg-red-900/10 rounded-lg">
+                                <Trash2 class="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="records.data.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+                <Tag class="h-10 w-10 mx-auto mb-2 opacity-20" />
+                <p>No financial records found for the given filters.</p>
             </div>
 
             <!-- Pagination (Simple) -->

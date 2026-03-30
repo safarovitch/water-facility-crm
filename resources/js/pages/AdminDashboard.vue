@@ -324,7 +324,8 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                         <a href="/orders/assignments" class="text-xs font-bold uppercase tracking-wider text-primary hover:underline">Dispatch All &rarr;</a>
                     </div>
                     <div class="p-0">
-                        <div class="overflow-x-auto">
+                        <!-- Desktop Queue -->
+                        <div class="hidden md:block overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead>
                                     <tr class="border-b border-primary/10">
@@ -341,10 +342,24 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                                     </tr>
                                 </tbody>
                             </table>
-                            <div v-if="!unassignedOrders.length" class="flex flex-col items-center justify-center py-8 opacity-60">
-                                <CheckCircle class="h-8 w-8 text-primary mb-2" />
-                                <p class="text-xs font-bold text-primary">All active orders are currently dispatched!</p>
+                        </div>
+                        
+                        <!-- Mobile Queue -->
+                        <div class="md:hidden divide-y divide-primary/10">
+                            <div v-for="order in unassignedOrders" :key="order.id" class="p-4 flex items-center justify-between bg-primary/5 active:bg-primary/10 transition-colors">
+                                <div class="flex flex-col">
+                                    <a :href="`/orders/${order.id}`" class="font-mono text-sm font-bold text-primary">{{ order.order_number }}</a>
+                                    <span class="text-xs font-medium text-primary/80 mt-0.5">{{ order.client_name }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-200/50">{{ order.created_at_human }}</span>
+                                </div>
                             </div>
+                        </div>
+
+                        <div v-if="!unassignedOrders.length" class="flex flex-col items-center justify-center py-8 opacity-60">
+                            <CheckCircle class="h-8 w-8 text-primary mb-2" />
+                            <p class="text-xs font-bold text-primary">All active orders are currently dispatched!</p>
                         </div>
                     </div>
                 </div>
@@ -399,8 +414,11 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="flex items-center gap-2 border-b border-sidebar-border/70 px-5 py-4 dark:border-sidebar-border">
                     <ShoppingCart class="h-4 w-4 text-muted-foreground" />
                     <h3 class="text-sm font-semibold text-foreground">Recent Orders</h3>
+                    <a href="/orders" class="ml-auto text-xs font-bold uppercase tracking-wider text-primary hover:underline">View All &rarr;</a>
                 </div>
-                <div class="overflow-x-auto">
+                
+                <!-- Desktop Recent Orders -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-sidebar-border/70 dark:border-sidebar-border">
@@ -450,8 +468,36 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                             </tr>
                         </tbody>
                     </table>
-                    <p v-if="!recentOrders.length" class="px-5 py-8 text-center text-sm text-muted-foreground">No orders yet.</p>
                 </div>
+
+                <!-- Mobile Recent Orders -->
+                <div class="md:hidden divide-y divide-sidebar-border/40">
+                    <div v-for="order in recentOrders" :key="order.id" class="p-4 active:bg-muted/30 transition-colors">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex flex-col">
+                                <a :href="`/orders/${order.id}`" class="font-mono text-sm font-bold text-primary">{{ order.order_number }}</a>
+                                <span class="text-xs font-medium text-foreground mt-0.5">{{ order.client_name }}</span>
+                            </div>
+                            <span
+                                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                                :class="statusConfig[order.status]?.color ?? 'text-muted-foreground bg-muted'"
+                            >
+                                {{ statusConfig[order.status]?.label ?? order.status }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-dashed border-sidebar-border/30">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total</span>
+                                <span class="text-sm font-bold text-foreground">{{ fmtCurrency(order.total_amount) }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-muted-foreground">{{ order.created_at_formatted }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p v-if="!recentOrders.length" class="px-5 py-8 text-center text-sm text-muted-foreground">No orders yet.</p>
             </div>
 
         </div>

@@ -77,14 +77,14 @@ const statusBadgeClass: Record<string, string> = {
 <template>
   <Head title="Orders" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="space-y-6 container mx-auto">
-      <div class="flex items-center justify-between">
+    <div class="space-y-4 md:space-y-6 container mx-auto px-4 md:px-0">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Orders</h1>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Orders</h1>
           <p class="text-sm text-muted-foreground mt-1">Manage processing, ready, and delivered orders.</p>
         </div>
-        <Link :href="create().url">
-          <Button class="gap-2 shadow-sm font-semibold rounded-xl">
+        <Link :href="create().url" class="w-full md:w-auto">
+          <Button class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
             <PlusCircle class="h-4 w-4" /> New Order
           </Button>
         </Link>
@@ -93,26 +93,26 @@ const statusBadgeClass: Record<string, string> = {
       <Card class="shadow-sm">
         <CardContent class="p-0">
             <!-- Filters -->
-            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
-                <div class="space-y-1 relative w-64 flex-1 max-w-sm">
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 grid grid-cols-1 md:flex md:flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-full md:w-64 max-w-sm">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
                     <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-                    <Input v-model="search" placeholder="Search order # or client..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilter" />
+                    <Input v-model="search" placeholder="Order # or client..." class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilter" />
                 </div>
-                <div class="space-y-1 w-48">
+                <div class="space-y-1 w-full md:w-48">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
-                    <select v-model="statusFilter" @change="applyFilter" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    <select v-model="statusFilter" @change="applyFilter" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         <option value="">All Statuses</option>
                         <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ s.replace('_', ' ') }}</option>
                     </select>
                 </div>
-                <div class="flex gap-2">
-                    <Button @click="applyFilter" variant="secondary" size="sm" class="h-9">Apply Filters</Button>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Apply Filters</Button>
                 </div>
             </div>
 
-            <!-- Table -->
-            <div class="relative overflow-x-auto">
+            <!-- Table (Desktop) -->
+            <div class="hidden md:block relative overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
@@ -165,16 +165,58 @@ const statusBadgeClass: Record<string, string> = {
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="orders.data.length === 0">
-                            <td colspan="7" class="px-6 py-12 text-center text-muted-foreground">
-                                <div class="flex flex-col items-center justify-center opacity-60">
-                                    <ShoppingCart class="h-10 w-10 mb-3 text-gray-400" />
-                                    <p class="font-medium text-sm">No orders found.</p>
-                                </div>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Card View (Mobile) -->
+            <div class="md:hidden divide-y divide-border/60">
+                <div v-for="order in orders.data" :key="order.id" class="p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-col">
+                            <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.client?.name }}</span>
+                            <span class="text-[10px] text-muted-foreground">{{ order.client?.email }}</span>
+                        </div>
+                        <Badge variant="outline" class="capitalize whitespace-nowrap text-[10px] h-5 px-1.5 shrink-0 font-semibold" :class="statusBadgeClass[order.status]">
+                            {{ order.status.replace('_', ' ') }}
+                        </Badge>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Total</span>
+                            <span class="font-bold text-sm text-gray-900 dark:text-white">{{ order.total_amount }} <span class="text-[10px] font-normal">{{ $page.props.currency }}</span></span>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Balance Due</span>
+                            <span class="font-bold text-sm" :class="order.balance_due > 0 ? 'text-red-500' : 'text-gray-900 dark:text-white'">
+                                {{ order.balance_due > 0 ? order.balance_due.toFixed(2) : 'Paid' }} 
+                                <span v-if="order.balance_due > 0" class="text-[10px] font-normal">{{ $page.props.currency }}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-dashed border-border/60">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Delivery</span>
+                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ order.scheduled_delivery_at_human || 'Not scheduled' }}</span>
+                        </div>
+                        <Link :href="show(order.id).url">
+                          <Button variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
+                              <Eye class="h-4 w-4 mr-1.5" /> View
+                          </Button>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="orders.data.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+                <div class="flex flex-col items-center justify-center opacity-60">
+                    <ShoppingCart class="h-10 w-10 mb-3 text-gray-400" />
+                    <p class="font-medium text-sm">No orders found.</p>
+                </div>
             </div>
 
             <!-- Pagination -->

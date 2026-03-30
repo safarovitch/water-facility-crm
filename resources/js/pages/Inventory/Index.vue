@@ -161,14 +161,14 @@ const statusBadgeClass = (status: string) => {
   <Head title="Inventory" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="space-y-6 container mx-auto">
+    <div class="space-y-4 md:space-y-6 container mx-auto px-4 md:px-0">
       <!-- Headers & Summary Cards -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Inventory</h1>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Inventory</h1>
           <p class="text-sm text-muted-foreground mt-1">Manage tools, equipment, and assets.</p>
         </div>
-        <Button @click="openCreateModal" class="gap-2 shadow-sm font-semibold rounded-xl">
+        <Button @click="openCreateModal" class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
           <PlusCircle class="h-4 w-4" /> Add Item
         </Button>
       </div>
@@ -207,31 +207,33 @@ const statusBadgeClass = (status: string) => {
       <Card class="shadow-sm">
         <CardContent class="p-0">
             <!-- Filters -->
-            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
-                <div class="space-y-1 relative w-64">
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 grid grid-cols-1 md:flex md:flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-full md:w-64">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
                     <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-                    <Input v-model="filterForm.search" placeholder="Search name, serial..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilters" />
+                    <Input v-model="filterForm.search" placeholder="Search name, serial..." class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilters" />
                 </div>
-                <div class="space-y-1 w-48">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
-                    <Input v-model="filterForm.category" list="category-suggestions" placeholder="All Categories" class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm" />
+                <div class="grid grid-cols-2 gap-3 w-full md:flex md:gap-3 md:w-auto">
+                    <div class="space-y-1 md:w-48">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
+                        <Input v-model="filterForm.category" list="category-suggestions" placeholder="All" class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm" />
+                    </div>
+                    <div class="space-y-1 md:w-40">
+                        <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
+                        <select v-model="filterForm.status" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="">All Statuses</option>
+                            <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ status.replace('_', ' ') }}</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="space-y-1 w-40">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
-                    <select v-model="filterForm.status" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        <option value="">All Statuses</option>
-                        <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ status.replace('_', ' ') }}</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-9">Apply</Button>
-                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-9 text-muted-foreground">Reset</Button>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Apply</Button>
+                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-10 md:h-9 flex-1 md:flex-none text-muted-foreground">Reset</Button>
                 </div>
             </div>
 
-            <!-- Table -->
-            <div class="relative overflow-x-auto">
+            <!-- Table (Desktop) -->
+            <div class="hidden md:block relative overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
@@ -283,17 +285,57 @@ const statusBadgeClass = (status: string) => {
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="items.data.length === 0">
-                            <td colspan="5" class="px-6 py-12 text-center text-muted-foreground">
-                                <div class="flex flex-col items-center justify-center opacity-60">
-                                    <Database class="h-10 w-10 mb-3 text-gray-400" />
-                                    <p class="font-medium text-sm">No inventory items found.</p>
-                                    <p class="text-xs mt-1">Adjust filters or add a new item.</p>
-                                </div>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Card View (Mobile) -->
+            <div class="md:hidden divide-y divide-border/60">
+                <div v-for="item in items.data" :key="item.id" class="p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 shrink-0 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <img v-if="item.photo_url" :src="item.photo_url" class="h-full w-full object-cover" />
+                            <Wrench v-else class="h-7 w-7 text-gray-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="font-bold text-gray-900 dark:text-white text-base leading-tight">{{ item.name }}</div>
+                                <Badge :class="statusBadgeClass(item.status)" class="capitalize whitespace-nowrap text-[10px] h-5 px-1.5 shrink-0">
+                                    {{ item.status.replace('_', ' ') }}
+                                </Badge>
+                            </div>
+                            <div class="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                <span class="bg-muted/50 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-tight">{{ item.category }}</span>
+                                <span v-if="item.serial_number" class="font-mono">SN: {{ item.serial_number }}</span>
+                                <span v-if="item.location" class="flex items-center gap-1"><MapPin class="h-3 w-3" /> {{ item.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">In Stock</span>
+                            <span class="font-bold text-sm">{{ Number(item.quantity) }} <span class="text-xs font-normal text-muted-foreground">{{ item.unit }}</span></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Button @click="openEditModal(item)" variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
+                                <Edit class="h-4 w-4 mr-1.5" /> Edit
+                            </Button>
+                            <Button @click="deleteRecord(item.id)" variant="ghost" size="icon" class="h-9 w-9 text-red-500 bg-red-50/50 dark:bg-red-900/10 rounded-lg">
+                                <Trash2 class="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="items.data.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+                <div class="flex flex-col items-center justify-center opacity-60">
+                    <Database class="h-10 w-10 mb-3 text-gray-400" />
+                    <p class="font-medium text-sm">No inventory items found.</p>
+                    <p class="text-xs mt-1">Adjust filters or add a new item.</p>
+                </div>
             </div>
             
             <!-- Pagination -->
