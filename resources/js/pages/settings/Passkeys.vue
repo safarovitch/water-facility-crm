@@ -96,10 +96,6 @@ const deletePasskey = (id: number) => {
     if (confirm('Are you sure you want to remove this passkey? You will no longer be able to sign in with it.')) {
         deleteForm.delete(`/settings/passkeys/${id}`, {
             preserveScroll: true,
-            onSuccess: () => {
-                // Clear the auto-register dismissal so the prompt can appear again
-                localStorage.removeItem('passkey-auto-register-dismissed');
-            },
         });
     }
 };
