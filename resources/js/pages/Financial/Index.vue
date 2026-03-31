@@ -225,7 +225,10 @@ const formatCurrency = (value: number) => {
                     </div>
                     <div class="space-y-1 md:w-48">
                         <Label class="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
-                        <Input v-model="filterForm.category" list="category-suggestions" placeholder="All" class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm" />
+                        <select v-model="filterForm.category" @change="applyFilters" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="">All Categories</option>
+                            <option v-for="(label, value) in categories" :key="value" :value="value">{{ label }}</option>
+                        </select>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 w-full md:flex md:gap-3 md:w-auto">
@@ -369,10 +372,7 @@ const formatCurrency = (value: number) => {
         </CardContent>
       </Card>
 
-      <!-- Category Suggestions Datalist -->
-      <datalist id="category-suggestions">
-        <option v-for="(label, value) in categories" :key="value" :value="value">{{ label }}</option>
-      </datalist>
+
 
       <!-- Create/Edit Dialog -->
       <Dialog v-model:open="isDialogOpen">
@@ -393,7 +393,9 @@ const formatCurrency = (value: number) => {
                 </div>
                 <div class="space-y-2">
                 <Label for="category">Category</Label>
-                <Input v-model="form.category" id="category" list="category-suggestions" placeholder="e.g. Wages, Maintenance..." class="h-9 w-full bg-transparent" required />
+                <select v-model="form.category" id="category" class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required>
+                    <option v-for="(label, value) in categories" :key="value" :value="value">{{ label }}</option>
+                </select>
                 </div>
             </div>
 
