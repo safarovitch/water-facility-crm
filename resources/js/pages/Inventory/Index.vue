@@ -55,7 +55,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Inventory', href: '/inventory-items' },
+  { title: 'Inventory', href: '/admin/inventory-items' },
 ];
 
 const formatCurrency = (value: number | string) => {
@@ -88,7 +88,7 @@ const filterForm = useForm({
 });
 
 const applyFilters = () => {
-  router.get('/inventory-items', filterForm.data(), { preserveState: true, preserveScroll: true });
+  router.get('/admin/inventory-items', filterForm.data(), { preserveState: true, preserveScroll: true });
 };
 
 const resetFilters = () => {
@@ -130,11 +130,11 @@ const submit = () => {
         delete payload.photo;
       }
       return payload;
-    }).post(`/inventory-items/${editingRecord.value.id}`, {
+    }).post(`/admin/inventory-items/${editingRecord.value.id}`, {
       onSuccess: () => isDialogOpen.value = false,
     });
   } else {
-    form.post('/inventory-items', {
+    form.post('/admin/inventory-items', {
       onSuccess: () => isDialogOpen.value = false,
     });
   }
@@ -142,7 +142,7 @@ const submit = () => {
 
 const deleteRecord = (id: number) => {
   if (confirm('Are you sure you want to delete this inventory item?')) {
-    router.delete(`/inventory-items/${id}`);
+    router.delete(`/admin/inventory-items/${id}`);
   }
 };
 

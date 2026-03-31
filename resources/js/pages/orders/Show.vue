@@ -173,7 +173,8 @@ const submitStatusUpdate = () => {
 const payWithWallet = () => {
   const currency = (usePage().props.currency as string) || 'USD';
   if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} ${currency} from wallet?`)) return;
-  router.post(`/orders/${props.order.id}/pay`, {}, {
+  const url = adminMode.value ? `/admin/orders/${props.order.id}/pay` : `/orders/${props.order.id}/pay`;
+  router.post(url, {}, {
     preserveScroll: true,
   });
 };
@@ -292,7 +293,7 @@ const statusButtonClass = (s: string) => {
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Client</h2>
           <p class="font-semibold text-gray-900 dark:text-white">
-            <Link :href="`/clients/${order.client.id}`" class="hover:underline hover:text-blue-600 transition-colors">
+            <Link :href="adminMode ? `/admin/clients/${order.client.id}` : '#'" :class="adminMode ? 'hover:underline hover:text-blue-600 transition-colors' : 'cursor-default'">
               {{ order.client.name }}
             </Link>
           </p>

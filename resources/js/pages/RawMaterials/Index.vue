@@ -43,8 +43,8 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Products', href: '/products' },
-  { title: 'Raw Materials', href: '/raw-materials' },
+  { title: 'Products', href: '/admin/products/index' },
+  { title: 'Raw Materials', href: '/admin/raw-materials' },
 ];
 
 const formatCurrency = (value: number | string) => {
@@ -70,7 +70,7 @@ const filterForm = useForm({
 });
 
 const applyFilters = () => {
-  router.get('/raw-materials', filterForm.data(), { preserveState: true, preserveScroll: true });
+  router.get('/admin/raw-materials', filterForm.data(), { preserveState: true, preserveScroll: true });
 };
 
 const resetFilters = () => {
@@ -101,11 +101,11 @@ const submit = () => {
   if (editingRecord.value) {
     // Note: because the controller accepts update on post using '{rawMaterial}',
     // Wait, the router defined it as post '{rawMaterial}' which maps to update.
-    form.post(`/raw-materials/${editingRecord.value.id}`, {
+    form.post(`/admin/raw-materials/${editingRecord.value.id}`, {
       onSuccess: () => isDialogOpen.value = false,
     });
   } else {
-    form.post('/raw-materials', {
+    form.post('/admin/raw-materials', {
       onSuccess: () => isDialogOpen.value = false,
     });
   }
@@ -113,7 +113,7 @@ const submit = () => {
 
 const deleteRecord = (id: number) => {
   if (confirm('Are you sure you want to delete this raw material? It may be linked to manufactured products.')) {
-    router.delete(`/raw-materials/${id}`);
+    router.delete(`/admin/raw-materials/${id}`);
   }
 };
 </script>

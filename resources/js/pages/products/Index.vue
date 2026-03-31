@@ -61,7 +61,7 @@ const filterForm = useForm({
 });
 
 const applyFilters = () => {
-  router.get('/products', filterForm.data(), { preserveState: true, preserveScroll: true });
+  router.get('/admin/products/index', filterForm.data(), { preserveState: true, preserveScroll: true });
 };
 </script>
 

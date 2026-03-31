@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as ordersIndex } from '@/routes/orders';
-import { index, create, edit, destroy } from '@/routes/admin/clients';
+import { index, create, edit, show, destroy } from '@/routes/admin/clients';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { Phone, Eye, Pencil, Trash2, PlusCircle, Search, Users } from 'lucide-vue-next';
@@ -111,7 +111,7 @@ const initiateCall = (phone: string | null) => {
                             <td class="px-6 py-4 flex items-center gap-3">
                                 <img class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700" :src="client.avatar_url" :alt="client.name">
                                 <div>
-                                    <Link :href="`/clients/${client.id}`" class="font-bold text-gray-900 dark:text-white hover:underline">{{ client.name }}</Link>
+                                    <Link :href="show(client.id).url" class="font-bold text-gray-900 dark:text-white hover:underline">{{ client.name }}</Link>
                                     <div class="text-xs text-muted-foreground object-contain mt-0.5">{{ client.email }}</div>
                                 </div>
                             </td>
@@ -136,7 +136,7 @@ const initiateCall = (phone: string | null) => {
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Link :href="`/clients/${client.id}`" title="View Profile">
+                                    <Link :href="show(client.id).url" title="View Profile">
                                       <Button variant="ghost" size="icon" class="h-8 w-8 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
                                           <Eye class="h-4 w-4" />
                                       </Button>

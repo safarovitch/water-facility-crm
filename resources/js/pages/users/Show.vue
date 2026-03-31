@@ -147,7 +147,7 @@ const depositForm = useForm({
 });
 
 const submitDeposit = () => {
-    depositForm.post(`/users/${props.profileUser.id}/wallet/deposit`, {
+    depositForm.post(`/admin/users/${props.profileUser.id}/wallet/deposit`, {
         onSuccess: () => {
             isDepositModalOpen.value = false;
             depositForm.reset();
@@ -538,7 +538,7 @@ const maxDeliveries = props.staffStats
                                 </CardTitle>
                                 <CardDescription class="text-xs">Comprehensive log of all orders related to this user.</CardDescription>
                             </div>
-                            <Link href="/orders" class="text-xs font-bold text-primary hover:underline">View All Orders</Link>
+                            <Link href="/admin/orders/index" class="text-xs font-bold text-primary hover:underline">View All Orders</Link>
                         </CardHeader>
                         <CardContent class="p-0">
                             <div v-if="orders.total === 0" class="p-16 text-center">
@@ -559,7 +559,7 @@ const maxDeliveries = props.staffStats
                                         <tbody class="divide-y divide-sidebar-border/50">
                                             <tr v-for="order in allOrders" :key="order.id" class="hover:bg-muted/20 transition-colors group">
                                                 <td class="px-6 py-5">
-                                                    <Link :href="`/orders/${order.id}`" class="flex flex-col hover:underline">
+                                                    <Link :href="`/admin/orders/${order.id}`" class="flex flex-col hover:underline">
                                                         <span class="text-sm font-black text-foreground group-hover:text-primary transition-colors">#{{ order.order_number }}</span>
                                                         <span class="text-[10px] text-muted-foreground font-medium group-hover:text-muted-foreground/80">{{ order.created_at_formatted }}</span>
                                                     </Link>

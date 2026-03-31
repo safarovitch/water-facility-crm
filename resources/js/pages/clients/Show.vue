@@ -18,7 +18,7 @@ const depositForm = useForm({
 });
 
 const submitDeposit = () => {
-  depositForm.post(`/users/${props.client.id}/wallet/deposit`, {
+  depositForm.post(`/admin/users/${props.client.id}/wallet/deposit`, {
     onSuccess: () => {
       isDepositModalOpen.value = false;
       depositForm.reset();
@@ -155,7 +155,7 @@ useIntersectionObserver(
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Clients', href: '/clients' },
+  { title: 'Clients', href: '/admin/clients/index' },
   { title: props.client.name, href: '#' },
 ];
 
@@ -359,7 +359,7 @@ const formatDate = (dateString: string) => {
                 <ShoppingBag class="w-5 h-5 text-gray-400" />
                 Order History
               </h2>
-              <Link v-if="orders.total > 0" href="/orders" class="text-sm text-blue-600 hover:underline">View All</Link>
+              <Link v-if="orders.total > 0" href="/admin/orders/index" class="text-sm text-blue-600 hover:underline">View All</Link>
             </div>
             <div class="p-0">
               <div v-if="orders.total === 0" class="p-8 text-center text-gray-500">
@@ -379,7 +379,7 @@ const formatDate = (dateString: string) => {
                   <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     <tr v-for="order in allOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td class="px-6 py-4">
-                        <Link :href="`/orders/${order.id}`" class="text-sm font-bold text-blue-600 hover:underline">
+                        <Link :href="`/admin/orders/${order.id}`" class="text-sm font-bold text-blue-600 hover:underline">
                           {{ order.order_number }}
                         </Link>
                       </td>

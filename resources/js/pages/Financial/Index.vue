@@ -54,7 +54,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Accounting', href: '/financial-records' },
+  { title: 'Accounting', href: '/admin/financial-records' },
 ];
 
 const isDialogOpen = ref(false);
@@ -91,14 +91,14 @@ const openEditDialog = (record: FinancialRecord) => {
 
 const submit = () => {
   if (editingRecord.value) {
-    form.post(`/financial-records/${editingRecord.value.id}`, {
+    form.post(`/admin/financial-records/${editingRecord.value.id}`, {
       onSuccess: () => {
         isDialogOpen.value = false;
         editingRecord.value = null;
       },
     });
   } else {
-    form.post('/financial-records', {
+    form.post('/admin/financial-records', {
       onSuccess: () => {
         isDialogOpen.value = false;
       },
@@ -109,7 +109,7 @@ const submit = () => {
 const deleteRecord = (id: number) => {
   const currency = (usePage().props.currency as string) || 'USD';
   if (confirm('Are you sure you want to delete this record?')) {
-    router.delete(`/financial-records/${id}`);
+    router.delete(`/admin/financial-records/${id}`);
   }
 };
 
@@ -121,7 +121,7 @@ const filterForm = useForm({
 });
 
 const applyFilters = () => {
-    router.get('/financial-records', filterForm.data(), { preserveState: true });
+    router.get('/admin/financial-records', filterForm.data(), { preserveState: true });
 };
 
 const resetFilters = () => {
