@@ -30,7 +30,6 @@ class FinancialRecord extends Model implements HasMedia
     protected $casts = [
         'amount'           => 'decimal:2',
         'type'             => FinancialTransactionType::class,
-        'category'         => FinancialTransactionCategory::class,
         'transaction_date' => 'datetime',
     ];
 

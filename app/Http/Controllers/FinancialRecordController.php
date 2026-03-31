@@ -41,7 +41,15 @@ class FinancialRecordController extends Controller
 
         $records = $query->latest('transaction_date')->latest('id')->paginate(50);
 
+        $dbCategories = FinancialRecord::distinct()->pluck('category')->toArray();
         $categories = FinancialTransactionCategory::asSelectArray();
+        
+        foreach ($dbCategories as $dbCat) {
+            if (!array_key_exists($dbCat, $categories)) {
+                // If it's a new custom string, just use it as both key and label
+                $categories[$dbCat] = $dbCat;
+            }
+        }
 
         return Inertia::render('Financial/Index', [
             'records'      => $records,
@@ -61,7 +69,7 @@ class FinancialRecordController extends Controller
         $data = $request->validate([
             'amount'           => ['required', 'numeric', 'min:0.01'],
             'type'             => ['required', 'string', new EnumValue(FinancialTransactionType::class)],
-            'category'         => ['required', 'string', new EnumValue(FinancialTransactionCategory::class)],
+            'category'         => ['required', 'string', 'max:255'],
             'description'      => ['nullable', 'string', 'max:1000'],
             'transaction_date' => ['required', 'date'],
             'receipt'          => ['nullable', 'image', 'max:5120'],
@@ -83,7 +91,7 @@ class FinancialRecordController extends Controller
         $data = $request->validate([
             'amount'           => ['required', 'numeric', 'min:0.01'],
             'type'             => ['required', 'string', new EnumValue(FinancialTransactionType::class)],
-            'category'         => ['required', 'string', new EnumValue(FinancialTransactionCategory::class)],
+            'category'         => ['required', 'string', 'max:255'],
             'description'      => ['nullable', 'string', 'max:1000'],
             'transaction_date' => ['required', 'date'],
             'receipt'          => ['nullable', 'image', 'max:5120'],
