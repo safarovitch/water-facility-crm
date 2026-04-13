@@ -8,9 +8,16 @@ import OrderNotificationToast from '@/components/OrderNotificationToast.vue';
 
 import type { BreadcrumbItemType } from '@/types';
 
+import { ref, onMounted } from 'vue';
+
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
 }
+
+const mounted = ref(false);
+onMounted(() => {
+    mounted.value = true;
+});
 
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
@@ -26,7 +33,9 @@ withDefaults(defineProps<Props>(), {
                 <slot />
             </AppContent>
             <BottomNav />
-            <OrderNotificationToast />
+            <template v-if="mounted && $page.props.auth.user">
+                <OrderNotificationToast />
+            </template>
         </AppShell>
     </div>
 </template>

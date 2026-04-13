@@ -25,7 +25,7 @@ const routeRawMaterialsIndex = () => '/admin/raw-materials';
 import { computed } from 'vue';
 import { useOrderNotifications } from '@/composables/useOrderNotifications';
 
-const { pendingCount } = useOrderNotifications();
+const { pendingCount } = useOrderNotifications() || { pendingCount: ref(0) };
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
