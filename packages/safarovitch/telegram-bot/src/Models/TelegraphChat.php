@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TelegraphChat extends BaseTelegraphChat
 {
+    protected $fillable = [
+        'chat_id',
+        'name',
+        'user_id',
+        'current_state',
+        'state_data',
+        'language',
+    ];
+
     protected $casts = [
         'state_data' => 'array',
     ];
