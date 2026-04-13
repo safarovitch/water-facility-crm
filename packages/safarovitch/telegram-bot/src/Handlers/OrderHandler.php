@@ -76,26 +76,34 @@ class OrderHandler
 
     public function confirmOrder(array $data): void
     {
-        \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
-            $order = \App\Models\Order::create([
-                'user_id' => $this->chat->user_id,
-                'delivery_address' => $data['address'],
-                'total_amount' => $data['total'],
-                'created_by' => $this->chat->user_id,
-                'status' => \App\Enums\OrderStatus::Pending->value,
-                'scheduled_delivery_at' => now()->addHours(2), // dummy for now
-            ]);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+                $order = \App\Models\Order::create([
+                    'user_id'               => $this->chat->user_id,
+                    'delivery_address'      => $data['address'],
+                    'total_amount'          => $data['total'],
+                    'created_by'            => $this->chat->user_id,
+                    'status'                => 'pending',
+                    'scheduled_delivery_at' => now()->addHours(2),
+                ]);
 
-            $order->items()->create([
-                'product_id' => $data['product_id'],
-                'quantity' => $data['quantity'],
-                'unit_price' => $data['total'] / $data['quantity'],
-                'subtotal' => $data['total'],
-            ]);
-        });
+                $order->items()->create([
+                    'product_id' => $data['product_id'],
+                    'quantity'   => $data['quantity'],
+                    'unit_price' => $data['total'] / $data['quantity'],
+                    'subtotal'   => $data['total'],
+                ]);
+            });
 
-        $this->chat->clearState();
-        $this->chat->message("✅ Заказ успешно создан! Ожидайте доставку.")->send();
+            $this->chat->clearState();
+            $this->chat->message("✅ Заказ успешно создан! Ожидайте доставку.")->send();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Telegram bot order creation failed', [
+                'error' => $e->getMessage(),
+                'data'  => $data,
+            ]);
+            $this->chat->message("❌ Ошибка при создании заказа: " . $e->getMessage())->send();
+        }
     }
 
     public function cancelOrder(): void
