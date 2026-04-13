@@ -43,19 +43,35 @@ class OrderController extends Controller
     {
         $request->validate([
             'status' => 'required|string',
+            'returned_materials' => ['nullable', 'array'],
+            'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
+            'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         $order = Order::where('courier_id', $request->user()->id)
             ->findOrFail($id);
 
-        $order->update([
-            'status' => $request->status,
-            'actual_delivery_at' => $request->status === 'delivered' ? now() : $order->actual_delivery_at,
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order, $request) {
+            $order->update([
+                'status' => $request->status,
+                'actual_delivery_at' => $request->status === 'delivered' ? now() : $order->actual_delivery_at,
+            ]);
+
+            if ($request->has('returned_materials') && $request->status === OrderStatus::Delivered->value) {
+                $syncData = [];
+                foreach ($request->input('returned_materials') as $rm) {
+                    $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
+                    
+                    \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
+                        ->increment('current_stock', $rm['quantity']);
+                }
+                $order->returnedMaterials()->sync($syncData);
+            }
+        });
 
         return response()->json([
             'message' => 'Order status updated successfully.',
-            'order' => $order,
+            'order' => $order->load('returnedMaterials'),
         ]);
     }
 

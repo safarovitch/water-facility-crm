@@ -127,4 +127,11 @@ class Order extends Model
   {
     return $this->hasMany(OrderItem::class);
   }
+
+  public function returnedMaterials(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+  {
+    return $this->belongsToMany(RawMaterial::class, 'order_returned_materials')
+        ->withPivot('quantity')
+        ->withTimestamps();
+  }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminModeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ClientProfileController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserAddressController;
@@ -28,6 +29,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::get('profile', [DashboardController::class, 'index'])->name('dashboard');
   // /dashboard redirects to /profile for backward compatibility
   Route::redirect('dashboard', '/profile');
+  
+  // Client profile edit routes
+  Route::get('profile/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
+  Route::post('profile/edit', [ClientProfileController::class, 'update'])->name('client-profile.update');
+
   // /admin is the admin-only statistics dashboard
   Route::get('admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
   // Toggle admin mode on/off

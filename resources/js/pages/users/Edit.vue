@@ -157,15 +157,15 @@ const isFormValid = computed(() => {
 
               <!-- Email -->
               <div class="grid gap-2">
-                <Label for="email">Email Address *</Label>
-                <Input id="email" class="mt-1 block w-full" name="email" v-model="form.email" required autocomplete="email" placeholder="Email Address" />
+                <Label for="email">Email Address</Label>
+                <Input id="email" class="mt-1 block w-full" name="email" v-model="form.email" autocomplete="email" placeholder="Email Address" />
                 <InputError class="mt-2" :message="errors.email" />
               </div>
 
               <!-- Phone -->
               <div class="grid gap-2">
-                <Label for="phone">Phone Number *</Label>
-                <Input id="phone" class="mt-1 block w-full" name="phone" v-model="form.phone" required autocomplete="tel" placeholder="Phone Number" />
+                <Label for="phone">Phone Number</Label>
+                <Input id="phone" class="mt-1 block w-full" name="phone" v-model="form.phone" autocomplete="tel" placeholder="Phone Number" />
                 <InputError class="mt-2" :message="errors.phone" />
               </div>
 

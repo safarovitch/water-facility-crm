@@ -26,6 +26,12 @@ interface OrderItem {
   subtotal: string;
   product: { id: number; name: Record<string, string> | string; image_url: string | null; };
 }
+interface ReturnedMaterial {
+  id: number;
+  name: string;
+  unit: string;
+  pivot: { quantity: number; };
+}
 interface Order {
   id: number;
   order_number: string;
@@ -50,6 +56,7 @@ interface Order {
   client: { id: number; name: string; email: string; phone: string | null; user_profile: UserProfile | null };
   creator: { name: string } | null;
   items: OrderItem[];
+  returned_materials: ReturnedMaterial[];
 }
 
 interface CourierOption {
@@ -63,9 +70,16 @@ interface CourierOption {
   last_active_at: string | null;
 }
 
+interface ReusableMaterial {
+  id: number;
+  name: string;
+  unit: string;
+}
+
 const props = defineProps<{ 
   order: Order; 
   statuses: string[]; 
+  reusable_materials?: ReusableMaterial[];
   couriers: CourierOption[]; 
 }>();
 
@@ -104,6 +118,7 @@ const validTransitions: Record<string, string[]> = {
 const nextStatuses = computed(() => validTransitions[props.order.status] ?? []);
 
 const isUpdatingStatus = ref(false);
+const isDeliveryModalOpen = ref(false);
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
@@ -115,7 +130,8 @@ onClickOutside(dropdownContainer, () => {
 
 const statusForm = ref({
   status: '',
-  actual_delivery_at: ''
+  actual_delivery_at: '',
+  returned_materials: [] as { raw_material_id: number; quantity: number }[]
 });
 
 const toggleDropdown = () => {
@@ -147,7 +163,11 @@ const confirmStatusUpdate = (status: string) => {
   if (status === 'delivered') {
     statusForm.value.status = status;
     statusForm.value.actual_delivery_at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
-    isUpdatingStatus.value = true;
+    
+    // Auto-init returned_materials to empty unless we want to preset rows
+    statusForm.value.returned_materials = [];
+
+    isDeliveryModalOpen.value = true;
     isDropdownOpen.value = false;
     pendingStatus.value = null;
   } else {
@@ -165,7 +185,7 @@ const submitStatusUpdate = () => {
   router.patch(updateStatusRoute.value!(props.order.id).url, statusForm.value, { 
     preserveScroll: true,
     onSuccess: () => {
-      isUpdatingStatus.value = false;
+      isDeliveryModalOpen.value = false;
     }
   });
 };
@@ -225,7 +245,7 @@ const statusButtonClass = (s: string) => {
               <span class="text-xs ml-1">({{ order.created_at_formatted }})</span> by {{ order.creator?.name ?? 'System' }}
             </p>
           </div>
-          <div class="flex items-center gap-3 flex-wrap" v-if="!isUpdatingStatus">
+          <div class="flex items-center gap-3 flex-wrap">
             <div class="relative" ref="dropdownContainer">
               <button 
                 @click="toggleDropdown"
@@ -275,16 +295,7 @@ const statusButtonClass = (s: string) => {
             </Link>
           </div>
 
-          <div v-else class="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800">
-            <div class="grid gap-1">
-              <label class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Actual Delivery Time</label>
-              <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div class="flex gap-2 self-end">
-              <Button size="sm" @click="submitStatusUpdate">Save Delivered</Button>
-              <Button size="sm" variant="ghost" @click="isUpdatingStatus = false">Cancel</Button>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -421,6 +432,36 @@ const statusButtonClass = (s: string) => {
         </table>
       </div>
 
+      <!-- Returned Materials -->
+      <div v-if="order.returned_materials?.length > 0" class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900/50">
+        <div class="px-4 py-4 sm:px-6 border-b border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/20 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package-check"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7.08 12 12 20.71 7.08"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
+            Returned Materials Log
+          </h2>
+          <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 py-0.5 px-2.5 rounded-full font-bold">Successfully Collected</span>
+        </div>
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-400">
+            <tr>
+              <th class="px-6 py-3 font-semibold">Material Model</th>
+              <th class="px-6 py-3 text-right font-semibold">Quantity Returned</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in order.returned_materials" :key="item.id" class="border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/20">
+              <td class="px-6 py-3.5 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-500 shadow shadow-blue-500/40"></div>
+                {{ item.name }}
+              </td>
+              <td class="px-6 py-3.5 text-right font-black text-gray-900 dark:text-gray-100 text-base">
+                +{{ item.pivot.quantity }} <span class="text-[10px] uppercase font-bold text-gray-400 ml-0.5">{{ item.unit }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Courier Assignment Modal -->
       <Dialog v-model:open="isAssignModalOpen">
         <DialogContent class="sm:max-w-xl">
@@ -487,6 +528,51 @@ const statusButtonClass = (s: string) => {
                 </div>
               </div>
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <!-- Delivery Confirmation Modal -->
+      <Dialog v-model:open="isDeliveryModalOpen">
+        <DialogContent class="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Confirm Delivery</DialogTitle>
+            <DialogDescription>
+              Record the actual delivery time and log any bottles or containers returned by the client.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="space-y-4 py-2">
+            <div>
+                <label class="text-xs uppercase font-bold text-gray-500 block mb-1">Actual Delivery Time</label>
+                <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+            </div>
+
+            <div v-if="(props.reusable_materials ?? []).length > 0" class="flex flex-col gap-2 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <label class="text-xs uppercase font-bold text-gray-500">Returned Containers</label>
+                
+                <div v-if="statusForm.returned_materials.length === 0" class="text-xs text-gray-400 py-3 italic text-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                    No items marked for return. Tracking none.
+                </div>
+                
+                <div v-for="(rm, index) in statusForm.returned_materials" :key="index" class="flex items-center gap-2 mb-1">
+                    <select v-model="statusForm.returned_materials[index].raw_material_id" class="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 outline-none">
+                      <option disabled :value="0">Select material</option>
+                      <option v-for="material in props.reusable_materials" :key="material.id" :value="material.id">{{ material.name }}</option>
+                    </select>
+                    <input type="number" min="1" v-model="statusForm.returned_materials[index].quantity" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 w-24 text-sm outline-none" placeholder="Qty" />
+                    <button type="button" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors" @click="statusForm.returned_materials.splice(index, 1)">✕</button>
+                </div>
+                
+                <Button variant="outline" type="button" @click="statusForm.returned_materials.push({ raw_material_id: 0, quantity: 1 })" class="mt-2 w-full border-dashed border-2 bg-transparent">
+                  + Add returned material
+                </Button>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4 border-t mt-4">
+              <Button type="button" variant="outline" @click="isDeliveryModalOpen = false">Cancel</Button>
+              <Button type="button" class="bg-green-600 hover:bg-green-700 text-white" @click="submitStatusUpdate">Save Delivery</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

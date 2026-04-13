@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a5d75bfb6f7593045dc488c1e372f91e",
+    "content-hash": "59e44ec560fde6f7e8ccf3bfe7e9ce71",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -555,6 +555,100 @@
                 "source": "https://github.com/DASPRiD/Enum/tree/1.0.6"
             },
             "time": "2024-08-09T14:30:48+00:00"
+        },
+        {
+            "name": "defstudio/telegraph",
+            "version": "v1.70.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/defstudio/telegraph.git",
+                "reference": "67add137a23b4e1abc98f01c6b6f97eb09af3832"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/defstudio/telegraph/zipball/67add137a23b4e1abc98f01c6b6f97eb09af3832",
+                "reference": "67add137a23b4e1abc98f01c6b6f97eb09af3832",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0 | ^11.0 | ^12.0 | ^13.0",
+                "illuminate/http": "^10.0 | ^11.0 | ^12.0 | ^13.0",
+                "illuminate/support": "^10.0 | ^11.0 | ^12.0 | ^13.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.12.1"
+            },
+            "require-dev": {
+                "defstudio/pest-plugin-laravel-expectations": "^2.1.2",
+                "ext-sqlite3": "*",
+                "friendsofphp/php-cs-fixer": "^3.13.0",
+                "guzzlehttp/guzzle": "^7.5.0",
+                "larastan/larastan": "^1.0.4 | ^2.4.0 | ^3.1.0",
+                "nunomaduro/collision": "^7.10.0 | ^8.1.1",
+                "orchestra/testbench": "^8.0 | ^9.0 | ^10.0 | ^11.0",
+                "pestphp/pest": "^2.34.2 | ^3.7.4 | ^4.1.0",
+                "pestphp/pest-plugin-laravel": "^2.3.0 | ^3.1.0 | ^4.1",
+                "phpstan/extension-installer": "^1.2.0",
+                "phpstan/phpstan-deprecation-rules": "^1.0.0 | ^2.0.1",
+                "phpstan/phpstan-phpunit": "^1.2.2 | ^2.0.4",
+                "spatie/laravel-ray": "^1.31.0",
+                "spatie/pest-plugin-snapshots": "^2.1.0",
+                "spatie/pest-plugin-test-time": "^2.1.0",
+                "spatie/x-ray": "dev-main"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Telegraph": "DefStudio\\Telegraph\\Facades\\Telegraph"
+                    },
+                    "providers": [
+                        "DefStudio\\Telegraph\\TelegraphServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "DefStudio\\Telegraph\\": "src",
+                    "DefStudio\\Telegraph\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabio Ivona",
+                    "email": "fabio.ivona@defstudio.it",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A laravel facade to interact with Telegram Bots",
+            "homepage": "https://github.com/defstudio/telegraph",
+            "keywords": [
+                "defstudio",
+                "laravel",
+                "telegraph"
+            ],
+            "support": {
+                "issues": "https://github.com/defstudio/telegraph/issues",
+                "source": "https://github.com/defstudio/telegraph/tree/v1.70.2"
+            },
+            "funding": [
+                {
+                    "url": "https://paypal.me/defstudiosrl",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/defstudio",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/fabio-ivona",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-04-02T11:33:31+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -4637,6 +4731,35 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.1"
             },
             "time": "2025-09-04T20:59:21+00:00"
+        },
+        {
+            "name": "safarovitch/telegram-bot",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/safarovitch/telegram-bot",
+                "reference": "89f9bf69d87b0150bda781dfaf7121ba9260ce11"
+            },
+            "require": {
+                "defstudio/telegraph": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Safarovitch\\TelegramBot\\TelegramBotServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Safarovitch\\TelegramBot\\": "src/"
+                }
+            },
+            "description": "Telegram Bot integration using Telegraph inside Safarovitch CRM",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "spatie/image",
@@ -11941,7 +12064,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "safarovitch/telegram-bot": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

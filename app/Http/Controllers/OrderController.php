@@ -131,11 +131,12 @@ class OrderController extends Controller
 
   public function show(Order $order): Response
   {
-    $order->load(['client.userProfile', 'creator', 'items.product', 'courier']);
+    $order->load(['client.userProfile', 'creator', 'items.product', 'courier', 'returnedMaterials']);
 
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
       'statuses' => OrderStatus::getValues(),
+      'reusable_materials' => \App\Models\RawMaterial::where('is_reusable', true)->get(),
       'couriers' => User::role('Currier')->withCount(['orders' => function ($q) {
         $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
       }])->get(),
@@ -201,9 +202,32 @@ class OrderController extends Controller
     $data = request()->validate([
       'status'             => ['required', 'in:' . implode(',', OrderStatus::getValues())],
       'actual_delivery_at' => ['nullable', 'date'],
+      'returned_materials' => ['nullable', 'array'],
+      'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
+      'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
     ]);
 
-    $order->update($data);
+    DB::transaction(function () use ($order, $data) {
+        $order->update([
+            'status' => $data['status'],
+            'actual_delivery_at' => $data['actual_delivery_at'] ?? null,
+        ]);
+
+        if (isset($data['returned_materials']) && $data['status'] === OrderStatus::Delivered) {
+            $syncData = [];
+            foreach ($data['returned_materials'] as $rm) {
+                // Determine if we need to sync multiple items or just one per iteration
+                // Here, a client can return multiple of the same or different. We'll flatten them.
+                $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
+                
+                // Also increment current_stock on the raw material to add it back into the inventory!
+                \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
+                  ->increment('current_stock', $rm['quantity']);
+            }
+            // we do syncWithoutDetaching in case they add things later, but usually it's set once per delivery
+            $order->returnedMaterials()->sync($syncData);
+        }
+    });
 
     return back()->with('success', 'Order status updated.');
   }

@@ -25,6 +25,12 @@ Route::prefix('v1/currier')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/{id}/reject', [OrderController::class, 'reject']);
+    // Inventory
+    Route::get('/reusable-materials', function () {
+        return response()->json(
+            \App\Models\RawMaterial::where('is_reusable', true)->get(['id', 'name', 'unit'])
+        );
+    });
 
     // Profile & Stats
     Route::get('/profile', [ProfileController::class, 'index']);

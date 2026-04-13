@@ -23,8 +23,8 @@ class UpdateUserRequest extends FormRequest
   {
     return [
       'name' => ['required', 'string', 'max:255'],
-      'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $this->user->id],
-      'phone' => ['required', 'string', 'max:255', 'unique:users,phone,' . $this->user->id],
+      'email' => ['required_without:phone', 'nullable', 'email', 'max:255', 'unique:users,email,' . $this->user->id],
+      'phone' => ['required_without:email', 'nullable', 'string', 'max:255', 'unique:user_phones,phone,' . ($this->user->phones->first()->id ?? 'NULL')],
       'password' => ['nullable', 'confirmed', 'string', 'min:8'],
       'roles' => ['sometimes', 'array'],
       'roles.*' => ['string', 'exists:roles,name'],
