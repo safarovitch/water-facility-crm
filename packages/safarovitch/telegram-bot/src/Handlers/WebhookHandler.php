@@ -112,7 +112,7 @@ class WebhookHandler extends DefStudioWebhookHandler
     public function mainMenu(): void
     {
         $this->chat->clearState();
-        if ($this->callbackQueryId) {
+        if (isset($this->callbackQueryId)) {
             try { $this->deleteKeyboard(); } catch (\Exception $e) {}
         }
         $this->chat->message("Что желаете? 💧")
@@ -122,13 +122,13 @@ class WebhookHandler extends DefStudioWebhookHandler
     // --- Action Router Layer ---
     public function actionNewOrder(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleNewOrder();
     }
 
     public function actionSelectProduct(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleSelectProduct((int) $this->data->get('id'));
     }
 
@@ -140,34 +140,34 @@ class WebhookHandler extends DefStudioWebhookHandler
             $this->mainMenu();
             return;
         }
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->confirmOrder($stateData);
         $this->mainMenu();
     }
     
     public function actionCancelOrder(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->cancelOrder();
         $this->mainMenu();
     }
 
     public function actionRepeatOrder(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleRepeatOrder();
     }
 
     public function actionMyOrders(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new TrackingHandler($this->chat, $this->bot))->handleListOrders();
         $this->mainMenu();
     }
 
     public function actionProfile(): void
     {
-        if ($this->callbackQueryId) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         $user = $this->chat->user;
         $this->chat->message("👤 Профиль:\nИмя: {$user->name}\nТелефон: {$user->phone}")->send();
         $this->mainMenu();
