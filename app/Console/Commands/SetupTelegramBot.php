@@ -26,7 +26,17 @@ class SetupTelegramBot extends Command
      */
     public function handle()
     {
-        $token = env('TELEGRAM_ORDER_BOT_TOKEN');
+        // Forge caches config, so env() will return null. We pull from config facade instead.
+        $token = config('telegraph.bot_token');
+        
+        // Fallback: Manually parse .env if cache is drifting or config:cache was missed
+        if (empty($token) && file_exists(base_path('.env'))) {
+            $envString = file_get_contents(base_path('.env'));
+            preg_match('/^TELEGRAM_ORDER_BOT_TOKEN=(.*)$/m', $envString, $matches);
+            if (!empty($matches[1])) {
+                $token = trim($matches[1], "\"' \t\n\r\0\x0B");
+            }
+        }
         
         if (empty($token)) {
             $this->error('TELEGRAM_ORDER_BOT_TOKEN is missing in .env!');

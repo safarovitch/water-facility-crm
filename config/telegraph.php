@@ -220,6 +220,8 @@ return [
         'start_with' => ['/'],
     ],
 
+    'bot_token' => env('TELEGRAM_ORDER_BOT_TOKEN', null),
+
     'payments' => [
         'provider_token' => env('TELEGRAPH_PAYMENT_PROVIDER_TOKEN', ''),
     ],
