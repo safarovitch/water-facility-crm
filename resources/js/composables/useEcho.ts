@@ -14,31 +14,44 @@ export const useEcho = () => {
             // @ts-ignore
             window.Pusher = Pusher;
 
+            // Site-wide security status
+            const isSiteSecure = window.location.protocol === 'https:';
+
+            // Environment variables
             const host = import.meta.env.VITE_REVERB_HOST;
             const port = import.meta.env.VITE_REVERB_PORT;
-            const scheme = import.meta.env.VITE_REVERB_SCHEME ?? 'https';
+            const envScheme = import.meta.env.VITE_REVERB_SCHEME ?? (isSiteSecure ? 'https' : 'http');
             
-            // If VITE_REVERB_HOST is missing or "localhost" but we are on a production domain,
-            // we should probably fallback to the current hostname for better reliability.
+            // SECURITY RULE: If the site is served over HTTPS, we MUST use wss://.
+            // Using ws:// on an https:// site will cause "Mixed Content" errors and be blocked by the browser.
+            const resolvedScheme = isSiteSecure ? 'https' : envScheme;
+            const isSecure = resolvedScheme === 'https';
+
+            // HOST RESOLUTION: Fallback to current domain if placeholder or empty.
             const resolvedHost = (!host || host === 'localhost' || host === 'reverb') 
                 ? window.location.hostname 
                 : host;
 
-            const isSecure = scheme === 'https';
+            // PORT RESOLUTION: 
+            // - If wss is used, we default to 443 (standard secure port).
+            // - If port 80 is given with wss, we ignore it and use 443.
+            let resolvedPort = port ? Number(port) : (isSecure ? 443 : 80);
+            if (isSecure && resolvedPort === 80) {
+                resolvedPort = 443;
+            }
 
             const config = {
                 broadcaster: 'reverb',
                 key: import.meta.env.VITE_REVERB_APP_KEY || 'missing-key',
                 wsHost: resolvedHost,
-                wsPort: port ? Number(port) : (isSecure ? 443 : 80),
-                wssPort: port ? Number(port) : 443,
+                wsPort: resolvedPort,
+                wssPort: resolvedPort,
                 forceTLS: isSecure,
                 enabledTransports: ['ws', 'wss'],
             };
 
-            if (import.meta.env.DEV) {
-                console.log('[Echo] Connecting to:', `${isSecure ? 'wss' : 'ws'}://${config.wsHost}:${isSecure ? config.wssPort : config.wsPort}`);
-            }
+            // Always log in development or if connectivity fails
+            console.log('[Echo] Connecting to:', `${isSecure ? 'wss' : 'ws'}://${config.wsHost}:${config.wsPort}`);
 
             echo = new Echo(config);
         } catch (e) {
