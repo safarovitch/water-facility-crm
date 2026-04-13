@@ -81,15 +81,23 @@ class WebhookHandler extends DefStudioWebhookHandler
             $phone = '+' . $phone;
         }
 
-        $user = User::where('phone', $phone)->first();
-        if (!$user) {
+        $userPhone = \App\Models\UserPhone::where('phone', $phone)->first();
+        
+        if ($userPhone) {
+            $user = $userPhone->user;
+        } else {
             $user = User::create([
                 'name' => $contact->firstName() ?? 'Telegram Client',
-                'phone' => $phone,
                 'email' => "tg_{$this->chat->chat_id}@example.local",
                 'password' => bcrypt(Str::random(16)),
             ]);
             $user->assignRole('Client');
+
+            $user->phones()->create([
+                'phone' => $phone,
+                'label' => 'Telegram',
+                'is_default' => true,
+            ]);
         }
 
         $this->chat->user_id = $user->id;
