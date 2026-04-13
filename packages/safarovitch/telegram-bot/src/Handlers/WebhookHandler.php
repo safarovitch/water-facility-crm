@@ -104,7 +104,7 @@ class WebhookHandler extends DefStudioWebhookHandler
         $this->chat->save();
 
         $this->chat->message("Отлично! Ваш аккаунт привязан.")
-            ->replyKeyboard(ReplyKeyboard::make()->remove())->send();
+            ->removeReplyKeyboard()->send();
 
         $this->mainMenu();
     }
