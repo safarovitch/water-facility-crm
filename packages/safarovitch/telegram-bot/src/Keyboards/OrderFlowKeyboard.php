@@ -11,7 +11,12 @@ class OrderFlowKeyboard
     {
         $buttons = [];
         foreach ($products as $product) {
-            $buttons[] = Button::make("{$product->name} - {$product->price} TJS")
+            // name is a JSON-cast array — extract ru locale or fallback to first value
+            $name = $product->name;
+            if (is_array($name)) {
+                $name = $name['ru'] ?? $name['en'] ?? array_values($name)[0] ?? 'Product';
+            }
+            $buttons[] = Button::make("{$name} - {$product->price} TJS")
                 ->action('actionSelectProduct')->param('id', (string) $product->id);
         }
         return Keyboard::make()->row($buttons);

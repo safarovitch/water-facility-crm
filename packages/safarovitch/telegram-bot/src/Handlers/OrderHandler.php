@@ -52,8 +52,14 @@ class OrderHandler
         $product = \App\Models\Product::find($data['product_id']);
         $total = $product->price * $data['quantity'];
 
+        // Resolve translatable name
+        $productName = $product->name;
+        if (is_array($productName)) {
+            $productName = $productName['ru'] ?? $productName['en'] ?? array_values($productName)[0] ?? 'Product';
+        }
+
         $summary = "📝 Проверьте ваш заказ:\n" .
-                   "Товар: {$product->name}\n" .
+                   "Товар: {$productName}\n" .
                    "Кол-во: {$data['quantity']}\n" .
                    "Сумма: {$total} TJS\n" .
                    "Адрес: {$address}\n\nПодтверждаете?";
