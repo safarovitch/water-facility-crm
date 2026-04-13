@@ -61,6 +61,10 @@ class Order extends Model
     static::creating(function (Order $order) {
       $order->order_number = static::generateOrderNumber();
     });
+
+    static::created(function (Order $order) {
+      event(new \App\Events\OrderCreated($order));
+    });
   }
 
   public static function generateOrderNumber(): string

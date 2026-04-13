@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import BottomNav from '@/components/BottomNav.vue';
+import OrderNotificationToast from '@/components/OrderNotificationToast.vue';
 
 import type { BreadcrumbItemType } from '@/types';
 
@@ -25,6 +26,7 @@ withDefaults(defineProps<Props>(), {
                 <slot />
             </AppContent>
             <BottomNav />
+            <OrderNotificationToast />
         </AppShell>
     </div>
 </template>

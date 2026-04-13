@@ -30,6 +30,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
         port: string;
         domain: string;
     };
+    pending_orders_count: number;
 };
 
 export interface Wallet {

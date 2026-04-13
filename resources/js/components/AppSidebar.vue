@@ -23,6 +23,9 @@ const routeFinancialIndex = () => '/admin/financial-records';
 const routeInventoryIndex = () => '/admin/inventory-items';
 const routeRawMaterialsIndex = () => '/admin/raw-materials';
 import { computed } from 'vue';
+import { useOrderNotifications } from '@/composables/useOrderNotifications';
+
+const { pendingCount } = useOrderNotifications();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -77,6 +80,7 @@ const mainNavItems = computed((): NavItem[] => {
             title: 'Orders',
             href: routeOrdersIndexAdmin(),
             icon: ShoppingCart,
+            badge: pendingCount.value > 0 ? pendingCount.value : undefined,
           },
         ],
       },
@@ -136,6 +140,7 @@ const mainNavItems = computed((): NavItem[] => {
       title: 'My Orders',
       href: '/orders/index',
       icon: ShoppingCart,
+      badge: pendingCount.value > 0 ? pendingCount.value : undefined,
     });
   }
 
