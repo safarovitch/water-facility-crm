@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
       ],
       'adminMode' => $request->session()->get('admin_mode', false) || $request->is('admin') || $request->is('admin/*'),
       'currency' => config('app.currency'),
+      'pending_orders_count' => $request->user() ? \App\Models\Order::where('status', 'pending')->count() : 0,
     ];
   }
 }

@@ -42,6 +42,7 @@ class RawMaterialController extends Controller
             'current_stock' => ['required', 'numeric', 'min:0'],
             'cost_per_unit' => ['required', 'numeric', 'min:0'],
             'status'        => ['required', 'string'],
+            'is_reusable'   => ['nullable', 'boolean'],
         ]);
 
         RawMaterial::create($data);
@@ -58,6 +59,7 @@ class RawMaterialController extends Controller
             'current_stock' => ['required', 'numeric', 'min:0'],
             'cost_per_unit' => ['required', 'numeric', 'min:0'],
             'status'        => ['required', 'string'],
+            'is_reusable'   => ['nullable', 'boolean'],
         ]);
 
         $rawMaterial->update($data);

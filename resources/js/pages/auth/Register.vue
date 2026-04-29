@@ -30,13 +30,13 @@ import { LoaderCircle } from 'lucide-vue-next';
 
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
-                    <Input id="email" type="email" required :tabindex="2" autocomplete="email" name="email" placeholder="email@example.com" />
+                    <Input id="email" type="email" :tabindex="2" autocomplete="email" name="email" placeholder="email@example.com" />
                     <InputError :message="errors.email" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="phone">Phone number</Label>
-                    <Input id="phone" type="string" required :tabindex="2" autocomplete="phone" name="phone" placeholder="123 456 789" />
+                    <Input id="phone" type="string" :tabindex="2" autocomplete="phone" name="phone" placeholder="123 456 789" />
                     <InputError :message="errors.phone" />
                 </div>
 

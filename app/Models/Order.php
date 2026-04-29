@@ -61,6 +61,10 @@ class Order extends Model
     static::creating(function (Order $order) {
       $order->order_number = static::generateOrderNumber();
     });
+
+    static::created(function (Order $order) {
+      event(new \App\Events\OrderCreated($order));
+    });
   }
 
   public static function generateOrderNumber(): string
@@ -126,5 +130,12 @@ class Order extends Model
   public function items(): HasMany
   {
     return $this->hasMany(OrderItem::class);
+  }
+
+  public function returnedMaterials(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+  {
+    return $this->belongsToMany(RawMaterial::class, 'order_returned_materials')
+        ->withPivot('quantity')
+        ->withTimestamps();
   }
 }

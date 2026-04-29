@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { index, edit, show } from '@/routes/admin/users';
+import { edit as clientEdit } from '@/routes/admin/clients';
+import { edit as profileEdit } from '@/routes/profile';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -14,7 +16,7 @@ import {
     ShoppingCart, TrendingUp, TrendingDown, Minus, Package,
     Wallet, XCircle, CheckCircle2, Clock, Truck,
     BarChart3, Star, PhoneCall, PhoneIncoming, PhoneOff, PhoneMissed,
-    MapPin, Building, Plus, X, RotateCcw, ShoppingBag, Loader2
+    MapPin, Building, Plus, X, RotateCcw, ShoppingBag, Loader2, Edit
 } from 'lucide-vue-next';
 
 interface UserAddress {
@@ -277,7 +279,7 @@ const maxDeliveries = props.staffStats
                 <!-- Actions -->
                 <div class="flex items-center gap-2 shrink-0">
                     <Button variant="outline" as-child size="sm" class="rounded-xl h-10 px-4">
-                        <Link :href="edit({ user: profileUser.id }).url">
+                        <Link :href="(profileUser.is_self && profileUser.is_client) ? '/profile/edit' : (profileUser.is_self ? profileEdit().url : (profileUser.is_client ? clientEdit({ client: profileUser.id }).url : edit({ user: profileUser.id }).url))">
                             <Edit class="mr-2 h-4 w-4" />
                             Edit Profile
                         </Link>

@@ -19,6 +19,7 @@ interface RawMaterial {
   current_stock: string;
   cost_per_unit: string;
   status: string;
+  is_reusable: boolean;
   created_at_human: string;
 }
 
@@ -62,6 +63,7 @@ const form = useForm({
   current_stock: '0',
   cost_per_unit: '0',
   status: 'active',
+  is_reusable: false,
 });
 
 const filterForm = useForm({
@@ -93,6 +95,7 @@ const openEditModal = (item: RawMaterial) => {
   form.current_stock = item.current_stock;
   form.cost_per_unit = item.cost_per_unit;
   form.status = item.status;
+  form.is_reusable = !!item.is_reusable;
   form.clearErrors();
   isDialogOpen.value = true;
 };
@@ -170,7 +173,10 @@ const deleteRecord = (id: number) => {
                     <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
                         <tr v-for="item in materials.data" :key="item.id" class="hover:bg-muted/40 transition-colors group">
                             <td class="px-6 py-4">
-                              <div class="font-bold text-gray-900 dark:text-white">{{ item.name }}</div>
+                              <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                {{ item.name }}
+                                <Badge v-if="item.is_reusable" variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-[10px] px-1.5 py-0">Reusable</Badge>
+                              </div>
                               <div class="text-xs text-gray-500 mt-0.5" v-if="item.sku">SKU: {{ item.sku }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -265,6 +271,14 @@ const deleteRecord = (id: number) => {
                 <select v-model="form.status" id="status" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ status }}</option>
                 </select>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+              <input type="checkbox" id="is_reusable" v-model="form.is_reusable" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+              <div class="grid gap-0.5">
+                  <Label for="is_reusable" class="cursor-pointer font-semibold">Reusable Material</Label>
+                  <p class="text-xs text-muted-foreground">Select if this material (like a 20L bottle) is returned by clients and can be restocked without repurchasing.</p>
               </div>
             </div>
 

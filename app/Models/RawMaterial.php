@@ -18,11 +18,13 @@ class RawMaterial extends Model
         'current_stock',
         'cost_per_unit',
         'status',
+        'is_reusable',
     ];
 
     protected $casts = [
         'current_stock' => 'decimal:2',
         'cost_per_unit' => 'decimal:2',
+        'is_reusable' => 'boolean',
     ];
 
     protected $appends = [
@@ -33,6 +35,13 @@ class RawMaterial extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function returnedOrders(): BelongsToMany
+    {
+        return $this->belongsToMany(Order::class, 'order_returned_materials')
             ->withPivot('quantity')
             ->withTimestamps();
     }

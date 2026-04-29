@@ -131,11 +131,12 @@ class OrderController extends Controller
 
   public function show(Order $order): Response
   {
-    $order->load(['client.userProfile', 'creator', 'items.product', 'courier']);
+    $order->load(['client.userProfile', 'creator', 'items.product', 'courier', 'returnedMaterials']);
 
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
       'statuses' => OrderStatus::getValues(),
+      'reusable_materials' => \App\Models\RawMaterial::where('is_reusable', true)->get(),
       'couriers' => User::role('Currier')->withCount(['orders' => function ($q) {
         $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
       }])->get(),
@@ -201,9 +202,32 @@ class OrderController extends Controller
     $data = request()->validate([
       'status'             => ['required', 'in:' . implode(',', OrderStatus::getValues())],
       'actual_delivery_at' => ['nullable', 'date'],
+      'returned_materials' => ['nullable', 'array'],
+      'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
+      'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
     ]);
 
-    $order->update($data);
+    DB::transaction(function () use ($order, $data) {
+        $order->update([
+            'status' => $data['status'],
+            'actual_delivery_at' => $data['actual_delivery_at'] ?? null,
+        ]);
+
+        if (isset($data['returned_materials']) && $data['status'] === OrderStatus::Delivered) {
+            $syncData = [];
+            foreach ($data['returned_materials'] as $rm) {
+                // Determine if we need to sync multiple items or just one per iteration
+                // Here, a client can return multiple of the same or different. We'll flatten them.
+                $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
+                
+                // Also increment current_stock on the raw material to add it back into the inventory!
+                \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
+                  ->increment('current_stock', $rm['quantity']);
+            }
+            // we do syncWithoutDetaching in case they add things later, but usually it's set once per delivery
+            $order->returnedMaterials()->sync($syncData);
+        }
+    });
 
     return back()->with('success', 'Order status updated.');
   }
@@ -248,5 +272,47 @@ class OrderController extends Controller
       $order->update(['courier_id' => $courierId]);
 
       return back()->with('success', 'Currier updated successfully.');
+  }
+
+  /**
+   * Live courier-location tracking for the signed-in client's active order.
+   * Returns the assigned courier's last fix when an order is in
+   * Accepted / Ready / InTransit; otherwise reports tracking: false.
+   */
+  public function activeTracking(\Illuminate\Http\Request $request)
+  {
+    $user = $request->user();
+
+    $order = Order::where('user_id', $user->id)
+      ->whereIn('status', [
+        OrderStatus::Accepted,
+        OrderStatus::Ready,
+        OrderStatus::InTransit,
+      ])
+      ->whereNotNull('courier_id')
+      ->with(['courier.lastLocation'])
+      ->latest()
+      ->first();
+
+    if (! $order || ! $order->courier || ! $order->courier->lastLocation) {
+      return response()
+        ->json(['tracking' => false])
+        ->header('Cache-Control', 'no-store, max-age=0');
+    }
+
+    $loc = $order->courier->lastLocation;
+
+    return response()->json([
+      'tracking' => true,
+      'order' => [
+        'id' => $order->id,
+        'status' => (string) $order->status,
+      ],
+      'courier' => [
+        'lat' => (float) $loc->lat,
+        'lng' => (float) $loc->lng,
+        'updated_at' => $loc->updated_at->toIso8601String(),
+      ],
+    ])->header('Cache-Control', 'no-store, max-age=0');
   }
 }

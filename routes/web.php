@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminModeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ClientProfileController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserAddressController;
@@ -14,6 +15,17 @@ use App\Http\Controllers\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Stash a same-origin return URL as the intended-URL, then redirect to /login.
+// Used by landing-page CTAs that need the user back on a specific page after login.
+Route::get('/auth/start', function (\Illuminate\Http\Request $request) {
+    $return = (string) $request->query('return', '/');
+    if (! str_starts_with($return, '/')) {
+        $return = '/';
+    }
+    $request->session()->put('url.intended', $return);
+    return redirect()->route('login');
+})->name('auth.start');
 
 // Custom passkey routes (replaces Route::passkeys()) to fix Session::flash() issue
 Route::prefix('passkeys')->group(function () {
@@ -28,6 +40,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::get('profile', [DashboardController::class, 'index'])->name('dashboard');
   // /dashboard redirects to /profile for backward compatibility
   Route::redirect('dashboard', '/profile');
+  
+  // Client profile edit routes
+  Route::get('profile/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
+  Route::post('profile/edit', [ClientProfileController::class, 'update'])->name('client-profile.update');
+
   // /admin is the admin-only statistics dashboard
   Route::get('admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
   // Toggle admin mode on/off
@@ -140,6 +157,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::get('{order}', [OrderController::class, 'show'])->name('show');
       Route::post('{order}/pay', [OrderController::class, 'payWithWallet'])->name('pay');
   });
+
+  // Live courier tracking for the signed-in client's active order
+  Route::get('me/active-tracking', [OrderController::class, 'activeTracking'])
+      ->name('me.tracking');
 });
 
 require __DIR__ . '/settings.php';

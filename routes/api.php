@@ -8,6 +8,13 @@ use App\Http\Controllers\Api\CommunicationController;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Route;
 
+// Public, anonymized live courier feed for the landing-page map.
+// Throttled, no auth, no PII — just active fixes from the last 15 min.
+Route::middleware('throttle:60,1')->get(
+    '/v1/public/curriers/locations',
+    [LocationController::class, 'publicLocations']
+);
+
 Route::prefix('v1/currier')->group(function () {
   // Auth
   Route::post('/auth/login', [AuthController::class, 'login']);
@@ -25,6 +32,12 @@ Route::prefix('v1/currier')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/{id}/reject', [OrderController::class, 'reject']);
+    // Inventory
+    Route::get('/reusable-materials', function () {
+        return response()->json(
+            \App\Models\RawMaterial::where('is_reusable', true)->get(['id', 'name', 'unit'])
+        );
+    });
 
     // Profile & Stats
     Route::get('/profile', [ProfileController::class, 'index']);
