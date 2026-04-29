@@ -273,4 +273,46 @@ class OrderController extends Controller
 
       return back()->with('success', 'Currier updated successfully.');
   }
+
+  /**
+   * Live courier-location tracking for the signed-in client's active order.
+   * Returns the assigned courier's last fix when an order is in
+   * Accepted / Ready / InTransit; otherwise reports tracking: false.
+   */
+  public function activeTracking(\Illuminate\Http\Request $request)
+  {
+    $user = $request->user();
+
+    $order = Order::where('user_id', $user->id)
+      ->whereIn('status', [
+        OrderStatus::Accepted,
+        OrderStatus::Ready,
+        OrderStatus::InTransit,
+      ])
+      ->whereNotNull('courier_id')
+      ->with(['courier.lastLocation'])
+      ->latest()
+      ->first();
+
+    if (! $order || ! $order->courier || ! $order->courier->lastLocation) {
+      return response()
+        ->json(['tracking' => false])
+        ->header('Cache-Control', 'no-store, max-age=0');
+    }
+
+    $loc = $order->courier->lastLocation;
+
+    return response()->json([
+      'tracking' => true,
+      'order' => [
+        'id' => $order->id,
+        'status' => (string) $order->status,
+      ],
+      'courier' => [
+        'lat' => (float) $loc->lat,
+        'lng' => (float) $loc->lng,
+        'updated_at' => $loc->updated_at->toIso8601String(),
+      ],
+    ])->header('Cache-Control', 'no-store, max-age=0');
+  }
 }

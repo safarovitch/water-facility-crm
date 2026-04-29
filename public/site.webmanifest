@@ -1,6 +1,6 @@
 {
-  "name": "Water-CRM",
-  "short_name": "Water",
+  "name": "fann — Mountain Spring Water",
+  "short_name": "fann",
   "icons": [
     {
       "src": "/favicon.svg",
@@ -19,8 +19,8 @@
       "type": "image/x-icon"
     }
   ],
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#0ea5e9",
+  "background_color": "#f6f6f6",
   "display": "standalone",
   "scope": "/",
   "start_url": "/?source=pwa",

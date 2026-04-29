@@ -8,6 +8,13 @@ use App\Http\Controllers\Api\CommunicationController;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Route;
 
+// Public, anonymized live courier feed for the landing-page map.
+// Throttled, no auth, no PII — just active fixes from the last 15 min.
+Route::middleware('throttle:60,1')->get(
+    '/v1/public/curriers/locations',
+    [LocationController::class, 'publicLocations']
+);
+
 Route::prefix('v1/currier')->group(function () {
   // Auth
   Route::post('/auth/login', [AuthController::class, 'login']);

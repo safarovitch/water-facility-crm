@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CurrierLocation;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LocationController extends Controller
@@ -16,7 +17,7 @@ class LocationController extends Controller
         ]);
 
         $user = $request->user();
-        
+
         CurrierLocation::create([
             'user_id' => $user->id,
             'lat' => $request->lat,
@@ -38,5 +39,34 @@ class LocationController extends Controller
             'message' => 'Pong',
             'server_time' => now(),
         ]);
+    }
+
+    /**
+     * Public, anonymized feed of currently-active courier positions.
+     * Returns only couriers active in the last 15 minutes.
+     * No names, no IDs — just lat/lng/updated_at.
+     */
+    public function publicLocations()
+    {
+        $cutoff = now()->subMinutes(15);
+
+        $couriers = User::role('Currier')
+            ->where('last_active_at', '>=', $cutoff)
+            ->with('lastLocation')
+            ->get()
+            ->filter(fn ($u) => $u->lastLocation !== null);
+
+        $payload = [
+            'count' => $couriers->count(),
+            'locations' => $couriers->values()->map(fn ($u) => [
+                'lat' => (float) $u->lastLocation->lat,
+                'lng' => (float) $u->lastLocation->lng,
+                'updated_at' => $u->lastLocation->updated_at->toIso8601String(),
+            ]),
+        ];
+
+        return response()
+            ->json($payload)
+            ->header('Cache-Control', 'no-store, max-age=0');
     }
 }

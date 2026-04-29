@@ -12,7 +12,7 @@ import { request } from '@/routes/password';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { LoaderCircle, Fingerprint } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
-import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser';
 
 defineProps<{
     status?: string;
@@ -25,11 +25,7 @@ const passkeyError = ref('');
 
 onMounted(() => {
     passkeySupported.value = browserSupportsWebAuthn();
-
-    // Auto-trigger passkey prompt when login page loads
-    if (passkeySupported.value) {
-        loginWithPasskey();
-    }
+    // No automatic passkey prompt — the user must click the button below.
 });
 
 const loginWithPasskey = async () => {
@@ -37,42 +33,44 @@ const loginWithPasskey = async () => {
     passkeyLoading.value = true;
 
     try {
-        // 1. Get authentication options from our custom controller
         const optionsResponse = await fetch('/passkeys/authentication-options', {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'same-origin', // ensure session cookie is sent
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
         });
-
         if (!optionsResponse.ok) {
             throw new Error('Failed to get authentication options');
         }
-
         const optionsJSON = await optionsResponse.json();
 
-        // 2. Prompt device biometric (Face ID / Touch ID / Fingerprint)
         const credential = await startAuthentication({ optionsJSON });
 
-        // 3. Submit to our custom authenticate route
-        router.post('/passkeys/authenticate', {
-            start_authentication_response: JSON.stringify(credential),
-            remember: true,
-        }, {
-            onSuccess: () => {
-                passkeyLoading.value = false;
+        router.post(
+            '/passkeys/authenticate',
+            {
+                start_authentication_response: JSON.stringify(credential),
+                remember: true,
             },
-            onError: (errors) => {
-                passkeyError.value = errors.passkey || 'Authentication failed. The passkey may not be registered.';
-                passkeyLoading.value = false;
+            {
+                onError: (errors) => {
+                    passkeyError.value =
+                        errors.passkey ||
+                        'Authentication failed. The passkey may not be registered.';
+                    passkeyLoading.value = false;
+                },
+                onFinish: () => {
+                    passkeyLoading.value = false;
+                },
             },
-        });
+        );
     } catch (error: any) {
-        if (error.name === 'NotAllowedError') {
-            passkeyError.value = 'Passkey authentication was cancelled.';
-        } else if (error.name === 'SecurityError') {
+        if (error?.name === 'NotAllowedError') {
+            passkeyError.value =
+                'No passkey available on this device, or the prompt was cancelled.';
+        } else if (error?.name === 'SecurityError') {
             passkeyError.value = 'Passkeys require a secure (HTTPS) connection.';
         } else {
-            passkeyError.value = error.message || 'An error occurred. Please try password login.';
-            console.error('Passkey auth error:', error);
+            passkeyError.value =
+                error?.message || 'An error occurred. Please try password login.';
         }
         passkeyLoading.value = false;
     }
