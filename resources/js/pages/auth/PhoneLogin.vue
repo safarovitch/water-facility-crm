@@ -22,9 +22,9 @@ const requestOtp = () => {
   phoneForm.post('/login/otp/request', {
     preserveScroll: true,
     onSuccess: (page) => {
-      const props = page.props as Record<string, any>;
-      verifiedPhone.value = props.phone ?? phoneForm.phone;
-      deepLink.value = props.deep_link ?? null;
+      const flow = (page.props as Record<string, any>).otpFlow ?? {};
+      verifiedPhone.value = flow.phone ?? phoneForm.phone;
+      deepLink.value = flow.deep_link ?? null;
       otpForm.phone = verifiedPhone.value;
       phase.value = 'otp';
     },

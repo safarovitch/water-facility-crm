@@ -63,6 +63,15 @@ class HandleInertiaRequests extends Middleware
         'success' => $request->session()->get('success'),
         'error'   => $request->session()->get('error'),
       ],
+      // Surface the result of the phone-OTP staging endpoints so the auth
+      // Vue pages can pick up the Telegram deep-link without needing extra
+      // round-trips. Populated by PhoneAuthController via back()->with(...).
+      'otpFlow' => [
+        'phone'        => $request->session()->get('phone'),
+        'deep_link'    => $request->session()->get('deep_link'),
+        'awaiting_otp' => (bool) $request->session()->get('awaiting_otp', false),
+        'name'         => $request->session()->get('name'),
+      ],
       'adminMode' => $request->session()->get('admin_mode', false) || $request->is('admin') || $request->is('admin/*'),
       'currency' => config('app.currency'),
       'pending_orders_count' => $request->user() ? \App\Models\Order::where('status', 'pending')->count() : 0,

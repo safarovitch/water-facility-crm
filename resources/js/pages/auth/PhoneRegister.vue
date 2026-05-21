@@ -21,10 +21,10 @@ const requestOtp = () => {
   detailsForm.post('/register/otp/request', {
     preserveScroll: true,
     onSuccess: (page) => {
-      const props = page.props as Record<string, any>;
-      otpForm.name = props.name ?? detailsForm.name;
-      otpForm.phone = props.phone ?? detailsForm.phone;
-      deepLink.value = props.deep_link ?? null;
+      const flow = (page.props as Record<string, any>).otpFlow ?? {};
+      otpForm.name = flow.name ?? detailsForm.name;
+      otpForm.phone = flow.phone ?? detailsForm.phone;
+      deepLink.value = flow.deep_link ?? null;
       phase.value = 'otp';
     },
   });

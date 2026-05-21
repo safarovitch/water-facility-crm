@@ -196,18 +196,24 @@ class TelegramOtpService
 
     if (!$bot) return null;
 
-    return Cache::remember(
-      'telegraph:bot_username:' . $bot->id,
-      now()->addDay(),
-      function () use ($bot) {
-        try {
-          return $bot->info()?->username ?? null;
-        } catch (\Throwable $e) {
-          Log::warning('TelegramOtpService: getMe() failed', ['error' => $e->getMessage()]);
-          return null;
-        }
-      }
-    );
+    $cacheKey = 'telegraph:bot_username:' . $bot->id;
+    $cached = Cache::get($cacheKey);
+    if ($cached) return $cached;
+
+    try {
+      $username = $bot->info()?->username ?? null;
+    } catch (\Throwable $e) {
+      Log::warning('TelegramOtpService: getMe() failed', ['error' => $e->getMessage()]);
+      $username = null;
+    }
+
+    if ($username) {
+      // Only cache successful lookups so a one-off Telegram outage doesn't
+      // pin us to null for 24 hours.
+      Cache::put($cacheKey, $username, now()->addDay());
+    }
+
+    return $username;
   }
 
   public function normalizePhone(string $phone): string
