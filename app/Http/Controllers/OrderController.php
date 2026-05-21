@@ -8,6 +8,7 @@ use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,51 @@ class OrderController extends Controller
     $custom = round((float) $customTotal, 2);
     $discount = round($calculatedTotal - $custom, 2);
     return [$custom, $discount];
+  }
+
+  /**
+   * Apply raw-material stock changes for a set of order items. $direction
+   * is -1 to deduct (new order / new items on edit) and +1 to restore
+   * (cancellation / replaced items on edit).
+   *
+   * Items can be either OrderItem models or raw arrays carrying
+   * product_id + quantity. Gifts still consume inventory — a free bottle
+   * is still a real bottle.
+   */
+  private function adjustRawMaterialStock(iterable $items, int $direction): void
+  {
+    $productIds = collect($items)
+      ->map(fn($i) => is_array($i) ? $i['product_id'] : $i->product_id)
+      ->unique()
+      ->values();
+
+    if ($productIds->isEmpty()) {
+      return;
+    }
+
+    $products = Product::with('rawMaterials')
+      ->whereIn('id', $productIds)
+      ->get()
+      ->keyBy('id');
+
+    foreach ($items as $item) {
+      $productId = is_array($item) ? $item['product_id'] : $item->product_id;
+      $quantity  = is_array($item) ? $item['quantity']   : $item->quantity;
+      $product   = $products[$productId] ?? null;
+      if (!$product) continue;
+
+      foreach ($product->rawMaterials as $material) {
+        $perUnit = (float) ($material->pivot->quantity ?? 0);
+        if ($perUnit <= 0) continue;
+
+        $delta = $perUnit * (int) $quantity;
+        if ($direction < 0) {
+          RawMaterial::where('id', $material->id)->decrement('current_stock', $delta);
+        } else {
+          RawMaterial::where('id', $material->id)->increment('current_stock', $delta);
+        }
+      }
+    }
   }
 
   public function index(): Response
@@ -138,10 +184,14 @@ class OrderController extends Controller
         'notes'                 => $request->notes,
         'total_amount'          => $finalTotal,
         'discount_amount'       => $discount,
+        'payment_status'        => $finalTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
         'created_by'            => auth()->id(),
       ]);
 
       $order->items()->createMany($items->toArray());
+
+      // Deduct raw materials from inventory for the BOM of each line item.
+      $this->adjustRawMaterialStock($items, -1);
 
       return $order;
     });
@@ -196,17 +246,31 @@ class OrderController extends Controller
       $calculatedTotal = (float) $items->sum('subtotal');
       [$finalTotal, $discount] = $this->resolveTotals($calculatedTotal, $request->input('custom_total'));
 
-      $order->update([
+      $updates = [
         'user_id'               => $request->user_id,
         'scheduled_delivery_at' => $request->scheduled_delivery_at,
         'delivery_address'      => $request->delivery_address,
         'notes'                 => $request->notes,
         'total_amount'          => $finalTotal,
         'discount_amount'       => $discount,
-      ]);
+      ];
+
+      // If editing drops the total to zero (all gifts / fully-discounted),
+      // mark it paid so it doesn't sit forever as Unpaid with 0 balance.
+      if ($finalTotal <= 0) {
+        $updates['payment_status'] = PaymentStatus::Paid;
+      }
+
+      $order->update($updates);
+
+      // Restore inventory for the items that are about to be replaced…
+      $this->adjustRawMaterialStock($order->items()->get(), +1);
 
       $order->items()->delete();
       $order->items()->createMany($items->toArray());
+
+      // …then deduct inventory for the new items.
+      $this->adjustRawMaterialStock($items, -1);
     });
 
     return redirect()->route('admin.orders.show', $order)
@@ -223,12 +287,21 @@ class OrderController extends Controller
       'cancellation_reason' => ['required', 'string', 'max:1000'],
     ]);
 
-    $order->update([
-      'status'              => OrderStatus::Cancelled,
-      'cancellation_reason' => $data['cancellation_reason'],
-      'cancelled_at'        => now(),
-      'cancelled_by'        => auth()->id(),
-    ]);
+    DB::transaction(function () use ($order, $data) {
+      // Already-cancelled orders shouldn't double-restore stock. The status
+      // dropdown blocks this client-side, but guard anyway in case the cancel
+      // endpoint is hit directly.
+      if ($order->status->value !== OrderStatus::Cancelled) {
+        $this->adjustRawMaterialStock($order->items()->get(), +1);
+      }
+
+      $order->update([
+        'status'              => OrderStatus::Cancelled,
+        'cancellation_reason' => $data['cancellation_reason'],
+        'cancelled_at'        => now(),
+        'cancelled_by'        => auth()->id(),
+      ]);
+    });
 
     return back()->with('success', 'Order cancelled.');
   }
@@ -298,6 +371,10 @@ class OrderController extends Controller
   {
       if ($order->status->value === OrderStatus::Cancelled) {
           return back()->with('error', 'Cancelled orders cannot be assigned to a courier.');
+      }
+
+      if ($order->delivery_address === 'Self Pickup') {
+          return back()->with('error', 'Self-pickup orders do not need a courier.');
       }
 
       request()->validate([

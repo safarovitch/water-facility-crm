@@ -130,6 +130,7 @@ const isCancelModalOpen = ref(false);
 const cancelForm = ref({ cancellation_reason: '' });
 const cancelError = ref('');
 const isCancelled = computed(() => props.order.status === 'cancelled');
+const isSelfPickup = computed(() => props.order.delivery_address === 'Self Pickup');
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
@@ -379,7 +380,12 @@ const statusButtonClass = (s: string) => {
             <span class="font-medium">Notes:</span> {{ order.notes }}
           </p>
 
-          <div v-if="!isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
+          <div v-if="isSelfPickup && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
+            <div class="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-lg px-3 py-2">
+              🏬 Self-pickup order — no courier needed.
+            </div>
+          </div>
+          <div v-else-if="!isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
             <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
             <div class="flex items-center gap-2">
               <Button @click="isAssignModalOpen = true" variant="outline" class="w-full justify-between font-normal h-12" :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 shadow-none' : ''">
