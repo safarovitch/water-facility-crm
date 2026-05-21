@@ -16,6 +16,23 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
+  /**
+   * Given the calculated item total and an optional admin-supplied custom
+   * total, return [final_total, discount]. If custom is unset or equal to
+   * the calculated total, discount is 0. If custom is lower, the gap is the
+   * discount. If custom is higher, treat it as a surcharge (negative
+   * discount) so the math still balances.
+   */
+  private function resolveTotals(float $calculatedTotal, $customTotal): array
+  {
+    if ($customTotal === null || $customTotal === '') {
+      return [round($calculatedTotal, 2), 0.0];
+    }
+    $custom = round((float) $customTotal, 2);
+    $discount = round($calculatedTotal - $custom, 2);
+    return [$custom, $discount];
+  }
+
   public function index(): Response
   {
     $pagination = request()->has('pagination')
@@ -88,17 +105,20 @@ class OrderController extends Controller
       $items = collect($request->items)->map(function ($item) {
         $product   = Product::findOrFail($item['product_id']);
         $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
-        $subtotal  = $unitPrice * $item['quantity'];
+        $isGift    = (bool) ($item['is_gift'] ?? false);
+        $subtotal  = $isGift ? 0 : $unitPrice * $item['quantity'];
 
         return [
           'product_id' => $item['product_id'],
           'quantity'   => $item['quantity'],
           'unit_price' => $unitPrice,
           'subtotal'   => $subtotal,
+          'is_gift'    => $isGift,
         ];
       });
 
-      $total = $items->sum('subtotal');
+      $calculatedTotal = (float) $items->sum('subtotal');
+      [$finalTotal, $discount] = $this->resolveTotals($calculatedTotal, $request->input('custom_total'));
 
       $deliveryAddress = $request->delivery_address;
 
@@ -116,7 +136,8 @@ class OrderController extends Controller
         'scheduled_delivery_at' => $request->scheduled_delivery_at,
         'delivery_address'      => $deliveryAddress,
         'notes'                 => $request->notes,
-        'total_amount'          => $total,
+        'total_amount'          => $finalTotal,
+        'discount_amount'       => $discount,
         'created_by'            => auth()->id(),
       ]);
 
@@ -131,7 +152,7 @@ class OrderController extends Controller
 
   public function show(Order $order): Response
   {
-    $order->load(['client.userProfile', 'creator', 'items.product', 'courier', 'returnedMaterials']);
+    $order->load(['client.userProfile', 'creator', 'canceller', 'items.product', 'courier', 'returnedMaterials']);
 
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
@@ -160,22 +181,28 @@ class OrderController extends Controller
       $items = collect($request->items)->map(function ($item) {
         $product   = Product::findOrFail($item['product_id']);
         $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
-        $subtotal  = $unitPrice * $item['quantity'];
+        $isGift    = (bool) ($item['is_gift'] ?? false);
+        $subtotal  = $isGift ? 0 : $unitPrice * $item['quantity'];
 
         return [
           'product_id' => $item['product_id'],
           'quantity'   => $item['quantity'],
           'unit_price' => $unitPrice,
           'subtotal'   => $subtotal,
+          'is_gift'    => $isGift,
         ];
       });
+
+      $calculatedTotal = (float) $items->sum('subtotal');
+      [$finalTotal, $discount] = $this->resolveTotals($calculatedTotal, $request->input('custom_total'));
 
       $order->update([
         'user_id'               => $request->user_id,
         'scheduled_delivery_at' => $request->scheduled_delivery_at,
         'delivery_address'      => $request->delivery_address,
         'notes'                 => $request->notes,
-        'total_amount'          => $items->sum('subtotal'),
+        'total_amount'          => $finalTotal,
+        'discount_amount'       => $discount,
       ]);
 
       $order->items()->delete();
@@ -192,7 +219,16 @@ class OrderController extends Controller
       return back()->with('error', 'Delivered orders cannot be cancelled.');
     }
 
-    $order->update(['status' => OrderStatus::Cancelled]);
+    $data = request()->validate([
+      'cancellation_reason' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $order->update([
+      'status'              => OrderStatus::Cancelled,
+      'cancellation_reason' => $data['cancellation_reason'],
+      'cancelled_at'        => now(),
+      'cancelled_by'        => auth()->id(),
+    ]);
 
     return back()->with('success', 'Order cancelled.');
   }
@@ -234,6 +270,10 @@ class OrderController extends Controller
 
   public function payWithWallet(Order $order, \App\Services\WalletService $walletService)
   {
+    if ($order->status->value === OrderStatus::Cancelled) {
+      return back()->with('error', 'Cancelled orders cannot be paid.');
+    }
+
     if ($order->payment_status->value === PaymentStatus::Paid) {
       return back()->with('error', 'Order is already paid.');
     }
@@ -256,6 +296,10 @@ class OrderController extends Controller
 
   public function assignCurrier(Order $order)
   {
+      if ($order->status->value === OrderStatus::Cancelled) {
+          return back()->with('error', 'Cancelled orders cannot be assigned to a courier.');
+      }
+
       request()->validate([
           'courier_id' => ['nullable', 'exists:users,id'],
       ]);

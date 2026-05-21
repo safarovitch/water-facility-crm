@@ -24,6 +24,7 @@ interface OrderItem {
   quantity: number;
   unit_price: string;
   subtotal: string;
+  is_gift: boolean;
   product: { id: number; name: Record<string, string> | string; image_url: string | null; };
 }
 interface ReturnedMaterial {
@@ -38,6 +39,7 @@ interface Order {
   status: string;
   payment_status: string;
   total_amount: string;
+  discount_amount: string;
   paid_amount: string;
   balance_due: number;
   scheduled_delivery_at: string | null;
@@ -48,6 +50,11 @@ interface Order {
   actual_delivery_at_formatted: string | null;
   delivery_address: string | null;
   notes: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  cancelled_at_human?: string | null;
+  cancelled_at_formatted?: string | null;
+  canceller: { id: number; name: string } | null;
   created_at: string;
   created_at_human: string;
   created_at_formatted: string;
@@ -119,6 +126,10 @@ const nextStatuses = computed(() => validTransitions[props.order.status] ?? []);
 
 const isUpdatingStatus = ref(false);
 const isDeliveryModalOpen = ref(false);
+const isCancelModalOpen = ref(false);
+const cancelForm = ref({ cancellation_reason: '' });
+const cancelError = ref('');
+const isCancelled = computed(() => props.order.status === 'cancelled');
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
@@ -145,18 +156,11 @@ const selectStatus = (status: string) => {
 
 const confirmStatusUpdate = (status: string) => {
   if (status === 'cancelled') {
-    if (!confirm('Cancel this order?')) {
-      pendingStatus.value = null;
-      isDropdownOpen.value = false;
-      return;
-    }
-    router.patch(cancelRoute.value!(props.order.id).url, {}, { 
-      preserveScroll: true,
-      onSuccess: () => {
-        isDropdownOpen.value = false;
-        pendingStatus.value = null;
-      }
-    });
+    cancelForm.value.cancellation_reason = '';
+    cancelError.value = '';
+    isCancelModalOpen.value = true;
+    isDropdownOpen.value = false;
+    pendingStatus.value = null;
     return;
   }
   
@@ -182,11 +186,30 @@ const confirmStatusUpdate = (status: string) => {
 };
 
 const submitStatusUpdate = () => {
-  router.patch(updateStatusRoute.value!(props.order.id).url, statusForm.value, { 
+  router.patch(updateStatusRoute.value!(props.order.id).url, statusForm.value, {
     preserveScroll: true,
     onSuccess: () => {
       isDeliveryModalOpen.value = false;
     }
+  });
+};
+
+const submitCancellation = () => {
+  const reason = cancelForm.value.cancellation_reason.trim();
+  if (!reason) {
+    cancelError.value = 'Please provide a reason for the cancellation.';
+    return;
+  }
+  cancelError.value = '';
+  router.patch(cancelRoute.value!(props.order.id).url, { cancellation_reason: reason }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      isCancelModalOpen.value = false;
+      cancelForm.value.cancellation_reason = '';
+    },
+    onError: (errors: Record<string, string>) => {
+      cancelError.value = errors.cancellation_reason ?? 'Could not cancel the order.';
+    },
   });
 };
 
@@ -299,6 +322,23 @@ const statusButtonClass = (s: string) => {
         </div>
       </div>
 
+      <!-- Cancellation banner -->
+      <div v-if="isCancelled" class="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/50 px-5 py-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-300">Order cancelled</div>
+            <p class="mt-1 text-sm text-red-900 dark:text-red-100 whitespace-pre-line">
+              {{ order.cancellation_reason || 'No reason was recorded.' }}
+            </p>
+            <p class="mt-2 text-xs text-red-700/80 dark:text-red-300/80">
+              <span v-if="order.canceller">By {{ order.canceller.name }}</span>
+              <span v-if="order.cancelled_at_human"> · {{ order.cancelled_at_human }}</span>
+              <span v-if="order.cancelled_at_formatted" class="ml-1 opacity-70">({{ order.cancelled_at_formatted }})</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Client info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
@@ -329,13 +369,17 @@ const statusButtonClass = (s: string) => {
             <span class="text-xs text-gray-500">{{ order.actual_delivery_at_formatted ?? order.actual_delivery_at }}</span>
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2">
-            <span class="font-medium">Address:</span> {{ order.delivery_address ?? '—' }}
+            <span class="font-medium">Address:</span>
+            <span v-if="order.delivery_address === 'Self Pickup'" class="ml-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded">
+              🏬 Self Pickup
+            </span>
+            <span v-else>{{ order.delivery_address ?? '—' }}</span>
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">
             <span class="font-medium">Notes:</span> {{ order.notes }}
           </p>
 
-          <div class="mt-4 pt-4 border-t dark:border-gray-700">
+          <div v-if="!isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
             <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
             <div class="flex items-center gap-2">
               <Button @click="isAssignModalOpen = true" variant="outline" class="w-full justify-between font-normal h-12" :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 shadow-none' : ''">
@@ -354,6 +398,18 @@ const statusButtonClass = (s: string) => {
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Payment</h2>
           <div class="space-y-1 text-sm">
+            <div v-if="Number(order.discount_amount) > 0" class="flex justify-between">
+              <span class="text-gray-500">Subtotal</span>
+              <span class="text-gray-700 dark:text-gray-300">{{ (Number(order.total_amount) + Number(order.discount_amount)).toFixed(2) }}</span>
+            </div>
+            <div v-if="Number(order.discount_amount) > 0" class="flex justify-between">
+              <span class="text-pink-600 dark:text-pink-300 font-medium">Discount</span>
+              <span class="text-pink-600 dark:text-pink-300 font-medium">-{{ Number(order.discount_amount).toFixed(2) }}</span>
+            </div>
+            <div v-else-if="Number(order.discount_amount) < 0" class="flex justify-between">
+              <span class="text-orange-600 dark:text-orange-300 font-medium">Surcharge</span>
+              <span class="text-orange-600 dark:text-orange-300 font-medium">+{{ Math.abs(Number(order.discount_amount)).toFixed(2) }}</span>
+            </div>
             <div class="flex justify-between">
               <span class="text-gray-500">Total</span>
               <span class="font-semibold text-gray-900 dark:text-white">{{ order.total_amount }}</span>
@@ -379,7 +435,7 @@ const statusButtonClass = (s: string) => {
             </span>
           </div>
 
-          <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="order.balance_due > 0 && order.payment_status !== 'paid'">
+          <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="!isCancelled && order.balance_due > 0 && order.payment_status !== 'paid'">
             <button @click="payWithWallet" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
               <Wallet class="size-5" />
               Pay with Wallet
@@ -404,7 +460,7 @@ const statusButtonClass = (s: string) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in order.items" :key="item.id" class="border-b dark:border-gray-700">
+            <tr v-for="item in order.items" :key="item.id" class="border-b dark:border-gray-700" :class="item.is_gift ? 'bg-pink-50/40 dark:bg-pink-900/10' : ''">
               <td class="px-6 py-3">
                 <div class="flex items-center gap-3">
                   <div v-if="item.product.image_url" class="w-10 h-10 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0">
@@ -413,14 +469,21 @@ const statusButtonClass = (s: string) => {
                   <div v-else class="w-10 h-10 rounded-md bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-200 border border-gray-200 dark:border-gray-700 shrink-0">
                     {{ resolveProductName(item.product.name).charAt(0).toUpperCase() }}
                   </div>
-                  <Link :href="editProduct(item.product.id).url" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                    {{ resolveProductName(item.product.name) }}
-                  </Link>
+                  <div class="flex items-center gap-2">
+                    <Link :href="editProduct(item.product.id).url" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                      {{ resolveProductName(item.product.name) }}
+                    </Link>
+                    <span v-if="item.is_gift" class="text-[10px] uppercase tracking-wide bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 px-2 py-0.5 rounded font-bold">
+                      Gift
+                    </span>
+                  </div>
                 </div>
               </td>
               <td class="px-6 py-3 text-right">{{ item.quantity }}</td>
-              <td class="px-6 py-3 text-right">{{ item.unit_price }}</td>
-              <td class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">{{ item.subtotal }}</td>
+              <td class="px-6 py-3 text-right" :class="item.is_gift ? 'line-through text-gray-400' : ''">{{ item.unit_price }}</td>
+              <td class="px-6 py-3 text-right font-semibold" :class="item.is_gift ? 'text-pink-600 dark:text-pink-300' : 'text-gray-900 dark:text-white'">
+                {{ item.is_gift ? 'Free' : item.subtotal }}
+              </td>
             </tr>
           </tbody>
           <tfoot>
@@ -533,6 +596,37 @@ const statusButtonClass = (s: string) => {
       </Dialog>
 
       <!-- Delivery Confirmation Modal -->
+      <!-- Cancellation Modal -->
+      <Dialog v-model:open="isCancelModalOpen">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Cancel Order</DialogTitle>
+            <DialogDescription>
+              Record why this order is being cancelled. The note is kept for later statistics.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="space-y-3 py-2">
+            <label class="text-xs uppercase font-bold text-gray-500 block">Reason *</label>
+            <textarea
+              v-model="cancelForm.cancellation_reason"
+              rows="4"
+              maxlength="1000"
+              placeholder="e.g. Client unreachable, duplicate order, wrong address…"
+              class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+            ></textarea>
+            <p v-if="cancelError" class="text-xs text-red-600">{{ cancelError }}</p>
+
+            <div class="flex justify-end gap-3 pt-4 border-t dark:border-gray-700 mt-2">
+              <Button type="button" variant="outline" @click="isCancelModalOpen = false">Keep Order</Button>
+              <Button type="button" class="bg-red-600 hover:bg-red-700 text-white" @click="submitCancellation">
+                Cancel Order
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog v-model:open="isDeliveryModalOpen">
         <DialogContent class="sm:max-w-xl">
           <DialogHeader>

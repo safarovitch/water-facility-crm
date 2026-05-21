@@ -95,7 +95,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::post('update/{client}', [ClientController::class, 'update'])->name('update');
       Route::delete('{client}',      [ClientController::class, 'destroy'])->name('destroy');
       Route::get('{client}/orders',  [ClientController::class, 'orders'])->name('orders');
-      
+      Route::post('{client}/transfer-profile', [ClientController::class, 'transferProfile'])->name('transfer-profile');
+
       // Address sub-routes under admin/clients
       Route::post('{client}/addresses',                       [UserAddressController::class, 'store'])->name('addresses.store');
       Route::post('{client}/addresses/{address}',             [UserAddressController::class, 'update'])->name('addresses.update');
