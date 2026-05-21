@@ -52,11 +52,55 @@ class WebhookHandler extends DefStudioWebhookHandler
 
     public function start(): void
     {
+        // Deep-link login flow: when the website generated a login token and
+        // the user opened t.me/<bot>?start=login_<token>, Telegram delivers
+        // "/start login_<token>" as the message text. Parse it here and hand
+        // off to the OTP service so the bot DMs the verification code.
+        $text = (string) ($this->message?->text() ?? '');
+        if (preg_match('/^\/start\s+login_([A-Za-z0-9]+)/', $text, $m)) {
+            $this->handleLoginDeepLink($m[1]);
+            return;
+        }
+
         if (!$this->chat->user_id) {
             $this->promptRegistration();
             return;
         }
         $this->mainMenu();
+    }
+
+    protected function handleLoginDeepLink(string $token): void
+    {
+        $service = app(\App\Services\TelegramOtpService::class);
+        $phone = $service->resolveLoginToken($token);
+
+        if (!$phone) {
+            $this->chat->message("Срок действия ссылки истёк. Запросите код входа заново на сайте.")->send();
+            return;
+        }
+
+        // If the chat is already bound to a user whose phone matches, we can
+        // send the OTP right away. Otherwise we need a contact share to map
+        // chat_id ↔ phone for the first time.
+        $userPhone = \App\Models\UserPhone::where('phone', $phone)->first();
+        $userIsBoundHere = $userPhone && $this->chat->user_id && (int) $userPhone->user_id === (int) $this->chat->user_id;
+
+        if ($userIsBoundHere || $userPhone) {
+            $service->dispatchOtp($this->chat, $phone);
+            return;
+        }
+
+        // Stash the pending phone so once the user shares their contact we
+        // can confirm the contact matches and then send the OTP.
+        $this->chat->setStateData(['pending_login_phone' => $phone]);
+        $this->chat->forceFill(['current_state' => 'login_awaiting_contact'])->save();
+
+        $this->chat->message("Для входа на сайт подтвердите номер, поделившись контактом ниже.")
+            ->replyKeyboard(
+                ReplyKeyboard::make()->buttons([
+                    ReplyButton::make('📞 Поделиться контактом')->requestContact(),
+                ])->resize()
+            )->send();
     }
 
     protected function promptRegistration(): void
@@ -81,14 +125,27 @@ class WebhookHandler extends DefStudioWebhookHandler
             $phone = '+' . $phone;
         }
 
+        // If we landed here via a login deep-link, the cached phone must match
+        // the contact the user just shared — otherwise someone is trying to
+        // log in as a different number.
+        $stateData = $this->chat->state_data ?? [];
+        $pendingPhone = $stateData['pending_login_phone'] ?? null;
+
+        if ($pendingPhone && $pendingPhone !== $phone) {
+            $this->chat->message("Этот номер не совпадает с тем, что вы ввели на сайте. Попробуйте ещё раз.")
+                ->removeReplyKeyboard()->send();
+            $this->chat->clearState();
+            return;
+        }
+
         $userPhone = \App\Models\UserPhone::where('phone', $phone)->first();
-        
+
         if ($userPhone) {
             $user = $userPhone->user;
         } else {
             $user = User::create([
                 'name' => $contact->firstName() ?? 'Telegram Client',
-                'email' => "tg_{$this->chat->chat_id}@example.local",
+                'email' => null,
                 'password' => bcrypt(Str::random(16)),
             ]);
             $user->assignRole('Client');
@@ -102,6 +159,15 @@ class WebhookHandler extends DefStudioWebhookHandler
 
         $this->chat->user_id = $user->id;
         $this->chat->save();
+
+        // Web-login path: send the OTP and stop — don't open the order menu.
+        if ($pendingPhone) {
+            $this->chat->clearState();
+            app(\App\Services\TelegramOtpService::class)->dispatchOtp($this->chat, $phone);
+            $this->chat->message("Код отправлен. Вернитесь на сайт и введите его.")
+                ->removeReplyKeyboard()->send();
+            return;
+        }
 
         $this->chat->message("Отлично! Ваш аккаунт привязан.")
             ->removeReplyKeyboard()->send();

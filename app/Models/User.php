@@ -42,6 +42,7 @@ class User extends Authenticatable implements HasPasskeys
     'sip_extension',
     'sip_password',
     'last_active_at',
+    'claimed_at',
   ];
 
   /**
@@ -95,6 +96,7 @@ class User extends Authenticatable implements HasPasskeys
       'password' => 'hashed',
       'status' => UserStatus::class,
       'last_active_at' => 'datetime',
+      'claimed_at' => 'datetime',
     ];
   }
 
@@ -164,6 +166,16 @@ class User extends Authenticatable implements HasPasskeys
   public function isClient(): bool
   {
     return $this->hasRole('Client');
+  }
+
+  /**
+   * Shell users were auto-created (e.g. from a walk-in order) and have no
+   * password chosen by the person. A future self-registration with the same
+   * email can adopt the row instead of being blocked by the unique check.
+   */
+  public function isShell(): bool
+  {
+    return $this->claimed_at === null;
   }
 
   public function isCurrier(): bool

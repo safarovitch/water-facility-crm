@@ -33,7 +33,20 @@ const form = useForm({
   notes: '',
   items: [] as LineItem[],
   custom_total: null as number | null,
+  new_contact: null as null | { name: string; phone: string; email: string },
 });
+
+const isNewContact = ref(false);
+
+const toggleNewContact = () => {
+  isNewContact.value = !isNewContact.value;
+  if (isNewContact.value) {
+    form.user_id = null;
+    form.new_contact = { name: '', phone: '', email: '' };
+  } else {
+    form.new_contact = null;
+  }
+};
 
 const addItem = () => {
   form.items.push({ product_id: null, quantity: 1, unit_price: 0, subtotal: 0, is_gift: false });
@@ -137,11 +150,52 @@ const toggleNewAddress = () => {
           <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Client & Delivery</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div class="grid gap-2 sm:col-span-2">
-              <Label for="user_id">Client *</Label>
-              <select id="user_id" v-model="form.user_id" required class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
+              <div class="flex items-center justify-between">
+                <Label for="user_id">Client *</Label>
+                <button
+                  type="button"
+                  @click="toggleNewContact"
+                  class="text-xs font-medium text-sky-600 hover:text-sky-700"
+                >
+                  {{ isNewContact ? '← Pick existing client' : '+ New walk-in client' }}
+                </button>
+              </div>
+
+              <select
+                v-if="!isNewContact"
+                id="user_id"
+                v-model="form.user_id"
+                :required="!isNewContact"
+                class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white"
+              >
                 <option :value="null">Select client...</option>
                 <option v-for="c in props.clients" :key="c.id" :value="c.id">{{ clientLabel(c) }}</option>
               </select>
+
+              <div
+                v-else
+                class="rounded-xl border border-dashed border-sky-300 bg-sky-50/40 dark:border-sky-800 dark:bg-sky-900/10 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
+              >
+                <p class="sm:col-span-2 text-xs text-sky-800 dark:text-sky-200">
+                  A client profile will be created from these details. If they later register with the same phone or email, the account will be adopted.
+                </p>
+                <div class="grid gap-1">
+                  <Label class="text-xs">Name *</Label>
+                  <Input v-model="form.new_contact!.name" placeholder="Client name" />
+                  <InputError :message="(form.errors as any)['new_contact.name']" />
+                </div>
+                <div class="grid gap-1">
+                  <Label class="text-xs">Phone *</Label>
+                  <Input v-model="form.new_contact!.phone" placeholder="+992 …" />
+                  <InputError :message="(form.errors as any)['new_contact.phone']" />
+                </div>
+                <div class="grid gap-1 sm:col-span-2">
+                  <Label class="text-xs">Email <span class="text-gray-400 font-normal">(optional)</span></Label>
+                  <Input v-model="form.new_contact!.email" type="email" placeholder="client@example.com" />
+                  <InputError :message="(form.errors as any)['new_contact.email']" />
+                </div>
+              </div>
+
               <InputError :message="form.errors.user_id" />
             </div>
             <div class="grid gap-2">
@@ -338,7 +392,14 @@ const toggleNewAddress = () => {
 
         <div class="flex items-center justify-end space-x-3 pt-2 pb-6">
           <Button type="button" @click="$inertia.visit(index().url)" variant="outline">Cancel</Button>
-          <Button type="submit" :disabled="form.processing || form.items.length === 0 || !form.user_id">
+          <Button
+            type="submit"
+            :disabled="
+              form.processing
+              || form.items.length === 0
+              || (!form.user_id && !(isNewContact && form.new_contact?.name && form.new_contact?.phone))
+            "
+          >
             <span v-if="form.processing">Creating...</span>
             <span v-else>Create Order</span>
           </Button>

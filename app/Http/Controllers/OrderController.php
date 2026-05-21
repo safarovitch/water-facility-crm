@@ -11,7 +11,10 @@ use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Models\UserPhone;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -145,8 +148,68 @@ class OrderController extends Controller
     ]);
   }
 
+  /**
+   * Resolve which user the order should belong to. If the request includes a
+   * `new_contact` block (admin entered a walk-in client), find or create a
+   * shell user (Client role, claimed_at = null) so a future self-registration
+   * with the same phone/email can adopt the row.
+   */
+  private function resolveOrderUserId(StoreOrderRequest $request): int
+  {
+    if ($request->user_id) {
+      return (int) $request->user_id;
+    }
+
+    $contact = $request->input('new_contact');
+    $phone = $contact['phone'] ?? null;
+    $email = $contact['email'] ?? null;
+    $name  = $contact['name']  ?? null;
+
+    if (!$phone && !$email) {
+      // StoreOrderRequest should have caught this, but guard anyway.
+      abort(422, 'A client or new contact (with phone) is required.');
+    }
+
+    // Try to match an existing user by phone first, then email.
+    $user = null;
+    if ($phone) {
+      $existingPhone = UserPhone::where('phone', $phone)->first();
+      if ($existingPhone) {
+        $user = User::find($existingPhone->user_id);
+      }
+    }
+    if (!$user && $email) {
+      $user = User::where('email', $email)->first();
+    }
+
+    if (!$user) {
+      $user = User::create([
+        'name'     => $name ?: 'Walk-in client',
+        'email'    => $email,
+        'password' => Hash::make(Str::random(32)),
+        'status'   => 'active',
+        // claimed_at stays null → shell user, adoptable on later registration.
+      ]);
+      $user->assignRole('Client');
+
+      if ($phone) {
+        UserPhone::create([
+          'user_id'    => $user->id,
+          'phone'      => $phone,
+          'label'      => 'Primary',
+          'is_default' => true,
+        ]);
+      }
+    }
+
+    return $user->id;
+  }
+
   public function store(StoreOrderRequest $request)
   {
+    $userId = $this->resolveOrderUserId($request);
+    $request->merge(['user_id' => $userId]);
+
     $order = DB::transaction(function () use ($request) {
       $items = collect($request->items)->map(function ($item) {
         $product   = Product::findOrFail($item['product_id']);
