@@ -110,6 +110,89 @@ class PhoneAuthController extends Controller
     ]);
   }
 
+  /**
+   * Setup-phone gate: shown to authenticated users whose phone_verified_at
+   * is null (typically legacy email+password accounts on first login post-
+   * migration). Same OTP loop as login.
+   */
+  public function showSetupPhone(Request $request): Response
+  {
+    $user = $request->user();
+    $existingPhone = $user?->phones()->orderByDesc('is_default')->first()?->phone;
+
+    return Inertia::render('auth/SetupPhone', [
+      'userName'      => $user?->name,
+      'existingPhone' => $existingPhone,
+    ]);
+  }
+
+  public function requestSetupOtp(Request $request): RedirectResponse
+  {
+    $request->validate([
+      'phone' => ['required', 'string', 'max:32'],
+    ]);
+
+    $info = $this->otp->requestLogin($request->phone);
+
+    return back()->with([
+      'phone'        => $info['phone'],
+      'deep_link'    => $info['deep_link'],
+      'awaiting_otp' => true,
+    ]);
+  }
+
+  public function verifySetupOtp(Request $request): RedirectResponse
+  {
+    $data = $request->validate([
+      'phone' => ['required', 'string', 'max:32'],
+      'code'  => ['required', 'string', 'size:6'],
+    ]);
+
+    $user = $request->user();
+    $normalized = $this->otp->normalizePhone($data['phone']);
+
+    $otpUser = $this->otp->verifyOtp($normalized, $data['code']);
+    if (!$otpUser) {
+      throw ValidationException::withMessages([
+        'code' => 'Invalid or expired code. Open the Telegram link again for a fresh one.',
+      ]);
+    }
+
+    // The Telegram-side flow may have created/used a stub user for this
+    // phone. If it's a DIFFERENT row from the currently signed-in account,
+    // attach the phone to the signed-in account instead and remove the stub.
+    if ($otpUser->id !== $user->id) {
+      // Move the phone over and discard the stub if it's truly empty (no
+      // orders / no profile). Otherwise just attach the phone and leave the
+      // stub for the admin to merge via the existing Transfer Profile UI.
+      $stub = $otpUser;
+      $stubHasData = $stub->orders()->exists() || $stub->userProfile()->exists();
+
+      // Reassign the phone row to the signed-in user.
+      \App\Models\UserPhone::where('phone', $normalized)
+        ->where('user_id', $stub->id)
+        ->update(['user_id' => $user->id]);
+
+      if (!$stubHasData && $stub->claimed_at === null) {
+        $stub->roles()->detach();
+        $stub->delete();
+      }
+    } else {
+      // Same user — make sure the phone is actually saved on them.
+      if (!$user->phones()->where('phone', $normalized)->exists()) {
+        $user->phones()->create([
+          'phone'      => $normalized,
+          'label'      => 'Primary',
+          'is_default' => !$user->phones()->exists(),
+        ]);
+      }
+    }
+
+    $user->forceFill(['phone_verified_at' => now()])->save();
+
+    return redirect()->intended(route('dashboard'));
+  }
+
   public function verifyRegisterOtp(Request $request): RedirectResponse
   {
     $data = $request->validate([

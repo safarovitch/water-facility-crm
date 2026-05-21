@@ -41,6 +41,12 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // Post-login phone-verification gate. The EnsurePhoneVerified middleware
+    // bounces users here until the OTP loop completes.
+    Route::get('account/setup-phone', [PhoneAuthController::class, 'showSetupPhone'])->name('account.setup-phone');
+    Route::post('account/setup-phone/request', [PhoneAuthController::class, 'requestSetupOtp'])->name('account.setup-phone.request');
+    Route::post('account/setup-phone/verify', [PhoneAuthController::class, 'verifySetupOtp'])->name('account.setup-phone.verify');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

@@ -222,6 +222,13 @@ return [
 
     'bot_token' => env('TELEGRAM_ORDER_BOT_TOKEN', null),
 
+    /*
+     * Bot username (without the @). Used to build t.me/<username>?start=…
+     * deep-links for the phone-OTP login flow. Optional — if left null we
+     * resolve it via a one-time getMe() call and cache the result.
+     */
+    'bot_username' => env('TELEGRAM_ORDER_BOT_USERNAME', null),
+
     'payments' => [
         'provider_token' => env('TELEGRAPH_PAYMENT_PROVIDER_TOKEN', ''),
     ],

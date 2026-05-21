@@ -124,10 +124,12 @@ class TelegramOtpService
 
     $otp->delete();
 
-    // First successful login claims the shell row, if applicable.
-    if ($user->claimed_at === null) {
-      $user->forceFill(['claimed_at' => now()])->save();
-    }
+    // First successful OTP verification claims the shell row and marks the
+    // phone verified — clears the migration nudge for legacy email accounts.
+    $updates = [];
+    if ($user->claimed_at === null) $updates['claimed_at'] = now();
+    if ($user->phone_verified_at === null) $updates['phone_verified_at'] = now();
+    if ($updates) $user->forceFill($updates)->save();
 
     return $user;
   }
@@ -163,27 +165,49 @@ class TelegramOtpService
     return $user;
   }
 
+  /**
+   * Resolve the TelegraphBot row matching the configured order bot token
+   * (TELEGRAM_ORDER_BOT_TOKEN). Falls back to the first bot if the token is
+   * missing or no exact match is found, but logs a warning so the issue is
+   * visible during setup.
+   */
   private function getBot(): ?TelegraphBot
   {
+    $token = config('telegraph.bot_token');
+    if ($token) {
+      $bot = TelegraphBot::where('token', $token)->first();
+      if ($bot) return $bot;
+      Log::warning('TelegramOtpService: TELEGRAM_ORDER_BOT_TOKEN does not match any telegraph_bots row. Run `php artisan app:setup-telegram-bot`.');
+    }
     return TelegraphBot::query()->first();
   }
 
   /**
-   * Telegraph stores the bot username on `info->username` after a getMe()
-   * call. We don't strictly require it — config('telegraph.bot_username')
-   * can override.
+   * Bot username (for building t.me/<username>?start=… links). Cached for 24h
+   * because it almost never changes. Order of resolution:
+   *   1. config('telegraph.bot_username') / TELEGRAM_ORDER_BOT_USERNAME env
+   *   2. Cached value from a prior getMe() call
+   *   3. Live getMe() call to the Telegram API, then cache the result
    */
   private function getBotUsername(?TelegraphBot $bot): ?string
   {
-    if (config('telegraph.bot_username')) {
-      return config('telegraph.bot_username');
-    }
+    $configured = config('telegraph.bot_username');
+    if ($configured) return $configured;
+
     if (!$bot) return null;
-    try {
-      return $bot->info()?->username ?? null;
-    } catch (\Throwable) {
-      return null;
-    }
+
+    return Cache::remember(
+      'telegraph:bot_username:' . $bot->id,
+      now()->addDay(),
+      function () use ($bot) {
+        try {
+          return $bot->info()?->username ?? null;
+        } catch (\Throwable $e) {
+          Log::warning('TelegramOtpService: getMe() failed', ['error' => $e->getMessage()]);
+          return null;
+        }
+      }
+    );
   }
 
   public function normalizePhone(string $phone): string

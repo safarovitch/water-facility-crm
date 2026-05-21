@@ -43,6 +43,7 @@ class User extends Authenticatable implements HasPasskeys
     'sip_password',
     'last_active_at',
     'claimed_at',
+    'phone_verified_at',
   ];
 
   /**
@@ -97,6 +98,7 @@ class User extends Authenticatable implements HasPasskeys
       'status' => UserStatus::class,
       'last_active_at' => 'datetime',
       'claimed_at' => 'datetime',
+      'phone_verified_at' => 'datetime',
     ];
   }
 

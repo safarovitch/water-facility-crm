@@ -3,56 +3,46 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\OtpCode;
 use App\Models\User;
+use App\Models\UserPhone;
+use App\Services\TelegramOtpService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
+/**
+ * Courier mobile app auth. Couriers receive their 6-digit code via the same
+ * Telegram bot (TELEGRAM_ORDER_BOT_TOKEN) used by the web flow — there is no
+ * SMS gateway, so the courier must have the bot opened at least once with
+ * their phone shared as a contact.
+ */
 class AuthController extends Controller
 {
+  public function __construct(private TelegramOtpService $otp) {}
+
+  /**
+   * Stage an OTP for a courier phone. Returns a Telegram deep-link the app
+   * can open — once the courier opens it the bot DMs the code, OR (if the
+   * courier already linked their phone earlier) the bot will DM the code
+   * the moment they tap the link.
+   */
   public function login(Request $request)
   {
-    $request->validate([
-      'identifier' => 'required|string',
-    ]);
+    $request->validate(['identifier' => 'required|string']);
 
-    $identifier = $this->normalizeIdentifier($request->identifier);
+    $phone = $this->otp->normalizePhone($request->identifier);
 
-    // Ensure user exists before sending OTP
-    if (str_contains($identifier, '@')) {
-      $user = User::where('email', $identifier)->first();
-    } else {
-      $user = User::whereHas('phones', function ($q) use ($identifier) {
-        $q->where('phone', $identifier);
-      })->first();
-    }
-
-    if (!$user) {
+    // Block non-couriers. We require the courier to already exist; the
+    // courier app is not a self-signup channel.
+    $user = User::whereHas('phones', fn ($q) => $q->where('phone', $phone))->first();
+    if (!$user || !$user->hasRole('Currier')) {
       return response()->json(['message' => 'User not registered.'], 404);
     }
 
-    if (!$user->hasRole('Currier')) {
-      return response()->json(['message' => 'User not registered.'], 404);
-    }
-
-    $code = (string) rand(100000, 999999);
-
-    // In a real app, we would send this via SMS/Email
-    Log::info("OTP for {$identifier}: {$code}");
-
-    OtpCode::updateOrCreate(
-      ['identifier' => $identifier],
-      [
-        'code' => $code,
-        'expires_at' => \Illuminate\Support\Facades\DB::raw('DATE_ADD(NOW(), INTERVAL 5 MINUTE)'),
-      ]
-    );
+    $info = $this->otp->requestLogin($phone);
 
     return response()->json([
-      'message' => 'OTP sent successfully (check logs).',
-      'identifier' => $identifier,
+      'message'    => 'OTP requested. Open Telegram to receive your code.',
+      'identifier' => $info['phone'],
+      'deep_link'  => $info['deep_link'],
     ]);
   }
 
@@ -60,44 +50,25 @@ class AuthController extends Controller
   {
     $request->validate([
       'identifier' => 'required|string',
-      'code' => 'required|string',
+      'code'       => 'required|string',
     ]);
 
-    $identifier = $this->normalizeIdentifier($request->identifier);
+    $phone = $this->otp->normalizePhone($request->identifier);
 
-    $otp = OtpCode::where('identifier', $identifier)
-      ->where('code', $request->code)
-      ->valid()
-      ->first();
-
-    if (!$otp) {
+    $user = $this->otp->verifyOtp($phone, $request->code);
+    if (!$user || !$user->hasRole('Currier')) {
       return response()->json(['message' => 'Invalid or expired OTP.'], 422);
     }
-
-    // Find user by normalized identifier
-    if (str_contains($identifier, '@')) {
-      $user = User::where('email', $identifier)->first();
-    } else {
-      $user = User::whereHas('phones', function ($q) use ($identifier) {
-        $q->where('phone', $identifier);
-      })->first();
-    }
-
-    if (!$user || !$user->hasRole('Currier')) {
-      return response()->json(['message' => 'User not registered.'], 404);
-    }
-
-    $otp->delete();
 
     $token = $user->createToken('courier-app')->plainTextToken;
 
     return response()->json([
       'token' => $token,
-      'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
+      'user'  => [
+        'id'    => $user->id,
+        'name'  => $user->name,
         'phone' => $user->phone,
-        'role' => $user->getRoleNames()->first(),
+        'role'  => $user->getRoleNames()->first(),
       ],
     ]);
   }
@@ -105,23 +76,6 @@ class AuthController extends Controller
   public function logout(Request $request)
   {
     $request->user()->currentAccessToken()->delete();
-
     return response()->json(['message' => 'Logged out successfully.']);
-  }
-
-  private function normalizeIdentifier(string $identifier): string
-  {
-    if (str_contains($identifier, '@')) {
-      return strtolower(trim($identifier));
-    }
-
-    try {
-      // Use laravel-phone to normalize. If + is present, it auto-detects.
-      // Explicitly include TJ (Tajikistan) as it is the primary region.
-      return (string) phone($identifier, ['TJ', 'AZ', 'US', 'RU'], 'E164');
-    } catch (\Exception $e) {
-      // Strip everything but numbers and + for a basic cleanup if library fails
-      return preg_replace('/[^\d+]/', '', $identifier);
-    }
   }
 }
