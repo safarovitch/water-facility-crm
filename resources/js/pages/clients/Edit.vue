@@ -9,7 +9,7 @@ import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import AddressMapPicker from '@/components/AddressMapPicker.vue';
 import type { AddressData } from '@/components/AddressMapPicker.vue';
-import { index, update } from '@/routes/admin/clients';
+import { index, update, transferProfile } from '@/routes/admin/clients';
 import { computed, ref } from 'vue';
 
 interface UserAddress {
@@ -38,7 +38,14 @@ interface Client {
   addresses: UserAddress[];
 }
 
-const props = defineProps<{ client: Client }>();
+interface TransferCandidate {
+  id: number;
+  name: string;
+  email: string | null;
+  phones?: { phone: string; is_default: boolean }[];
+}
+
+const props = defineProps<{ client: Client; transferCandidates: TransferCandidate[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Clients', href: index().url },
@@ -129,6 +136,36 @@ function setPrimaryPhone(i: number) {
 
 function submitForm() {
   form.post(update(props.client.id).url);
+}
+
+// ── Profile transfer ─────────────────────────────────────────────────────────
+
+const transferOpen = ref(false);
+const transferSearch = ref('');
+const transferForm = useForm({ target_user_id: null as number | null });
+
+const filteredCandidates = computed(() => {
+  const q = transferSearch.value.trim().toLowerCase();
+  if (!q) return props.transferCandidates.slice(0, 20);
+  return props.transferCandidates.filter(c => {
+    if (c.name?.toLowerCase().includes(q)) return true;
+    if (c.email?.toLowerCase().includes(q)) return true;
+    return c.phones?.some(p => p.phone?.toLowerCase().includes(q));
+  }).slice(0, 20);
+});
+
+function submitTransfer() {
+  if (!transferForm.target_user_id) return;
+  const target = props.transferCandidates.find(c => c.id === transferForm.target_user_id);
+  const targetLabel = target ? `${target.name} (${target.email ?? 'no email'})` : 'this user';
+  const ok = window.confirm(
+    `Transfer this client's profile, addresses, phones, orders, and wallet to ${targetLabel}?\n\n` +
+    `The current account will lose the Client role and all linked data. This cannot be undone.`,
+  );
+  if (!ok) return;
+  transferForm.post(transferProfile(props.client.id).url, {
+    preserveScroll: true,
+  });
 }
 
 const initiateCall = (phone: string | null) => {
@@ -273,6 +310,65 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
               <div class="grid gap-2 sm:col-span-2">
                 <AddressMapPicker :model-value="addr" @update:model-value="updateAddress(i, $event)" height="260px" />
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile transfer -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-semibold text-gray-900 dark:text-white">Transfer Profile to Another User</h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Use when this client registered a second account. Moves profile, addresses, phones, orders, and wallet to the chosen user, then removes the Client role here.
+              </p>
+            </div>
+            <Button type="button" variant="outline" size="sm" @click="transferOpen = !transferOpen">
+              {{ transferOpen ? 'Cancel' : 'Transfer…' }}
+            </Button>
+          </div>
+
+          <div v-if="transferOpen" class="mt-4 space-y-3">
+            <div class="grid gap-2">
+              <Label>Search target user (name, email, or phone)</Label>
+              <Input v-model="transferSearch" placeholder="Start typing to filter…" />
+            </div>
+
+            <div class="max-h-64 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+              <p v-if="filteredCandidates.length === 0" class="p-3 text-xs text-gray-400 italic">No matching users.</p>
+              <label
+                v-for="c in filteredCandidates"
+                :key="c.id"
+                class="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <input
+                  type="radio"
+                  name="transfer_target"
+                  :value="c.id"
+                  v-model="transferForm.target_user_id"
+                />
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900 dark:text-white">{{ c.name }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ c.email ?? '— no email —' }}
+                    <span v-if="c.phones?.length"> · {{ c.phones[0].phone }}</span>
+                  </div>
+                </div>
+                <span class="text-xs text-gray-400">#{{ c.id }}</span>
+              </label>
+            </div>
+            <InputError :message="transferForm.errors.target_user_id" />
+
+            <div class="flex justify-end">
+              <Button
+                type="button"
+                variant="destructive"
+                :disabled="!transferForm.target_user_id || transferForm.processing"
+                @click="submitTransfer"
+              >
+                <span v-if="transferForm.processing">Transferring…</span>
+                <span v-else>Transfer Profile</span>
+              </Button>
             </div>
           </div>
         </div>

@@ -22,9 +22,13 @@ class Order extends Model
     'actual_delivery_at',
     'delivery_address',
     'total_amount',
+    'discount_amount',
     'paid_amount',
     'payment_status',
     'notes',
+    'cancellation_reason',
+    'cancelled_at',
+    'cancelled_by',
     'created_by',
     'courier_id',
     'lat',
@@ -36,7 +40,9 @@ class Order extends Model
     'payment_status'        => PaymentStatus::class,
     'scheduled_delivery_at' => 'datetime',
     'actual_delivery_at'    => 'datetime',
+    'cancelled_at'          => 'datetime',
     'total_amount'          => 'decimal:2',
+    'discount_amount'       => 'decimal:2',
     'paid_amount'           => 'decimal:2',
     'lat'                   => 'float',
     'lng'                   => 'float',
@@ -52,6 +58,8 @@ class Order extends Model
     'scheduled_delivery_at_formatted',
     'actual_delivery_at_human',
     'actual_delivery_at_formatted',
+    'cancelled_at_human',
+    'cancelled_at_formatted',
   ];
 
   protected static function boot(): void
@@ -112,6 +120,16 @@ class Order extends Model
     return Attribute::get(fn() => $this->actual_delivery_at?->format('F j, Y H:i:s'));
   }
 
+  protected function cancelledAtHuman(): Attribute
+  {
+    return Attribute::get(fn() => $this->cancelled_at?->diffForHumans());
+  }
+
+  protected function cancelledAtFormatted(): Attribute
+  {
+    return Attribute::get(fn() => $this->cancelled_at?->format('F j, Y H:i:s'));
+  }
+
   public function client(): BelongsTo
   {
     return $this->belongsTo(User::class, 'user_id');
@@ -125,6 +143,11 @@ class Order extends Model
   public function creator(): BelongsTo
   {
     return $this->belongsTo(User::class, 'created_by');
+  }
+
+  public function canceller(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'cancelled_by');
   }
 
   public function items(): HasMany

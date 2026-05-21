@@ -16,12 +16,14 @@ class OrderItem extends Model
     'quantity',
     'unit_price',
     'subtotal',
+    'is_gift',
   ];
 
   protected $casts = [
     'quantity'   => 'integer',
     'unit_price' => 'decimal:2',
     'subtotal'   => 'decimal:2',
+    'is_gift'    => 'boolean',
   ];
 
   protected $appends = [

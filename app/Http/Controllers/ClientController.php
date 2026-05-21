@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserPhone;
 use App\Models\UserProfile;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -143,9 +144,70 @@ class ClientController extends Controller
   {
     $client->load(['userProfile', 'addresses', 'phones']);
 
+    // Candidates for profile transfer: any user except the current client.
+    // Most useful: recently registered users who don't yet have a Client role
+    // and don't already own this client's data. We let the admin search by
+    // name/email/phone from the UI, so we just send a small recent slice here.
+    $transferCandidates = User::where('id', '!=', $client->id)
+      ->with('phones:id,user_id,phone,is_default')
+      ->latest('id')
+      ->limit(50)
+      ->get(['id', 'name', 'email']);
+
     return Inertia::render('clients/Edit')->with([
       'client' => $client,
+      'transferCandidates' => $transferCandidates,
     ]);
+  }
+
+  /**
+   * Transfer this client's profile (UserProfile, addresses, phones, orders,
+   * wallet) to another user. Used when the same person registers a second
+   * account and we want their CRM history to follow the new auth row.
+   *
+   * The source user keeps existence but loses Client role and all linked
+   * client data. The target user receives the Client role and the data.
+   */
+  public function transferProfile(Request $request, User $client)
+  {
+    $request->validate([
+      'target_user_id' => ['required', 'integer', 'exists:users,id', 'different:'.$client->id],
+    ]);
+
+    $target = User::findOrFail($request->target_user_id);
+
+    if ($target->id === $client->id) {
+      return back()->withErrors(['target_user_id' => 'Source and target must be different users.']);
+    }
+
+    DB::transaction(function () use ($client, $target) {
+      // Remove any data already attached to the target so the source's data
+      // (the canonical history) wins. Target is typically a fresh duplicate
+      // account with little or no data, so this is safe.
+      $target->userProfile()->delete();
+      $target->addresses()->delete();
+      $target->phones()->delete();
+      Wallet::where('user_id', $target->id)->delete();
+
+      // Move data from source to target.
+      UserProfile::where('user_id', $client->id)->update(['user_id' => $target->id]);
+      UserAddress::where('user_id', $client->id)->update(['user_id' => $target->id]);
+      UserPhone::where('user_id', $client->id)->update(['user_id' => $target->id]);
+      Wallet::where('user_id', $client->id)->update(['user_id' => $target->id]);
+      \App\Models\Order::where('user_id', $client->id)->update(['user_id' => $target->id]);
+
+      // Swap the Client role.
+      if ($client->hasRole('Client')) {
+        $client->removeRole('Client');
+      }
+      if (!$target->hasRole('Client')) {
+        $target->assignRole('Client');
+      }
+    });
+
+    return redirect()
+      ->route('admin.clients.edit', $target->id)
+      ->with('success', "Client profile transferred to {$target->name}.");
   }
 
   public function update(UpdateClientRequest $request, User $client)

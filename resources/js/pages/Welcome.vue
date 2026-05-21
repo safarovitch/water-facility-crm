@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import FannLogo from '@/components/FannLogo.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import { useLandingI18n } from '@/composables/useLandingI18n';
 import { dashboard, login, register } from '@/routes';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
@@ -14,6 +16,8 @@ import {
     Truck,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+
+const { t, locale } = useLandingI18n();
 
 const page = usePage();
 const isLoggedIn = computed(() => Boolean(page.props.auth?.user));
@@ -182,6 +186,12 @@ function scrollToTargetIfPresent() {
 }
 
 onMounted(async () => {
+    // Reflect the detected/stored locale on <html lang> so screen readers and
+    // CSS :lang() selectors get it right on initial paint.
+    if (typeof document !== 'undefined') {
+        document.documentElement.lang = locale.value === 'tg' ? 'tg' : locale.value;
+    }
+
     // Inertia's SPA navigation doesn't always honor URL fragments (e.g. after
     // /auth/start → /login → redirect()->intended('/#coverage')). Force it.
     scrollToTargetIfPresent();
@@ -220,68 +230,53 @@ onBeforeUnmount(() => {
     }
 });
 
-const features = [
-    {
-        icon: Mountain,
-        title: 'Mountain Spring Source',
-        description:
-            'Bottled directly at the source in the Varzob valley, where Tajikistan’s alpine snow-melt feeds pure underground springs.',
-    },
-    {
-        icon: ShieldCheck,
-        title: 'Multi-Stage Filtration',
-        description:
-            'Mechanical, carbon and UV filtration preserve natural minerals while removing every impurity.',
-    },
-    {
-        icon: Truck,
-        title: 'Free Home & Office Delivery',
-        description:
-            'Year-round delivery across Dushanbe and surrounding districts. Schedule once — we keep you stocked.',
-    },
-    {
-        icon: Leaf,
-        title: 'Naturally Balanced Minerals',
-        description:
-            'Light, soft taste with the calcium, magnesium and potassium your body actually needs.',
-    },
-];
+const features = computed(() => [
+    { icon: Mountain, title: t('features.sourceTitle'), description: t('features.sourceDesc') },
+    { icon: ShieldCheck, title: t('features.filtrationTitle'), description: t('features.filtrationDesc') },
+    { icon: Truck, title: t('features.deliveryTitle'), description: t('features.deliveryDesc') },
+    { icon: Leaf, title: t('features.mineralsTitle'), description: t('features.mineralsDesc') },
+]);
 
-const steps = [
-    { n: '01', title: 'Place an order', text: 'Call, WhatsApp or send a quick message — tell us how many bottles and where.' },
-    { n: '02', title: 'We deliver', text: 'Same-day or next-day delivery to your home or office, no minimum order.' },
-    { n: '03', title: 'Stay hydrated', text: 'We pick up empties on the next visit. You only ever pay for the water.' },
-];
+const steps = computed(() => [
+    { n: '01', title: t('how.step1Title'), text: t('how.step1Text') },
+    { n: '02', title: t('how.step2Title'), text: t('how.step2Text') },
+    { n: '03', title: t('how.step3Title'), text: t('how.step3Text') },
+]);
 
-const plans = [
+const plans = computed(() => [
     {
-        name: 'Single Bottle',
-        price: '19',
-        unit: 'TJS',
-        per: '/ 19L bottle',
-        features: ['Pay-as-you-go', 'No subscription', 'Delivered same / next day'],
-        cta: 'Order one',
+        name: t('pricing.singleName'),
+        price: '20',
+        unit: t('pricing.unitTjs'),
+        per: t('pricing.singlePer'),
+        features: [t('pricing.singleF1'), t('pricing.singleF2'), t('pricing.singleF3')],
+        cta: t('pricing.singleCta'),
         highlight: false,
     },
     {
-        name: 'Home Pack',
-        price: '69',
-        unit: 'TJS',
-        per: '/ 4 bottles',
-        features: ['Best for families', 'Free delivery', 'Flexible schedule'],
-        cta: 'Order Home Pack',
+        name: t('pricing.homeName'),
+        price: '75',
+        unit: t('pricing.unitTjs'),
+        per: t('pricing.homePer'),
+        features: [t('pricing.homeF1'), t('pricing.homeF2'), t('pricing.homeF3')],
+        cta: t('pricing.homeCta'),
         highlight: true,
     },
     {
-        name: 'Office Plan',
-        price: 'Custom',
+        name: t('pricing.officeName'),
+        price: t('pricing.custom'),
         unit: '',
-        per: '8+ bottles per delivery',
-        features: ['Dedicated account manager', 'Dispensers available', 'Invoiced billing'],
-        cta: 'Request a quote',
+        per: t('pricing.officePer'),
+        features: [t('pricing.officeF1'), t('pricing.officeF2'), t('pricing.officeF3')],
+        cta: t('pricing.officeCta'),
         highlight: false,
     },
-];
+]);
+
+const couriersLabel = (count: number) => {
+    const key = count === 1 ? 'coverage.couriersSingular' : 'coverage.couriersPlural';
+    return t(key).replace('{count}', String(count));
+};
 </script>
 
 <template>
@@ -299,50 +294,49 @@ const plans = [
 
     <div class="min-h-screen bg-[#f6f6f6] text-slate-900 antialiased">
         <!-- Top nav -->
-        <header class="sticky top-0 z-40 border-b border-sky-100/80 bg-[#f6f6f6]/80 backdrop-blur">
+        <header class="sticky top-0 z-[1000] border-b border-sky-100/80 bg-[#f6f6f6]/80 backdrop-blur">
             <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <a href="#top" class="flex items-center text-slate-900">
                     <FannLogo variant="inline" class="h-9 w-auto" />
                 </a>
 
                 <nav class="hidden items-center gap-7 text-sm text-slate-600 md:flex">
-                    <a href="#about" class="hover:text-sky-600">About</a>
-                    <a href="#features" class="hover:text-sky-600">Why us</a>
-                    <a href="#how" class="hover:text-sky-600">How it works</a>
-                    <a href="#pricing" class="hover:text-sky-600">Pricing</a>
-                    <a href="#coverage" class="hover:text-sky-600">Delivery</a>
-                    <a href="#contact" class="hover:text-sky-600">Contact</a>
+                    <a href="#about" class="hover:text-sky-600">{{ t('nav.about') }}</a>
+                    <a href="#features" class="hover:text-sky-600">{{ t('nav.whyUs') }}</a>
+                    <a href="#how" class="hover:text-sky-600">{{ t('nav.howItWorks') }}</a>
+                    <a href="#pricing" class="hover:text-sky-600">{{ t('nav.pricing') }}</a>
+                    <a href="#coverage" class="hover:text-sky-600">{{ t('nav.delivery') }}</a>
+                    <a href="#contact" class="hover:text-sky-600">{{ t('nav.contact') }}</a>
                 </nav>
 
                 <div class="flex items-center gap-2">
+                    <LanguageSwitcher />
                     <Link
                         v-if="$page.props.auth.user"
                         :href="dashboard()"
-                        class="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-medium hover:border-slate-300 sm:inline-block"
+                        class="hidden h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium hover:border-slate-300 sm:inline-flex"
                     >
-                        Dashboard
+                        {{ t('nav.dashboard') }}
                     </Link>
                     <template v-else>
                         <Link
                             :href="login()"
                             class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline-block"
                         >
-                            Log in
+                            {{ t('nav.login') }}
                         </Link>
                         <Link
                             :href="register()"
                             class="hidden rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 sm:inline-block"
                         >
-                            Sign up
+                            {{ t('nav.signup') }}
                         </Link>
                     </template>
                     <a
                         :href="phoneHref"
-                        class="inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-600"
+                        class="inline-flex h-10 items-center gap-2 rounded-full bg-sky-500 px-4 text-sm font-medium text-white shadow-sm hover:bg-sky-600"
                     >
                         <Phone class="h-4 w-4" />
-                        <span class="hidden sm:inline">Order now</span>
-                        <span class="sm:hidden">Order</span>
                     </a>
                 </div>
             </div>
@@ -356,16 +350,14 @@ const plans = [
                         class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3 py-1 text-xs font-medium text-sky-700"
                     >
                         <Mountain class="h-3.5 w-3.5" />
-                        fann · sourced in Varzob, Tajikistan
+                        {{ t('hero.badge') }}
                     </span>
                     <h1 class="mt-6 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-                        Pure mountain spring water,<br />
-                        <span class="text-sky-600">delivered to your door.</span>
+                        {{ t('hero.headline1') }}<br />
+                        <span class="text-sky-600">{{ t('hero.headline2') }}</span>
                     </h1>
                     <p class="mt-6 max-w-xl text-lg text-slate-600">
-                        19-litre bottles of natural Varzob valley spring water, professionally
-                        filtered and brought to homes and offices across Tajikistan — every
-                        week, all year round.
+                        {{ t('hero.subtitle') }}
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -374,7 +366,7 @@ const plans = [
                             class="inline-flex items-center gap-2 rounded-full bg-sky-500 px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-sky-600"
                         >
                             <Phone class="h-5 w-5" />
-                            Call to order
+                            {{ t('hero.callToOrder') }}
                         </a>
                         <a
                             :href="whatsappHref"
@@ -382,22 +374,22 @@ const plans = [
                             rel="noopener"
                             class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-800 transition hover:border-slate-300"
                         >
-                            WhatsApp
+                            {{ t('hero.whatsapp') }}
                         </a>
                     </div>
 
                     <dl class="mt-10 grid grid-cols-3 gap-6 border-t border-slate-200 pt-6 text-sm">
                         <div>
-                            <dt class="text-slate-500">Bottle size</dt>
-                            <dd class="mt-1 text-lg font-semibold text-slate-900">19 L</dd>
+                            <dt class="text-slate-500">{{ t('hero.statBottleLabel') }}</dt>
+                            <dd class="mt-1 text-lg font-semibold text-slate-900">{{ t('hero.statBottleValue') }}</dd>
                         </div>
                         <div>
-                            <dt class="text-slate-500">Delivery</dt>
-                            <dd class="mt-1 text-lg font-semibold text-slate-900">Year-round</dd>
+                            <dt class="text-slate-500">{{ t('hero.statDeliveryLabel') }}</dt>
+                            <dd class="mt-1 text-lg font-semibold text-slate-900">{{ t('hero.statDeliveryValue') }}</dd>
                         </div>
                         <div>
-                            <dt class="text-slate-500">Source</dt>
-                            <dd class="mt-1 text-lg font-semibold text-slate-900">Varzob</dd>
+                            <dt class="text-slate-500">{{ t('hero.statSourceLabel') }}</dt>
+                            <dd class="mt-1 text-lg font-semibold text-slate-900">{{ t('hero.statSourceValue') }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -468,27 +460,25 @@ const plans = [
         <section id="about" class="mx-auto max-w-6xl px-6 py-20">
             <div class="grid gap-12 md:grid-cols-2 md:items-center">
                 <div class="order-2 md:order-1">
-                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">Our source</span>
+                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">{{ t('about.eyebrow') }}</span>
                     <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                        From the Varzob valley, untouched and unhurried.
+                        {{ t('about.title') }}
                     </h2>
                     <p class="mt-5 text-slate-600">
-                        Our water is collected in the Varzob gorge, where the Hisor mountains feed deep,
-                        natural springs with snow-melt that has been filtering through stone for years.
-                        We bottle it close to the source to preserve its mineral profile and crisp taste.
+                        {{ t('about.body') }}
                     </p>
                     <ul class="mt-6 space-y-3 text-slate-700">
                         <li class="flex items-start gap-3">
                             <CheckCircle2 class="mt-0.5 h-5 w-5 flex-none text-sky-500" />
-                            <span>Naturally cold, naturally clean — no chemical treatment required.</span>
+                            <span>{{ t('about.bullet1') }}</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <CheckCircle2 class="mt-0.5 h-5 w-5 flex-none text-sky-500" />
-                            <span>Bottled in a sealed, food-grade facility under strict hygiene controls.</span>
+                            <span>{{ t('about.bullet2') }}</span>
                         </li>
                         <li class="flex items-start gap-3">
                             <CheckCircle2 class="mt-0.5 h-5 w-5 flex-none text-sky-500" />
-                            <span>Delivered in reusable, sanitised 19-litre bottles.</span>
+                            <span>{{ t('about.bullet3') }}</span>
                         </li>
                     </ul>
                 </div>
@@ -508,10 +498,10 @@ const plans = [
                             <div class="rounded-xl bg-white/85 p-4 backdrop-blur">
                                 <div class="flex items-center gap-2 text-sm font-semibold text-sky-700">
                                     <Mountain class="h-4 w-4" />
-                                    Varzob Gorge, Tajikistan
+                                    {{ t('about.locationLabel') }}
                                 </div>
                                 <p class="mt-1 text-sm text-slate-600">
-                                    Spring elevation: ~1 600 m. Average source temperature: 6–8 °C.
+                                    {{ t('about.locationFacts') }}
                                 </p>
                             </div>
                         </div>
@@ -524,13 +514,12 @@ const plans = [
         <section id="features" class="bg-slate-50 py-20">
             <div class="mx-auto max-w-6xl px-6">
                 <div class="max-w-2xl">
-                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">Why us</span>
+                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">{{ t('features.eyebrow') }}</span>
                     <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                        Clean water shouldn’t be complicated.
+                        {{ t('features.title') }}
                     </h2>
                     <p class="mt-4 text-slate-600">
-                        We do one thing: bring real mountain spring water to your home or office,
-                        reliably, and at a fair price.
+                        {{ t('features.body') }}
                     </p>
                 </div>
 
@@ -553,9 +542,9 @@ const plans = [
         <!-- How it works -->
         <section id="how" class="mx-auto max-w-6xl px-6 py-20">
             <div class="text-center">
-                <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">How it works</span>
+                <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">{{ t('how.eyebrow') }}</span>
                 <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                    Three steps. No paperwork.
+                    {{ t('how.title') }}
                 </h2>
             </div>
             <ol class="mt-12 grid gap-6 md:grid-cols-3">
@@ -575,12 +564,12 @@ const plans = [
         <section id="pricing" class="bg-gradient-to-b from-white to-sky-50/60 py-20">
             <div class="mx-auto max-w-6xl px-6">
                 <div class="max-w-2xl">
-                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">Pricing</span>
+                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">{{ t('pricing.eyebrow') }}</span>
                     <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                        Simple, transparent pricing.
+                        {{ t('pricing.title') }}
                     </h2>
                     <p class="mt-4 text-slate-600">
-                        Pay per bottle or set up a regular delivery — whatever suits your home or office best.
+                        {{ t('pricing.body') }}
                     </p>
                 </div>
 
@@ -601,7 +590,7 @@ const plans = [
                                 v-if="p.highlight"
                                 class="rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-semibold text-white"
                             >
-                                Popular
+                                {{ t('pricing.popular') }}
                             </span>
                         </div>
                         <div class="mt-5 flex items-baseline gap-2">
@@ -635,7 +624,7 @@ const plans = [
                     </div>
                 </div>
                 <p class="mt-6 text-center text-xs text-slate-500">
-                    Prices are indicative. A refundable bottle deposit may apply on first order.
+                    {{ t('pricing.disclaimer') }}
                 </p>
             </div>
         </section>
@@ -644,13 +633,12 @@ const plans = [
         <section id="coverage" class="mx-auto max-w-6xl px-6 py-20">
             <div class="grid gap-12 md:grid-cols-2 md:items-center">
                 <div>
-                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">Coverage</span>
+                    <span class="text-sm font-semibold tracking-wide text-sky-600 uppercase">{{ t('coverage.eyebrow') }}</span>
                     <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                        We deliver across Dushanbe.
+                        {{ t('coverage.title') }}
                     </h2>
                     <p class="mt-4 text-slate-600">
-                        Our couriers cover the city centre and the surrounding districts year-round.
-                        Address outside the zone? Give us a call — we'll often arrange it.
+                        {{ t('coverage.body') }}
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -660,7 +648,7 @@ const plans = [
                             class="inline-flex cursor-pointer items-center gap-2 rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600"
                         >
                             <Truck class="h-4 w-4" />
-                            Where is my water?
+                            {{ t('coverage.whereIsMyWater') }}
                         </a>
                     </div>
                 </div>
@@ -671,7 +659,7 @@ const plans = [
                     <div
                         ref="mapEl"
                         class="block h-[420px] w-full"
-                        aria-label="fann live courier coverage map"
+                        :aria-label="t('coverage.mapAria')"
                     />
 
                     <!-- live status pill -->
@@ -684,14 +672,14 @@ const plans = [
                                 courierCount > 0 ? 'bg-sky-500' : 'bg-slate-300',
                             ]"
                         />
-                        <template v-if="!mapReady">Loading map…</template>
+                        <template v-if="!mapReady">{{ t('coverage.loading') }}</template>
                         <template v-else-if="trackingMode === 'personal'">
-                            Your water is on the way
+                            {{ t('coverage.personal') }}
                         </template>
                         <template v-else-if="courierCount > 0">
-                            {{ courierCount }} courier{{ courierCount === 1 ? '' : 's' }} on the road
+                            {{ couriersLabel(courierCount) }}
                         </template>
-                        <template v-else>No couriers on the road right now</template>
+                        <template v-else>{{ t('coverage.none') }}</template>
                     </div>
                 </div>
             </div>
@@ -704,11 +692,10 @@ const plans = [
                     <div>
                         <FannLogo variant="stacked" class="mb-6 h-24 w-auto text-white" :show-tagline="true" />
                         <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-                            Order your first bottle today.
+                            {{ t('contact.title') }}
                         </h2>
                         <p class="mt-4 max-w-md text-slate-300">
-                            Tell us how many 19L bottles you need and where to bring them.
-                            We’ll handle the rest.
+                            {{ t('contact.body') }}
                         </p>
 
                         <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -717,7 +704,7 @@ const plans = [
                                 class="inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600"
                             >
                                 <Phone class="h-4 w-4" />
-                                Call us
+                                {{ t('contact.call') }}
                             </a>
                             <a
                                 :href="whatsappHref"
@@ -725,7 +712,7 @@ const plans = [
                                 rel="noopener"
                                 class="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:border-white/40"
                             >
-                                Chat on WhatsApp
+                                {{ t('contact.whatsapp') }}
                             </a>
                         </div>
                     </div>
@@ -734,7 +721,7 @@ const plans = [
                         <li class="flex items-start gap-3">
                             <Phone class="mt-0.5 h-5 w-5 flex-none text-sky-400" />
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-slate-400">Phone</div>
+                                <div class="text-xs uppercase tracking-wide text-slate-400">{{ t('contact.phoneLabel') }}</div>
                                 <a :href="phoneHref" class="text-base font-medium text-white hover:text-sky-300">
                                     {{ phone }}
                                 </a>
@@ -743,7 +730,7 @@ const plans = [
                         <li class="flex items-start gap-3">
                             <Mail class="mt-0.5 h-5 w-5 flex-none text-sky-400" />
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-slate-400">Email</div>
+                                <div class="text-xs uppercase tracking-wide text-slate-400">{{ t('contact.emailLabel') }}</div>
                                 <a :href="`mailto:${email}`" class="text-base font-medium text-white hover:text-sky-300">
                                     {{ email }}
                                 </a>
@@ -752,15 +739,15 @@ const plans = [
                         <li class="flex items-start gap-3">
                             <MapPin class="mt-0.5 h-5 w-5 flex-none text-sky-400" />
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-slate-400">Service area</div>
-                                <div class="text-base font-medium text-white">Dushanbe & surrounding districts</div>
+                                <div class="text-xs uppercase tracking-wide text-slate-400">{{ t('contact.serviceLabel') }}</div>
+                                <div class="text-base font-medium text-white">{{ t('contact.serviceValue') }}</div>
                             </div>
                         </li>
                         <li class="flex items-start gap-3">
                             <Clock class="mt-0.5 h-5 w-5 flex-none text-sky-400" />
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-slate-400">Hours</div>
-                                <div class="text-base font-medium text-white">Daily, 11:00 – 03:00</div>
+                                <div class="text-xs uppercase tracking-wide text-slate-400">{{ t('contact.hoursLabel') }}</div>
+                                <div class="text-base font-medium text-white">{{ t('contact.hoursValue') }}</div>
                             </div>
                         </li>
                     </ul>
@@ -772,11 +759,11 @@ const plans = [
         <footer class="border-t border-slate-200 bg-[#f6f6f6]">
             <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-slate-500 md:flex-row">
                 <FannLogo variant="inline" class="h-7 w-auto text-slate-700" />
-                <div>© {{ new Date().getFullYear() }} fann. All rights reserved.</div>
+                <div>© {{ new Date().getFullYear() }} fann. {{ t('footer.rights') }}</div>
                 <div class="flex items-center gap-5">
-                    <a href="#about" class="hover:text-slate-700">About</a>
-                    <a href="#pricing" class="hover:text-slate-700">Pricing</a>
-                    <a href="#contact" class="hover:text-slate-700">Contact</a>
+                    <a href="#about" class="hover:text-slate-700">{{ t('footer.about') }}</a>
+                    <a href="#pricing" class="hover:text-slate-700">{{ t('footer.pricing') }}</a>
+                    <a href="#contact" class="hover:text-slate-700">{{ t('footer.contact') }}</a>
                 </div>
             </div>
         </footer>

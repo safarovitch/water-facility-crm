@@ -20,7 +20,9 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'New Order', href: '#' },
 ];
 
-interface LineItem { product_id: number | null; quantity: number; unit_price: number; subtotal: number; }
+interface LineItem { product_id: number | null; quantity: number; unit_price: number; subtotal: number; is_gift: boolean; }
+
+const SELF_PICKUP_LABEL = 'Self Pickup';
 
 const form = useForm({
   user_id: null as number | null,
@@ -30,10 +32,11 @@ const form = useForm({
   new_address_label: '',
   notes: '',
   items: [] as LineItem[],
+  custom_total: null as number | null,
 });
 
 const addItem = () => {
-  form.items.push({ product_id: null, quantity: 1, unit_price: 0, subtotal: 0 });
+  form.items.push({ product_id: null, quantity: 1, unit_price: 0, subtotal: 0, is_gift: false });
 };
 
 const removeItem = (index: number) => {
@@ -51,20 +54,41 @@ const resolveProductName = (product: Product): string => {
   return product.name?.['en'] ?? product.name?.['uz'] ?? Object.values(product.name)[0] ?? '—';
 };
 
+const recalcSubtotal = (item: LineItem) => {
+  item.subtotal = item.is_gift ? 0 : item.unit_price * item.quantity;
+};
+
 const onProductChange = (item: LineItem) => {
   if (!item.product_id) return;
   const p = productMap.value[item.product_id];
   if (!p) return;
   const price = parseFloat(p.sale_price) > 0 ? parseFloat(p.sale_price) : parseFloat(p.price);
   item.unit_price = price;
-  item.subtotal = price * item.quantity;
+  recalcSubtotal(item);
 };
 
 const onQtyChange = (item: LineItem) => {
-  item.subtotal = item.unit_price * item.quantity;
+  recalcSubtotal(item);
+};
+
+const onGiftToggle = (item: LineItem) => {
+  recalcSubtotal(item);
 };
 
 const total = computed(() => form.items.reduce((sum, i) => sum + i.subtotal, 0));
+
+const effectiveTotal = computed(() =>
+  form.custom_total !== null && form.custom_total !== undefined && !isNaN(Number(form.custom_total))
+    ? Number(form.custom_total)
+    : total.value,
+);
+
+const discount = computed(() => {
+  if (form.custom_total === null || form.custom_total === undefined || isNaN(Number(form.custom_total))) return 0;
+  return Number((total.value - Number(form.custom_total)).toFixed(2));
+});
+
+const clearCustomTotal = () => { form.custom_total = null; };
 
 const submitForm = () => { form.post(store().url); };
 
@@ -76,8 +100,17 @@ const clientAddresses = computed(() => (selectedClient.value as any)?.addresses 
 
 const isAddingNewAddress = ref(false);
 
+const isSelfPickup = computed(() => form.delivery_address === SELF_PICKUP_LABEL);
+
 const onAddressSelect = (addr: string) => {
   form.delivery_address = addr;
+  isAddingNewAddress.value = false;
+};
+
+const selectSelfPickup = () => {
+  form.delivery_address = SELF_PICKUP_LABEL;
+  form.new_address = '';
+  form.new_address_label = '';
   isAddingNewAddress.value = false;
 };
 
@@ -118,13 +151,30 @@ const toggleNewAddress = () => {
             </div>
             <div class="grid gap-2 sm:col-span-2">
               <Label>Delivery Address</Label>
-              <div v-if="clientAddresses.length > 0 && !isAddingNewAddress" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                <div v-for="addr in clientAddresses" :key="addr.id" 
+              <div v-if="!isAddingNewAddress" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                <!-- Self pickup option -->
+                <div
+                  @click="selectSelfPickup"
+                  :class="[
+                    'p-3 rounded-lg border cursor-pointer transition-colors text-sm flex items-start gap-2',
+                    isSelfPickup
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                      : 'border-dashed border-gray-300 dark:border-gray-600 hover:border-amber-400 dark:hover:border-amber-700'
+                  ]">
+                  <span class="text-lg leading-none">🏬</span>
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-white">Self Pickup</div>
+                    <div class="text-xs text-gray-500 mt-1">Client will collect the order — no delivery needed.</div>
+                  </div>
+                </div>
+
+                <!-- Existing client addresses -->
+                <div v-for="addr in clientAddresses" :key="addr.id"
                   @click="onAddressSelect(addr.address_line)"
                   :class="[
                     'p-3 rounded-lg border cursor-pointer transition-colors text-sm',
-                    form.delivery_address === addr.address_line 
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' 
+                    form.delivery_address === addr.address_line && !isSelfPickup
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
                   ]">
                   <div class="font-medium text-gray-900 dark:text-white">{{ addr.label }}</div>
@@ -155,7 +205,7 @@ const toggleNewAddress = () => {
                 </div>
               </div>
 
-              <div v-if="!isAddingNewAddress && clientAddresses.length === 0" class="mt-2 p-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              <div v-if="!isAddingNewAddress && clientAddresses.length === 0 && !isSelfPickup" class="mt-2 p-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
                 <p class="text-xs text-gray-500 mb-2">No addresses found for this client.</p>
                 <Button type="button" variant="outline" size="sm" @click="toggleNewAddress">
                   Add First Address
@@ -180,41 +230,99 @@ const toggleNewAddress = () => {
             No items yet. Click "+ Add Item" to start.
           </div>
 
-          <div v-for="(item, idx) in form.items" :key="idx" class="grid grid-cols-12 gap-3 items-end mb-3 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <!-- Product -->
-            <div class="col-span-5 grid gap-1">
-              <Label>Product</Label>
-              <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
-                <option :value="null">Select product...</option>
-                <option v-for="p in props.products" :key="p.id" :value="p.id">{{ resolveProductName(p) }}</option>
-              </select>
-              <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
+          <div v-for="(item, idx) in form.items" :key="idx" class="mb-3 border-b border-gray-100 dark:border-gray-700 pb-3">
+            <div class="grid grid-cols-12 gap-3 items-end">
+              <!-- Product -->
+              <div class="col-span-5 grid gap-1">
+                <Label>Product</Label>
+                <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
+                  <option :value="null">Select product...</option>
+                  <option v-for="p in props.products" :key="p.id" :value="p.id">{{ resolveProductName(p) }}</option>
+                </select>
+                <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
+              </div>
+              <!-- Qty -->
+              <div class="col-span-2 grid gap-1">
+                <Label>Qty</Label>
+                <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" />
+              </div>
+              <!-- Unit price -->
+              <div class="col-span-2 grid gap-1">
+                <Label>Unit Price</Label>
+                <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" />
+              </div>
+              <!-- Subtotal -->
+              <div class="col-span-2 grid gap-1">
+                <Label>Subtotal</Label>
+                <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700" />
+              </div>
+              <!-- Remove -->
+              <div class="col-span-1 flex items-end pb-0.5">
+                <button type="button" @click="removeItem(idx)" class="text-red-500 hover:text-red-700 text-lg font-bold">✕</button>
+              </div>
             </div>
-            <!-- Qty -->
-            <div class="col-span-2 grid gap-1">
-              <Label>Qty</Label>
-              <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" />
-            </div>
-            <!-- Unit price -->
-            <div class="col-span-2 grid gap-1">
-              <Label>Unit Price</Label>
-              <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" />
-            </div>
-            <!-- Subtotal -->
-            <div class="col-span-2 grid gap-1">
-              <Label>Subtotal</Label>
-              <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700" />
-            </div>
-            <!-- Remove -->
-            <div class="col-span-1 flex items-end pb-0.5">
-              <button type="button" @click="removeItem(idx)" class="text-red-500 hover:text-red-700 text-lg font-bold">✕</button>
+            <!-- Gift toggle -->
+            <div class="mt-2 flex items-center gap-2">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs">
+                <input
+                  type="checkbox"
+                  :checked="item.is_gift"
+                  @change="item.is_gift = ($event.target as HTMLInputElement).checked; onGiftToggle(item)"
+                  class="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                />
+                <span class="font-medium text-gray-700 dark:text-gray-300">Gift (free)</span>
+              </label>
+              <span v-if="item.is_gift" class="text-[10px] uppercase tracking-wide bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300 px-2 py-0.5 rounded">
+                Subtotal forced to 0
+              </span>
             </div>
           </div>
 
-          <!-- Total footer -->
-          <div v-if="form.items.length > 0" class="flex justify-end mt-3">
-            <div class="text-base font-semibold text-gray-900 dark:text-white">
-              Total: {{ total.toFixed(2) }}
+          <!-- Total footer with custom pricing / discount -->
+          <div v-if="form.items.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-2 text-sm">
+            <div class="flex justify-end items-center gap-6">
+              <span class="text-gray-500">Calculated</span>
+              <span class="font-mono text-gray-700 dark:text-gray-300 w-32 text-right">{{ total.toFixed(2) }}</span>
+            </div>
+
+            <div class="flex justify-end items-center gap-6">
+              <Label for="custom_total" class="text-gray-500 m-0 font-normal">
+                Custom total
+                <span class="text-[10px] text-gray-400 ml-1">(leave blank to use calculated)</span>
+              </Label>
+              <div class="flex items-center gap-1 w-32">
+                <Input
+                  id="custom_total"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  v-model.number="form.custom_total"
+                  :placeholder="total.toFixed(2)"
+                  class="text-right font-mono"
+                />
+                <button
+                  v-if="form.custom_total !== null && form.custom_total !== undefined"
+                  type="button"
+                  @click="clearCustomTotal"
+                  class="text-gray-400 hover:text-red-500 text-xs px-1"
+                  title="Clear custom total"
+                >✕</button>
+              </div>
+            </div>
+            <InputError :message="form.errors.custom_total" />
+
+            <div v-if="discount !== 0" class="flex justify-end items-center gap-6">
+              <span :class="discount > 0 ? 'text-pink-600 dark:text-pink-300 font-medium' : 'text-orange-600 dark:text-orange-300 font-medium'">
+                {{ discount > 0 ? 'Discount' : 'Surcharge' }}
+              </span>
+              <span class="font-mono w-32 text-right" :class="discount > 0 ? 'text-pink-600 dark:text-pink-300' : 'text-orange-600 dark:text-orange-300'">
+                {{ discount > 0 ? '-' : '+' }}{{ Math.abs(discount).toFixed(2) }}
+              </span>
+            </div>
+
+            <div class="flex justify-end items-center gap-6 border-t border-gray-200 dark:border-gray-600 pt-2">
+              <span class="text-gray-900 dark:text-white font-bold uppercase text-xs tracking-wider">Order Total</span>
+              <span class="font-mono font-bold text-base text-gray-900 dark:text-white w-32 text-right">{{ effectiveTotal.toFixed(2) }}</span>
             </div>
           </div>
         </div>

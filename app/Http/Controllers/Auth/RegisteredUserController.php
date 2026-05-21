@@ -44,6 +44,8 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $user->assignRole('Client');
+
         if ($request->has('phone') && $request->phone) {
             $user->phones()->create([
                 'phone' => $request->phone,
