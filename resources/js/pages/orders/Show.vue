@@ -270,8 +270,16 @@ const statusButtonClass = (s: string) => {
             </p>
           </div>
           <div class="flex items-center gap-3 flex-wrap">
-            <div class="relative" ref="dropdownContainer">
-              <button 
+            <!-- Static status badge for clients; admin gets the editable dropdown. -->
+            <span
+              v-if="!adminMode"
+              class="inline-flex items-center px-4 py-2 rounded-xl font-bold uppercase text-xs border shadow-sm"
+              :class="statusBadge[order.status]"
+            >
+              {{ order.status.replace('_', ' ') }}
+            </span>
+            <div v-else class="relative" ref="dropdownContainer">
+              <button
                 @click="toggleDropdown"
                 class="group flex items-center gap-2 px-4 py-2 rounded-xl font-bold uppercase text-xs transition-all border shadow-sm"
                 :class="[
@@ -380,12 +388,12 @@ const statusButtonClass = (s: string) => {
             <span class="font-medium">Notes:</span> {{ order.notes }}
           </p>
 
-          <div v-if="isSelfPickup && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
+          <div v-if="adminMode && isSelfPickup && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
             <div class="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-lg px-3 py-2">
               🏬 Self-pickup order — no courier needed.
             </div>
           </div>
-          <div v-else-if="!isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
+          <div v-else-if="adminMode && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
             <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
             <div class="flex items-center gap-2">
               <Button @click="isAssignModalOpen = true" variant="outline" class="w-full justify-between font-normal h-12" :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 shadow-none' : ''">
@@ -400,8 +408,8 @@ const statusButtonClass = (s: string) => {
           </div>
         </div>
 
-        <!-- Payment summary -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
+        <!-- Payment summary — admin only. Clients see no monetary totals. -->
+        <div v-if="adminMode" class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Payment</h2>
           <div class="space-y-1 text-sm">
             <div v-if="Number(order.discount_amount) > 0" class="flex justify-between">
@@ -461,8 +469,8 @@ const statusButtonClass = (s: string) => {
             <tr>
               <th class="px-6 py-3">Product</th>
               <th class="px-6 py-3 text-right">Qty</th>
-              <th class="px-6 py-3 text-right">Unit Price</th>
-              <th class="px-6 py-3 text-right">Subtotal</th>
+              <th v-if="adminMode" class="px-6 py-3 text-right">Unit Price</th>
+              <th v-if="adminMode" class="px-6 py-3 text-right">Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -486,13 +494,13 @@ const statusButtonClass = (s: string) => {
                 </div>
               </td>
               <td class="px-6 py-3 text-right">{{ item.quantity }}</td>
-              <td class="px-6 py-3 text-right" :class="item.is_gift ? 'line-through text-gray-400' : ''">{{ item.unit_price }}</td>
-              <td class="px-6 py-3 text-right font-semibold" :class="item.is_gift ? 'text-pink-600 dark:text-pink-300' : 'text-gray-900 dark:text-white'">
+              <td v-if="adminMode" class="px-6 py-3 text-right" :class="item.is_gift ? 'line-through text-gray-400' : ''">{{ item.unit_price }}</td>
+              <td v-if="adminMode" class="px-6 py-3 text-right font-semibold" :class="item.is_gift ? 'text-pink-600 dark:text-pink-300' : 'text-gray-900 dark:text-white'">
                 {{ item.is_gift ? 'Free' : item.subtotal }}
               </td>
             </tr>
           </tbody>
-          <tfoot>
+          <tfoot v-if="adminMode">
             <tr class="bg-gray-50 dark:bg-gray-700">
               <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Total</td>
               <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">{{ order.total_amount }}</td>

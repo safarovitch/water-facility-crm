@@ -38,9 +38,16 @@ class OrderController extends Controller
   }
 
   /**
-   * Apply raw-material stock changes for a set of order items. $direction
-   * is -1 to deduct (new order / new items on edit) and +1 to restore
+   * Apply inventory changes for a set of order items. Decrements when
+   * $direction is -1 (new order / new items on edit), restores when +1
    * (cancellation / replaced items on edit).
+   *
+   * Two layers move together so totals stay consistent:
+   *   • products.quantity — the finished-goods count on the product itself
+   *     (only adjusted when manage_stock = true, so non-stocked items like
+   *     digital products or one-off services aren't affected).
+   *   • raw_materials.current_stock — the BOM consumables that the product
+   *     uses up per unit (caps, labels, water litres, etc.).
    *
    * Items can be either OrderItem models or raw arrays carrying
    * product_id + quantity. Gifts still consume inventory — a free bottle
@@ -64,15 +71,25 @@ class OrderController extends Controller
 
     foreach ($items as $item) {
       $productId = is_array($item) ? $item['product_id'] : $item->product_id;
-      $quantity  = is_array($item) ? $item['quantity']   : $item->quantity;
+      $quantity  = (int) (is_array($item) ? $item['quantity'] : $item->quantity);
       $product   = $products[$productId] ?? null;
-      if (!$product) continue;
+      if (!$product || $quantity <= 0) continue;
 
+      // 1) Finished-goods stock on the product row.
+      if ($product->manage_stock) {
+        if ($direction < 0) {
+          Product::where('id', $product->id)->decrement('quantity', $quantity);
+        } else {
+          Product::where('id', $product->id)->increment('quantity', $quantity);
+        }
+      }
+
+      // 2) Raw-material consumables per the product's BOM.
       foreach ($product->rawMaterials as $material) {
         $perUnit = (float) ($material->pivot->quantity ?? 0);
         if ($perUnit <= 0) continue;
 
-        $delta = $perUnit * (int) $quantity;
+        $delta = $perUnit * $quantity;
         if ($direction < 0) {
           RawMaterial::where('id', $material->id)->decrement('current_stock', $delta);
         } else {
@@ -82,20 +99,36 @@ class OrderController extends Controller
     }
   }
 
-  public function index(): Response
+  public function index()
   {
     $pagination = request()->has('pagination')
       ? request()->input('pagination')
       : ['limit' => 50, 'page' => 1];
 
+    // Client-facing /orders route MUST be scoped to the signed-in user.
+    // Only the admin /admin/orders path may list across users.
+    $isAdminPath = request()->is('admin/*');
+    $authUserId = auth()->id();
+
+    // Clients now have a single-page home (/profile) that shows their orders
+    // inline. Redirect them there if they hit /orders directly.
+    if (!$isAdminPath && auth()->user()?->hasRole('Client')
+        && !auth()->user()?->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+      return redirect()->route('dashboard');
+    }
+
     $orders = Order::with(['client', 'creator'])
+      ->when(
+        !$isAdminPath && $authUserId,
+        fn($q) => $q->where('user_id', $authUserId)
+      )
       ->when(
         request('status'),
         fn($q, $status) =>
         $q->where('status', $status)
       )
       ->when(
-        request('user_id'),
+        $isAdminPath && request('user_id'),
         fn($q, $userId) =>
         $q->where('user_id', $userId)
       )
@@ -263,8 +296,23 @@ class OrderController extends Controller
       ->with('success', 'Order created successfully.');
   }
 
-  public function show(Order $order): Response
+  public function show(Order $order)
   {
+    // Non-admin path → only the order owner may view it. Staff/admin land
+    // here via /admin/orders/{order} and bypass the check.
+    $isAdminPath = request()->is('admin/*');
+    if (!$isAdminPath && $order->user_id !== auth()->id()) {
+      abort(404);
+    }
+
+    // Clients use the single-page home which opens a read-only modal for
+    // order details. Send them there so they don't see the sidebar-wrapped
+    // admin order page.
+    if (!$isAdminPath && auth()->user()?->hasRole('Client')
+        && !auth()->user()?->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+      return redirect()->route('dashboard');
+    }
+
     $order->load(['client.userProfile', 'creator', 'canceller', 'items.product', 'courier', 'returnedMaterials']);
 
     return Inertia::render('orders/Show')->with([
