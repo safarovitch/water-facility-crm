@@ -40,6 +40,7 @@ interface Order {
   payment_status: string;
   total_amount: string;
   discount_amount: string;
+  deposit_charge: string;
   paid_amount: string;
   balance_due: number;
   scheduled_delivery_at: string | null;
@@ -83,11 +84,20 @@ interface ReusableMaterial {
   unit: string;
 }
 
-const props = defineProps<{ 
-  order: Order; 
-  statuses: string[]; 
+interface ReusableSummaryRow {
+  raw_material: { id: number; name: string; unit: string; deposit_price: string };
+  expected: number;
+  returned: number;
+  missing: number;
+  charge: number;
+}
+
+const props = defineProps<{
+  order: Order;
+  statuses: string[];
   reusable_materials?: ReusableMaterial[];
-  couriers: CourierOption[]; 
+  reusable_summary?: ReusableSummaryRow[];
+  couriers: CourierOption[];
 }>();
 
 const adminMode = computed(() => !!usePage().props.adminMode);
@@ -428,6 +438,10 @@ const statusButtonClass = (s: string) => {
               <span class="text-gray-500">Total</span>
               <span class="font-semibold text-gray-900 dark:text-white">{{ order.total_amount }}</span>
             </div>
+            <div v-if="Number(order.deposit_charge) > 0" class="flex justify-between">
+              <span class="text-blue-700 dark:text-blue-300 font-medium">Bottle deposit</span>
+              <span class="text-blue-700 dark:text-blue-300 font-medium">+{{ Number(order.deposit_charge).toFixed(2) }}</span>
+            </div>
             <div class="flex justify-between">
               <span class="text-gray-500">Paid</span>
               <span class="text-green-600 font-medium">{{ order.paid_amount }}</span>
@@ -654,6 +668,24 @@ const statusButtonClass = (s: string) => {
             <div>
                 <label class="text-xs uppercase font-bold text-gray-500 block mb-1">Actual Delivery Time</label>
                 <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+            </div>
+
+            <div v-if="(props.reusable_summary ?? []).length > 0" class="rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-900/10 p-4 space-y-2">
+                <p class="text-xs uppercase font-bold text-blue-700 dark:text-blue-300">Reusable containers in this order</p>
+                <p class="text-[11px] text-blue-700/80 dark:text-blue-300/80">Any container the client doesn't hand back is added to the order total at its deposit price.</p>
+                <ul class="divide-y divide-blue-100 dark:divide-blue-900/40">
+                  <li v-for="row in props.reusable_summary" :key="row.raw_material.id" class="py-2 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="font-medium text-gray-900 dark:text-white flex-1 min-w-0 truncate">{{ row.raw_material.name }}</span>
+                    <span class="text-xs text-gray-500">
+                      Expected <span class="font-semibold text-gray-700 dark:text-gray-200">{{ row.expected }}</span>
+                      · Returned <span class="font-semibold text-gray-700 dark:text-gray-200">{{ row.returned }}</span>
+                    </span>
+                    <span v-if="row.missing > 0" class="text-xs font-semibold text-red-600 dark:text-red-400">
+                      Charge {{ row.missing }} × {{ Number(row.raw_material.deposit_price).toFixed(2) }} = {{ row.charge.toFixed(2) }}
+                    </span>
+                    <span v-else class="text-xs font-semibold text-green-600 dark:text-green-400">All returned</span>
+                  </li>
+                </ul>
             </div>
 
             <div v-if="(props.reusable_materials ?? []).length > 0" class="flex flex-col gap-2 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">

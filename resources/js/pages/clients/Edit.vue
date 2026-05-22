@@ -199,8 +199,8 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
               <InputError :message="form.errors.name" />
             </div>
             <div class="grid gap-2">
-              <Label for="email">Email *</Label>
-              <Input id="email" type="email" v-model="form.email" required />
+              <Label for="email">Email <span class="text-gray-400 font-normal">(optional)</span></Label>
+              <Input id="email" type="email" v-model="form.email" />
               <InputError :message="form.errors.email" />
             </div>
           </div>

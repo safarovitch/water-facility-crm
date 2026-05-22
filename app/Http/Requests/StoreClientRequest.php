@@ -16,9 +16,10 @@ class StoreClientRequest extends FormRequest
   public function rules(): array
   {
     return [
-      // User fields
+      // User fields. Phone is the primary identifier; email is optional and
+      // only used when the client also wants to sign in via email.
       'name'     => ['required', 'string', 'max:255'],
-      'email'    => ['required', 'email'],
+      'email'    => ['nullable', 'email'],
       'phones'   => ['nullable', 'array'],
       'phones.*.id' => ['nullable', 'integer'],
       'phones.*.label' => ['required', 'string', 'max:50'],

@@ -155,6 +155,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
   // Client-facing orders (keep original paths but clarify they are for clients if needed)
   Route::name('orders.')->prefix('orders')->group(function () {
       Route::get('index', [OrderController::class, 'index'])->name('index');
+      // Static routes must be registered before {order} so they don't get
+      // captured by the show wildcard.
+      Route::get('create', [OrderController::class, 'clientCreate'])->name('client.create');
+      Route::post('store', [OrderController::class, 'clientStore'])->name('client.store');
       Route::get('{order}', [OrderController::class, 'show'])->name('show');
       Route::post('{order}/pay', [OrderController::class, 'payWithWallet'])->name('pay');
   });

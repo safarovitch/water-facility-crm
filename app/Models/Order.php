@@ -23,6 +23,7 @@ class Order extends Model
     'delivery_address',
     'total_amount',
     'discount_amount',
+    'deposit_charge',
     'paid_amount',
     'payment_status',
     'notes',
@@ -43,6 +44,7 @@ class Order extends Model
     'cancelled_at'          => 'datetime',
     'total_amount'          => 'decimal:2',
     'discount_amount'       => 'decimal:2',
+    'deposit_charge'        => 'decimal:2',
     'paid_amount'           => 'decimal:2',
     'lat'                   => 'float',
     'lng'                   => 'float',
@@ -85,7 +87,69 @@ class Order extends Model
 
   public function getBalanceDueAttribute(): float
   {
-    return (float) $this->total_amount - (float) $this->paid_amount;
+    return (float) $this->total_amount + (float) $this->deposit_charge - (float) $this->paid_amount;
+  }
+
+  /**
+   * For each reusable raw material used by the items in this order, return:
+   *   raw_material_id => [
+   *     'raw_material'   => RawMaterial model,
+   *     'expected'       => float total units the BOM consumed,
+   *     'returned'       => int units recorded as returned,
+   *     'missing'        => float max(expected - returned, 0),
+   *     'charge'         => float deposit_price × missing,
+   *   ]
+   *
+   * Used at delivery time to bill clients for bottles they didn't hand
+   * back, and to surface the breakdown to admins.
+   */
+  public function reusableDepositSummary(): array
+  {
+    $this->loadMissing(['items.product.rawMaterials']);
+
+    $expected = [];   // rm_id => float
+    $materials = [];  // rm_id => RawMaterial
+
+    foreach ($this->items as $item) {
+      foreach ($item->product->rawMaterials ?? [] as $material) {
+        if (! $material->is_reusable) {
+          continue;
+        }
+        $perUnit = (float) ($material->pivot->quantity ?? 0);
+        if ($perUnit <= 0) {
+          continue;
+        }
+        $expected[$material->id] = ($expected[$material->id] ?? 0)
+          + ($perUnit * (int) $item->quantity);
+        $materials[$material->id] = $material;
+      }
+    }
+
+    if (empty($expected)) {
+      return [];
+    }
+
+    $this->loadMissing('returnedMaterials');
+    $returned = [];
+    foreach ($this->returnedMaterials as $rm) {
+      $returned[$rm->id] = ($returned[$rm->id] ?? 0) + (int) ($rm->pivot->quantity ?? 0);
+    }
+
+    $summary = [];
+    foreach ($expected as $rmId => $exp) {
+      $ret = (int) ($returned[$rmId] ?? 0);
+      $missing = max($exp - $ret, 0);
+      $material = $materials[$rmId];
+      $summary[$rmId] = [
+        'raw_material' => $material,
+        'expected'     => $exp,
+        'returned'     => $ret,
+        'missing'      => $missing,
+        'charge'       => round($missing * (float) $material->deposit_price, 2),
+      ];
+    }
+
+    return $summary;
   }
 
   /**

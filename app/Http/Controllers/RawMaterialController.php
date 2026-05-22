@@ -41,6 +41,7 @@ class RawMaterialController extends Controller
             'unit'          => ['required', 'string', 'max:50'],
             'current_stock' => ['required', 'numeric', 'min:0'],
             'cost_per_unit' => ['required', 'numeric', 'min:0'],
+            'deposit_price' => ['nullable', 'numeric', 'min:0'],
             'status'        => ['required', 'string'],
             'is_reusable'   => ['nullable', 'boolean'],
         ]);
@@ -58,6 +59,7 @@ class RawMaterialController extends Controller
             'unit'          => ['required', 'string', 'max:50'],
             'current_stock' => ['required', 'numeric', 'min:0'],
             'cost_per_unit' => ['required', 'numeric', 'min:0'],
+            'deposit_price' => ['nullable', 'numeric', 'min:0'],
             'status'        => ['required', 'string'],
             'is_reusable'   => ['nullable', 'boolean'],
         ]);

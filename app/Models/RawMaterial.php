@@ -17,6 +17,7 @@ class RawMaterial extends Model
         'unit',
         'current_stock',
         'cost_per_unit',
+        'deposit_price',
         'status',
         'is_reusable',
     ];
@@ -24,6 +25,7 @@ class RawMaterial extends Model
     protected $casts = [
         'current_stock' => 'decimal:2',
         'cost_per_unit' => 'decimal:2',
+        'deposit_price' => 'decimal:2',
         'is_reusable' => 'boolean',
     ];
 

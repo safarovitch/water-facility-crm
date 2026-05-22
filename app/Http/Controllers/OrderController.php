@@ -182,6 +182,93 @@ class OrderController extends Controller
   }
 
   /**
+   * Client-facing "order water" form. Pre-fills the signed-in user's
+   * addresses so they can pick one; no client picker, no price overrides,
+   * no gifts — those are admin-only concerns.
+   */
+  public function clientCreate(): Response
+  {
+    $user = auth()->user();
+    $user->load('addresses');
+
+    return Inertia::render('orders/ClientCreate')->with([
+      'addresses' => $user->addresses,
+      'products'  => Product::where('status', 'active')
+        ->select(['id', 'name', 'price', 'sale_price', 'quantity', 'status'])
+        ->get(),
+    ]);
+  }
+
+  /**
+   * Store a client-placed order. Validates the simpler client payload
+   * (no custom_total, no gifts, no walk-in contact), forces the order
+   * onto the signed-in user, and lets the existing inventory deduction
+   * pipeline run.
+   */
+  public function clientStore(\Illuminate\Http\Request $request)
+  {
+    $data = $request->validate([
+      'scheduled_delivery_at' => ['nullable', 'date', 'after_or_equal:today'],
+      'delivery_address'      => ['nullable', 'string'],
+      'new_address'           => ['nullable', 'string'],
+      'new_address_label'     => ['nullable', 'string', 'max:50'],
+      'notes'                 => ['nullable', 'string'],
+      'items'                 => ['required', 'array', 'min:1'],
+      'items.*.product_id'    => ['required', 'exists:products,id'],
+      'items.*.quantity'      => ['required', 'integer', 'min:1'],
+    ]);
+
+    $userId = auth()->id();
+
+    $order = DB::transaction(function () use ($data, $userId) {
+      $items = collect($data['items'])->map(function ($item) {
+        $product   = Product::findOrFail($item['product_id']);
+        $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
+        $subtotal  = $unitPrice * $item['quantity'];
+
+        return [
+          'product_id' => $item['product_id'],
+          'quantity'   => $item['quantity'],
+          'unit_price' => $unitPrice,
+          'subtotal'   => $subtotal,
+          'is_gift'    => false,
+        ];
+      });
+
+      $total = (float) $items->sum('subtotal');
+
+      $deliveryAddress = $data['delivery_address'] ?? null;
+      if (!empty($data['new_address'])) {
+        $address = UserAddress::create([
+          'user_id'      => $userId,
+          'label'        => $data['new_address_label'] ?? 'New Address',
+          'address_line' => $data['new_address'],
+        ]);
+        $deliveryAddress = $address->address_line;
+      }
+
+      $order = Order::create([
+        'user_id'               => $userId,
+        'scheduled_delivery_at' => $data['scheduled_delivery_at'] ?? null,
+        'delivery_address'      => $deliveryAddress,
+        'notes'                 => $data['notes'] ?? null,
+        'total_amount'          => $total,
+        'discount_amount'       => 0,
+        'payment_status'        => $total <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
+        'created_by'            => $userId,
+      ]);
+
+      $order->items()->createMany($items->toArray());
+      $this->adjustRawMaterialStock($items, -1);
+
+      return $order;
+    });
+
+    return redirect()->route('dashboard')
+      ->with('success', "Order #{$order->order_number} placed. We'll be in touch shortly.");
+  }
+
+  /**
    * Resolve which user the order should belong to. If the request includes a
    * `new_contact` block (admin entered a walk-in client), find or create a
    * shell user (Client role, claimed_at = null) so a future self-registration
@@ -313,12 +400,15 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $order->load(['client.userProfile', 'creator', 'canceller', 'items.product', 'courier', 'returnedMaterials']);
+    $order->load(['client.userProfile', 'creator', 'canceller', 'items.product.rawMaterials', 'courier', 'returnedMaterials']);
 
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
       'statuses' => OrderStatus::getValues(),
       'reusable_materials' => \App\Models\RawMaterial::where('is_reusable', true)->get(),
+      // Expected vs. returned reusable containers, plus the deposit owed for
+      // any shortfall. The admin sees this on delivery to know what to bill.
+      'reusable_summary' => array_values($order->reusableDepositSummary()),
       'couriers' => User::role('Currier')->withCount(['orders' => function ($q) {
         $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
       }])->get(),
@@ -427,6 +517,8 @@ class OrderController extends Controller
       'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
     ]);
 
+    $wasAlreadyDelivered = $order->status->value === OrderStatus::Delivered;
+
     DB::transaction(function () use ($order, $data) {
         $order->update([
             'status' => $data['status'],
@@ -439,7 +531,7 @@ class OrderController extends Controller
                 // Determine if we need to sync multiple items or just one per iteration
                 // Here, a client can return multiple of the same or different. We'll flatten them.
                 $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
-                
+
                 // Also increment current_stock on the raw material to add it back into the inventory!
                 \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
                   ->increment('current_stock', $rm['quantity']);
@@ -447,9 +539,51 @@ class OrderController extends Controller
             // we do syncWithoutDetaching in case they add things later, but usually it's set once per delivery
             $order->returnedMaterials()->sync($syncData);
         }
+
+        // After delivery, charge the client for any reusable containers
+        // (e.g. 19L bottles) they didn't return. Recomputed every time so
+        // re-editing the returned-materials list keeps the bill correct.
+        if ($data['status'] === OrderStatus::Delivered) {
+            $this->applyDepositCharge($order->fresh(['items.product.rawMaterials', 'returnedMaterials']));
+        }
     });
 
+    // Only fire the delivered event on the first transition into Delivered
+    // so repeated saves (e.g. editing the returned-materials list) don't
+    // re-spam the Telegram group.
+    if (!$wasAlreadyDelivered && $data['status'] === OrderStatus::Delivered) {
+        event(new \App\Events\OrderDelivered($order->fresh(['client', 'courier'])));
+    }
+
     return back()->with('success', 'Order status updated.');
+  }
+
+  /**
+   * Refresh the order's deposit_charge from the reusable-material
+   * summary, and re-evaluate payment_status so an underpaid order
+   * shows as Unpaid (or Paid if the running total catches up).
+   */
+  private function applyDepositCharge(Order $order): void
+  {
+    $summary = $order->reusableDepositSummary();
+    $charge = (float) collect($summary)->sum('charge');
+
+    if ((float) $order->deposit_charge === $charge) {
+        return;
+    }
+
+    $order->deposit_charge = $charge;
+
+    $newTotal = (float) $order->total_amount + $charge;
+    if ((float) $order->paid_amount >= $newTotal && $newTotal > 0) {
+        $order->payment_status = PaymentStatus::Paid;
+    } elseif ((float) $order->paid_amount > 0) {
+        $order->payment_status = PaymentStatus::Partial;
+    } else {
+        $order->payment_status = $newTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid;
+    }
+
+    $order->save();
   }
 
   public function payWithWallet(Order $order, \App\Services\WalletService $walletService)

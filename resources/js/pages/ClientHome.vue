@@ -11,7 +11,6 @@ import {
   ShoppingCart,
   Calendar,
   LogOut,
-  Settings,
   Package,
 } from 'lucide-vue-next';
 
@@ -107,13 +106,6 @@ const openDetail = (order: OrderSummary) => { detailOrder.value = order; };
           <FannLogo variant="inline" class="h-8 w-auto" />
         </Link>
         <div class="flex items-center gap-2">
-          <Link
-            href="/settings/profile"
-            class="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            <Settings class="h-4 w-4" />
-            <span class="hidden sm:inline">Settings</span>
-          </Link>
           <button
             type="button"
             @click="logout"
@@ -152,10 +144,6 @@ const openDetail = (order: OrderSummary) => { detailOrder.value = order; };
             <UserIcon class="h-4 w-4 text-slate-500" />
             Profile
           </h2>
-          <Link
-            href="/profile/edit"
-            class="text-xs font-semibold text-sky-600 hover:text-sky-700"
-          >Edit →</Link>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

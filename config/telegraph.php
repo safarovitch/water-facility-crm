@@ -229,6 +229,14 @@ return [
      */
     'bot_username' => env('TELEGRAM_ORDER_BOT_USERNAME', null),
 
+    /*
+     * Chat ID of the operations group where staff receive order
+     * notifications (new orders, deliveries). Add the bot to the group
+     * first; the group ID is typically negative (e.g. -1001234567890).
+     * Leave null to disable group notifications.
+     */
+    'notifications_chat_id' => env('TELEGRAM_GROUP_ID', null),
+
     'payments' => [
         'provider_token' => env('TELEGRAPH_PAYMENT_PROVIDER_TOKEN', ''),
     ],

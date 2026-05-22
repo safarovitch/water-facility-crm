@@ -19,9 +19,9 @@ class UpdateClientRequest extends FormRequest
     $userId = $this->route('client')?->id;
 
     return [
-      // User fields
+      // User fields. Email is optional — phone is the primary identifier.
       'name'  => ['required', 'string', 'max:255'],
-      'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($userId)],
+      'email' => ['nullable', 'email', Rule::unique('users', 'email')->ignore($userId)],
       'phones' => ['nullable', 'array'],
       'phones.*.id' => ['nullable', 'integer'],
       'phones.*.label' => ['required', 'string', 'max:50'],

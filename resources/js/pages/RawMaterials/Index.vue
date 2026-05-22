@@ -18,6 +18,7 @@ interface RawMaterial {
   unit: string;
   current_stock: string;
   cost_per_unit: string;
+  deposit_price: string;
   status: string;
   is_reusable: boolean;
   created_at_human: string;
@@ -62,6 +63,7 @@ const form = useForm({
   unit: 'pcs',
   current_stock: '0',
   cost_per_unit: '0',
+  deposit_price: '0',
   status: 'active',
   is_reusable: false,
 });
@@ -94,6 +96,7 @@ const openEditModal = (item: RawMaterial) => {
   form.unit = item.unit;
   form.current_stock = item.current_stock;
   form.cost_per_unit = item.cost_per_unit;
+  form.deposit_price = item.deposit_price ?? '0';
   form.status = item.status;
   form.is_reusable = !!item.is_reusable;
   form.clearErrors();
@@ -184,8 +187,13 @@ const deleteRecord = (id: number) => {
                                 <span class="text-xs text-muted-foreground ml-1">{{ item.unit }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="font-medium">{{ formatCurrency(item.cost_per_unit) }}</span>
-                                <span class="text-xs text-muted-foreground ml-1">/ {{ item.unit }}</span>
+                                <div>
+                                  <span class="font-medium">{{ formatCurrency(item.cost_per_unit) }}</span>
+                                  <span class="text-xs text-muted-foreground ml-1">/ {{ item.unit }}</span>
+                                </div>
+                                <div v-if="item.is_reusable" class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                                  Deposit: <span class="font-medium">{{ formatCurrency(item.deposit_price) }}</span>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <Badge :variant="item.status === 'active' ? 'default' : 'secondary'" class="capitalize">
@@ -280,6 +288,14 @@ const deleteRecord = (id: number) => {
                   <Label for="is_reusable" class="cursor-pointer font-semibold">Reusable Material</Label>
                   <p class="text-xs text-muted-foreground">Select if this material (like a 20L bottle) is returned by clients and can be restocked without repurchasing.</p>
               </div>
+            </div>
+
+            <div v-if="form.is_reusable" class="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 dark:border-blue-900/40 dark:bg-blue-900/10 p-3">
+              <Label for="deposit_price" class="font-semibold">Deposit Price <span class="text-xs text-muted-foreground font-normal">(charged when not returned)</span></Label>
+              <Input v-model="form.deposit_price" type="number" step="0.01" min="0" id="deposit_price" placeholder="0.00" />
+              <p class="text-xs text-muted-foreground">
+                What the client pays per unit when they don't return this container with their next order. This is the replacement price you quote — typically your cost plus a small fee — and is separate from <span class="font-medium">Cost Per Unit</span>.
+              </p>
             </div>
 
             <div v-if="Object.keys(form.errors).length > 0" class="rounded-lg bg-destructive/10 p-3 text-sm text-destructive font-medium border border-destructive/20">

@@ -151,9 +151,9 @@ watchDebounced(
               <InputError :message="form.errors.name" />
             </div>
             <div class="grid gap-2">
-              <Label for="email">Email *</Label>
+              <Label for="email">Email <span class="text-gray-400 font-normal">(optional)</span></Label>
               <div class="relative">
-                <Input id="email" type="email" v-model="form.email" required :class="{ 'border-red-500': userCheckResult?.is_client }" />
+                <Input id="email" type="email" v-model="form.email" :class="{ 'border-red-500': userCheckResult?.is_client }" />
                 <div v-if="isCheckingEmail" class="absolute right-3 top-2.5">
                   <div class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
                 </div>

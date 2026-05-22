@@ -78,7 +78,7 @@ class ClientController extends Controller
 
   public function store(StoreClientRequest $request)
   {
-    $user = User::where('email', $request->email)->first();
+    $user = $request->email ? User::where('email', $request->email)->first() : null;
 
     if ($user && $user->isClient()) {
       return back()->withErrors(['email' => 'This email is already registered as a client.'])->withInput();
@@ -88,7 +88,7 @@ class ClientController extends Controller
       if (!$user) {
         $user = User::create([
           'name'     => $request->name,
-          'email'    => $request->email,
+          'email'    => $request->email ?: null,
           'password' => Hash::make(Str::random(16)),
           'status'   => 'active',
         ]);
