@@ -17,6 +17,8 @@ class Order extends Model
   protected $fillable = [
     'order_number',
     'user_id',
+    'contact_name',
+    'contact_phone',
     'status',
     'scheduled_delivery_at',
     'actual_delivery_at',

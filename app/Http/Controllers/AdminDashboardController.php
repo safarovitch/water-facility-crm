@@ -65,7 +65,7 @@ class AdminDashboardController extends Controller
             ->map(fn($order) => [
                 'id'             => $order->id,
                 'order_number'   => $order->order_number,
-                'client_name'    => $order->client?->name ?? '—',
+                'client_name'    => $order->contact_name ?: ($order->client?->name ?? '—'),
                 'status'         => $order->status->value ?? $order->status,
                 'total_amount'   => (float) $order->total_amount,
                 'paid_amount'    => (float) $order->paid_amount,
@@ -117,7 +117,7 @@ class AdminDashboardController extends Controller
             ->map(fn($o) => [
                 'id' => $o->id,
                 'order_number' => $o->order_number,
-                'client_name' => $o->client?->name ?? '—',
+                'client_name' => $o->contact_name ?: ($o->client?->name ?? '—'),
                 'status' => $o->status->value ?? $o->status,
                 'created_at_human' => $o->created_at_human,
             ]);

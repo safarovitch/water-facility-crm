@@ -209,7 +209,7 @@ class UserController extends Controller
                 ->map(fn($o) => [
                     'id'           => $o->id,
                     'order_number' => $o->order_number,
-                    'client_name'  => $o->client?->name ?? '—',
+                    'client_name'  => $o->contact_name ?: ($o->client?->name ?? '—'),
                     'status'       => $o->status->value ?? $o->status,
                     'statusLabel'  => $o->statusLabel ?? $o->status,
                     'total_amount' => (float) $o->total_amount,

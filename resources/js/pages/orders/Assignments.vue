@@ -47,9 +47,11 @@ const searchQuery = ref('');
 const filteredOrders = computed(() => {
   return props.orders.filter(order => {
     const matchesStatus = !selectedStatus.value || order.status === selectedStatus.value;
-    const matchesSearch = !searchQuery.value || 
-      order.order_number.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      order.client?.name?.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const q = searchQuery.value.toLowerCase();
+    const matchesSearch = !searchQuery.value ||
+      order.order_number.toLowerCase().includes(q) ||
+      order.client?.name?.toLowerCase().includes(q) ||
+      order.contact_name?.toLowerCase().includes(q);
     return matchesStatus && matchesSearch;
   });
 });
@@ -211,7 +213,7 @@ const isModalOpen = computed({
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex flex-col">
-                      <span class="font-bold text-xs leading-tight">{{ order.client?.name }}</span>
+                      <span class="font-bold text-xs leading-tight">{{ order.contact_name || order.client?.name }}</span>
                       <span class="text-[10px] text-muted-foreground truncate max-w-xs">{{ order.delivery_address }}</span>
                     </div>
                   </td>

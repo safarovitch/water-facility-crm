@@ -360,8 +360,18 @@ class OrderController extends Controller
         $deliveryAddress = $address->address_line;
       }
 
+      // When the admin typed a walk-in contact, keep the typed name/phone
+      // on the order itself. The order may still be linked to an existing
+      // user (matched by phone) — that's fine; we just don't want the
+      // existing user's name to replace what the admin typed.
+      $contact     = $request->input('new_contact');
+      $contactName = $contact['name']  ?? null;
+      $contactPhone = $contact['phone'] ?? null;
+
       $order = Order::create([
         'user_id'               => $request->user_id,
+        'contact_name'          => $contactName,
+        'contact_phone'         => $contactPhone,
         'scheduled_delivery_at' => $request->scheduled_delivery_at,
         'delivery_address'      => $deliveryAddress,
         'notes'                 => $request->notes,

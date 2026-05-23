@@ -301,20 +301,36 @@ const statusButtonClass = (s: string) => {
                 <ChevronDown class="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
 
-              <!-- Status Dropdown -->
-              <div v-if="isDropdownOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-in fade-in zoom-in duration-100">
+              <!-- Mobile backdrop (sm+: hidden). Inside dropdownContainer so its
+                   click is treated as "outside the button area" — we close
+                   explicitly to make the intent clear. -->
+              <div
+                v-if="isDropdownOpen"
+                @click="isDropdownOpen = false"
+                class="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm sm:hidden"
+              ></div>
+
+              <!-- Status Dropdown — bottom sheet on mobile, anchored popover on sm+. -->
+              <div
+                v-if="isDropdownOpen"
+                class="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border border-b-0 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-2xl py-2 animate-in slide-in-from-bottom duration-150
+                       sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:w-56 sm:rounded-2xl sm:border-b sm:origin-top-right sm:animate-none"
+              >
+                <!-- Mobile drag handle -->
+                <div class="mx-auto mb-2 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden"></div>
+
                 <div class="px-4 py-2 border-b border-gray-50 dark:border-gray-700/50 mb-1">
                   <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Order Status</p>
                 </div>
-                <div class="px-1">
-                  <button 
-                    v-for="status in statuses" 
+                <div class="px-1 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+                  <button
+                    v-for="status in statuses"
                     :key="status"
                     @click="status === pendingStatus ? confirmStatusUpdate(status) : selectStatus(status)"
                     class="flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-0.5"
                     :class="[
-                      status === pendingStatus 
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-[0.98]' 
+                      status === pendingStatus
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-[0.98]'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                     ]"
                   >
@@ -364,11 +380,15 @@ const statusButtonClass = (s: string) => {
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Client</h2>
           <p class="font-semibold text-gray-900 dark:text-white">
             <Link :href="adminMode ? `/admin/clients/${order.client.id}` : '#'" :class="adminMode ? 'hover:underline hover:text-blue-600 transition-colors' : 'cursor-default'">
-              {{ order.client.name }}
+              {{ order.contact_name || order.client.name }}
             </Link>
           </p>
-          <p class="text-sm text-gray-500">{{ order.client.email }}</p>
-          <p class="text-sm text-gray-500" v-if="order.client.phone">{{ order.client.phone }}</p>
+          <p class="text-sm text-gray-500" v-if="order.contact_phone">{{ order.contact_phone }}</p>
+          <p v-if="order.contact_name && order.client.name !== order.contact_name" class="text-[11px] text-gray-400 mt-1">
+            Linked to account: {{ order.client.name }}
+          </p>
+          <p class="text-sm text-gray-500" :class="{ 'mt-2': order.contact_name }">{{ order.client.email }}</p>
+          <p class="text-sm text-gray-500" v-if="order.client.phone && order.client.phone !== order.contact_phone">{{ order.client.phone }}</p>
           <p class="text-sm text-gray-500 mt-1" v-if="order.client.user_profile?.region">
             📍 {{ order.client.user_profile.region }}
           </p>

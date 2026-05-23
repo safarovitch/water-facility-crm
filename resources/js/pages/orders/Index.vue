@@ -138,8 +138,8 @@ const statusBadgeClass: Record<string, string> = {
                                 {{ order.order_number }}
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-bold text-gray-900 dark:text-white">{{ order.client?.name }}</div>
-                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.client?.email }}</div>
+                                <div class="font-bold text-gray-900 dark:text-white">{{ order.contact_name || order.client?.name }}</div>
+                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.contact_phone || order.client?.email }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <Badge variant="outline" class="capitalize border-transparent relative font-semibold" :class="statusBadgeClass[order.status]">
@@ -182,8 +182,8 @@ const statusBadgeClass: Record<string, string> = {
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex flex-col">
                             <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
-                            <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.client?.name }}</span>
-                            <span class="text-[10px] text-muted-foreground">{{ order.client?.email }}</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.contact_name || order.client?.name }}</span>
+                            <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.email }}</span>
                         </div>
                         <Badge variant="outline" class="capitalize whitespace-nowrap text-[10px] h-5 px-1.5 shrink-0 font-semibold" :class="statusBadgeClass[order.status]">
                             {{ order.status.replace('_', ' ') }}

@@ -30,7 +30,7 @@ class OrderCreated implements ShouldBroadcast
         return [
             'id' => $this->order->id,
             'order_number' => $this->order->order_number,
-            'client_name' => $this->order->user?->name ?? 'Guest',
+            'client_name' => $this->order->contact_name ?: ($this->order->user?->name ?? 'Guest'),
             'total_amount' => $this->order->total_amount,
             'status' => $this->order->status?->name ?? $this->order->status,
             'created_at' => $this->order->created_at->toDateTimeString(),

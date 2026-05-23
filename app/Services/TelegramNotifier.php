@@ -24,7 +24,7 @@ class TelegramNotifier
     {
         $order->loadMissing(['client', 'items.product']);
 
-        $client = $order->client?->name ?? 'Walk-in client';
+        $client = $order->contact_name ?: ($order->client?->name ?? 'Walk-in client');
         $items = $order->items
             ->map(fn ($i) => "• {$i->quantity}× " . $this->productName($i->product?->name))
             ->implode("\n");
@@ -47,7 +47,7 @@ class TelegramNotifier
     {
         $order->loadMissing(['client', 'courier']);
 
-        $client = $order->client?->name ?? 'Client';
+        $client = $order->contact_name ?: ($order->client?->name ?? 'Client');
         $courier = $order->courier?->name ?? 'Unknown';
         $when = $order->actual_delivery_at?->format('M j, Y H:i') ?? now()->format('M j, Y H:i');
         $deposit = (float) $order->deposit_charge;
