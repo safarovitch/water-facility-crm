@@ -17,6 +17,7 @@ class Order extends Model
   protected $fillable = [
     'order_number',
     'user_id',
+    'parent_order_id',
     'contact_name',
     'contact_phone',
     'status',
@@ -113,6 +114,14 @@ class Order extends Model
     $materials = [];  // rm_id => RawMaterial
 
     foreach ($this->items as $item) {
+      // Once delivered, only count containers we actually handed over —
+      // a short-shipped bottle isn't a missing return, it's a missing
+      // delivery. Pre-delivery (delivered_quantity null) we fall back to
+      // the ordered amount so admins can preview the expected return set.
+      $countedQty = $item->delivered_quantity ?? $item->quantity;
+      if ($countedQty <= 0) {
+        continue;
+      }
       foreach ($item->product->rawMaterials ?? [] as $material) {
         if (! $material->is_reusable) {
           continue;
@@ -122,7 +131,7 @@ class Order extends Model
           continue;
         }
         $expected[$material->id] = ($expected[$material->id] ?? 0)
-          + ($perUnit * (int) $item->quantity);
+          + ($perUnit * (int) $countedQty);
         $materials[$material->id] = $material;
       }
     }
@@ -226,5 +235,22 @@ class Order extends Model
     return $this->belongsToMany(RawMaterial::class, 'order_returned_materials')
         ->withPivot('quantity')
         ->withTimestamps();
+  }
+
+  /**
+   * The original order this row was spun off from when a partial delivery
+   * was rolled forward into a backorder.
+   */
+  public function parentOrder(): BelongsTo
+  {
+    return $this->belongsTo(Order::class, 'parent_order_id');
+  }
+
+  /**
+   * Child orders created from this order's undelivered shortfall.
+   */
+  public function backorders(): HasMany
+  {
+    return $this->hasMany(Order::class, 'parent_order_id');
   }
 }

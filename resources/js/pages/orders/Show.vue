@@ -22,11 +22,13 @@ interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
   id: number;
   quantity: number;
+  delivered_quantity: number | null;
   unit_price: string;
   subtotal: string;
   is_gift: boolean;
   product: { id: number; name: Record<string, string> | string; image_url: string | null; };
 }
+interface OrderRef { id: number; order_number: string; status: string; total_amount?: string; scheduled_delivery_at?: string | null; }
 interface ReturnedMaterial {
   id: number;
   name: string;
@@ -65,6 +67,9 @@ interface Order {
   creator: { name: string } | null;
   items: OrderItem[];
   returned_materials: ReturnedMaterial[];
+  parent_order_id: number | null;
+  parent_order: OrderRef | null;
+  backorders: OrderRef[];
 }
 
 interface CourierOption {
@@ -150,11 +155,24 @@ onClickOutside(dropdownContainer, () => {
   pendingStatus.value = null;
 });
 
+interface DeliveredLine {
+  order_item_id: number;
+  delivered_quantity: number;
+  shortfall_action: 'dismiss' | 'backorder';
+}
+
 const statusForm = ref({
   status: '',
   actual_delivery_at: '',
-  returned_materials: [] as { raw_material_id: number; quantity: number }[]
+  returned_materials: [] as { raw_material_id: number; quantity: number }[],
+  delivered_items: [] as DeliveredLine[],
 });
+
+const productName = (name: Record<string, string> | string | undefined): string => {
+  if (!name) return '—';
+  if (typeof name === 'string') return name;
+  return name['en'] ?? name['uz'] ?? name['ru'] ?? Object.values(name)[0] ?? '—';
+};
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -178,9 +196,17 @@ const confirmStatusUpdate = (status: string) => {
   if (status === 'delivered') {
     statusForm.value.status = status;
     statusForm.value.actual_delivery_at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
-    
-    // Auto-init returned_materials to empty unless we want to preset rows
+
     statusForm.value.returned_materials = [];
+
+    // Seed delivered_items with "fully delivered" for every line. The
+    // admin can lower the count per row; rows where they go below
+    // ordered_quantity get a dismiss/backorder choice.
+    statusForm.value.delivered_items = props.order.items.map(i => ({
+      order_item_id: i.id,
+      delivered_quantity: i.delivered_quantity ?? i.quantity,
+      shortfall_action: 'dismiss' as const,
+    }));
 
     isDeliveryModalOpen.value = true;
     isDropdownOpen.value = false;
@@ -360,6 +386,33 @@ const statusButtonClass = (s: string) => {
         </div>
       </div>
 
+      <!-- Backorder lineage: this order is a child spun off from a parent
+           short-delivery, or has children spun off from itself. -->
+      <div
+        v-if="order.parent_order || (order.backorders?.length ?? 0) > 0"
+        class="rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-900/15 dark:border-blue-900/50 px-5 py-4 space-y-2"
+      >
+        <p v-if="order.parent_order" class="text-sm text-blue-900 dark:text-blue-100">
+          <span class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mr-2">Backorder of</span>
+          <Link :href="showRoute(order.parent_order.id).url" class="font-semibold hover:underline">
+            #{{ order.parent_order.order_number }}
+          </Link>
+          <span class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-1 capitalize">({{ order.parent_order.status.replace('_', ' ') }})</span>
+        </p>
+        <div v-if="(order.backorders?.length ?? 0) > 0">
+          <p class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mb-1">Backorders from this delivery</p>
+          <ul class="space-y-1">
+            <li v-for="b in order.backorders" :key="b.id" class="text-sm flex items-center gap-2 flex-wrap">
+              <Link :href="showRoute(b.id).url" class="font-semibold text-blue-900 dark:text-blue-100 hover:underline">
+                #{{ b.order_number }}
+              </Link>
+              <span class="text-xs text-blue-700/80 dark:text-blue-300/80 capitalize">{{ b.status.replace('_', ' ') }}</span>
+              <span v-if="b.total_amount" class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-auto font-mono">{{ Number(b.total_amount).toFixed(2) }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <!-- Cancellation banner -->
       <div v-if="isCancelled" class="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/50 px-5 py-4">
         <div class="flex items-start justify-between gap-4">
@@ -530,7 +583,16 @@ const statusButtonClass = (s: string) => {
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-3 text-right">{{ item.quantity }}</td>
+              <td class="px-6 py-3 text-right">
+                <span>{{ item.quantity }}</span>
+                <span
+                  v-if="item.delivered_quantity != null && item.delivered_quantity !== item.quantity"
+                  class="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                  :title="`Delivered ${item.delivered_quantity} of ${item.quantity}`"
+                >
+                  Delivered {{ item.delivered_quantity }}
+                </span>
+              </td>
               <td v-if="adminMode" class="px-6 py-3 text-right" :class="item.is_gift ? 'line-through text-gray-400' : ''">{{ item.unit_price }}</td>
               <td v-if="adminMode" class="px-6 py-3 text-right font-semibold" :class="item.is_gift ? 'text-pink-600 dark:text-pink-300' : 'text-gray-900 dark:text-white'">
                 {{ item.is_gift ? 'Free' : item.subtotal }}
@@ -687,10 +749,69 @@ const statusButtonClass = (s: string) => {
             </DialogDescription>
           </DialogHeader>
 
-          <div class="space-y-4 py-2">
+          <div class="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
             <div>
                 <label class="text-xs uppercase font-bold text-gray-500 block mb-1">Actual Delivery Time</label>
                 <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+            </div>
+
+            <!-- Partial delivery: per-line actual delivered count. Default is
+                 the ordered quantity; rows where the admin drops below get a
+                 dismiss / deliver-later toggle. -->
+            <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/30 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="text-xs uppercase font-bold text-gray-500">Delivered Quantities</label>
+                <span class="text-[10px] text-gray-400">Ordered → Delivered</span>
+              </div>
+              <div v-for="(line, idx) in statusForm.delivered_items" :key="line.order_item_id" class="rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 p-3">
+                <div class="flex items-center gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ productName(props.order.items[idx]?.product?.name) }}</p>
+                    <p class="text-[11px] text-gray-500">Ordered {{ props.order.items[idx]?.quantity }}</p>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    :max="props.order.items[idx]?.quantity"
+                    v-model.number="line.delivered_quantity"
+                    class="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm text-right outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div
+                  v-if="line.delivered_quantity < (props.order.items[idx]?.quantity ?? 0)"
+                  class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap"
+                >
+                  <span class="text-[11px] uppercase font-bold tracking-wide text-amber-600 dark:text-amber-400">
+                    Short by {{ (props.order.items[idx]?.quantity ?? 0) - line.delivered_quantity }}
+                  </span>
+                  <div class="ml-auto inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      @click="line.shortfall_action = 'dismiss'"
+                      :class="[
+                        'px-3 py-1.5 font-semibold transition-colors',
+                        line.shortfall_action === 'dismiss'
+                          ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
+                          : 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                      ]"
+                    >Dismiss</button>
+                    <button
+                      type="button"
+                      @click="line.shortfall_action = 'backorder'"
+                      :class="[
+                        'px-3 py-1.5 font-semibold border-l border-gray-200 dark:border-gray-700 transition-colors',
+                        line.shortfall_action === 'backorder'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                      ]"
+                    >Deliver later</button>
+                  </div>
+                </div>
+              </div>
+              <p class="text-[11px] text-gray-500 leading-snug">
+                <span class="font-semibold">Dismiss</span> restores stock and reduces the bill;
+                <span class="font-semibold">Deliver later</span> additionally creates a follow-up order for the shortfall.
+              </p>
             </div>
 
             <div v-if="(props.reusable_summary ?? []).length > 0" class="rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-900/10 p-4 space-y-2">

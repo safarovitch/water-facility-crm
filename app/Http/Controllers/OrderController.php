@@ -410,7 +410,16 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $order->load(['client.userProfile', 'creator', 'canceller', 'items.product.rawMaterials', 'courier', 'returnedMaterials']);
+    $order->load([
+      'client.userProfile',
+      'creator',
+      'canceller',
+      'items.product.rawMaterials',
+      'courier',
+      'returnedMaterials',
+      'parentOrder:id,order_number,status',
+      'backorders:id,parent_order_id,order_number,status,total_amount,scheduled_delivery_at',
+    ]);
 
     return Inertia::render('orders/Show')->with([
       'order'    => $order,
@@ -439,7 +448,9 @@ class OrderController extends Controller
   public function update(UpdateOrderRequest $request, Order $order)
   {
     DB::transaction(function () use ($request, $order) {
-      $items = collect($request->items)->map(function ($item) {
+      $isDelivered = $order->status->value === OrderStatus::Delivered;
+
+      $items = collect($request->items)->map(function ($item) use ($isDelivered) {
         $product   = Product::findOrFail($item['product_id']);
         $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
         $isGift    = (bool) ($item['is_gift'] ?? false);
@@ -448,6 +459,10 @@ class OrderController extends Controller
         return [
           'product_id' => $item['product_id'],
           'quantity'   => $item['quantity'],
+          // Editing a delivered order is a correction to what was handed
+          // over, so new lines are treated as fully delivered. For non-
+          // delivered orders this stays NULL (set later at delivery time).
+          'delivered_quantity' => $isDelivered ? (int) $item['quantity'] : null,
           'unit_price' => $unitPrice,
           'subtotal'   => $subtotal,
           'is_gift'    => $isGift,
@@ -466,21 +481,26 @@ class OrderController extends Controller
         'discount_amount'       => $discount,
       ];
 
-      // If editing drops the total to zero (all gifts / fully-discounted),
-      // mark it paid so it doesn't sit forever as Unpaid with 0 balance.
       if ($finalTotal <= 0) {
         $updates['payment_status'] = PaymentStatus::Paid;
       }
 
       $order->update($updates);
 
-      // Restore inventory for the items that are about to be replaced…
-      $this->adjustRawMaterialStock($order->items()->get(), +1);
+      // Restore inventory by what was *actually* deducted, not what was
+      // ordered. After a partial delivery the live deduction equals
+      // delivered_quantity; only that much was taken from stock and only
+      // that much should be returned before the new items are deducted.
+      $existingItems = $order->items()->get();
+      $restoreSet = $existingItems->map(fn($i) => [
+        'product_id' => $i->product_id,
+        'quantity'   => (int) ($i->delivered_quantity ?? $i->quantity),
+      ])->all();
+      $this->adjustRawMaterialStock($restoreSet, +1);
 
       $order->items()->delete();
       $order->items()->createMany($items->toArray());
 
-      // …then deduct inventory for the new items.
       $this->adjustRawMaterialStock($items, -1);
     });
 
@@ -525,28 +545,39 @@ class OrderController extends Controller
       'returned_materials' => ['nullable', 'array'],
       'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
       'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
+      // Partial delivery: per-line actual delivered count and what to do
+      // with any shortfall. Optional — when absent or empty, the existing
+      // "fully delivered" behavior applies.
+      'delivered_items'                      => ['nullable', 'array'],
+      'delivered_items.*.order_item_id'      => ['required', 'integer'],
+      'delivered_items.*.delivered_quantity' => ['required', 'integer', 'min:0'],
+      'delivered_items.*.shortfall_action'   => ['nullable', 'in:dismiss,backorder'],
     ]);
 
     $wasAlreadyDelivered = $order->status->value === OrderStatus::Delivered;
+    $isDeliveringNow     = $data['status'] === OrderStatus::Delivered && !$wasAlreadyDelivered;
 
-    DB::transaction(function () use ($order, $data) {
+    DB::transaction(function () use ($order, $data, $isDeliveringNow) {
         $order->update([
             'status' => $data['status'],
             'actual_delivery_at' => $data['actual_delivery_at'] ?? null,
         ]);
 
+        // Partial-delivery handling — only on the first transition into
+        // Delivered, so re-saves (editing returned materials) don't re-run
+        // shortfall logic and double-restore inventory.
+        if ($isDeliveringNow) {
+            $this->applyPartialDelivery($order, $data['delivered_items'] ?? []);
+        }
+
         if (isset($data['returned_materials']) && $data['status'] === OrderStatus::Delivered) {
             $syncData = [];
             foreach ($data['returned_materials'] as $rm) {
-                // Determine if we need to sync multiple items or just one per iteration
-                // Here, a client can return multiple of the same or different. We'll flatten them.
                 $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
 
-                // Also increment current_stock on the raw material to add it back into the inventory!
                 \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
                   ->increment('current_stock', $rm['quantity']);
             }
-            // we do syncWithoutDetaching in case they add things later, but usually it's set once per delivery
             $order->returnedMaterials()->sync($syncData);
         }
 
@@ -558,14 +589,128 @@ class OrderController extends Controller
         }
     });
 
-    // Only fire the delivered event on the first transition into Delivered
-    // so repeated saves (e.g. editing the returned-materials list) don't
-    // re-spam the Telegram group.
     if (!$wasAlreadyDelivered && $data['status'] === OrderStatus::Delivered) {
         event(new \App\Events\OrderDelivered($order->fresh(['client', 'courier'])));
     }
 
     return back()->with('success', 'Order status updated.');
+  }
+
+  /**
+   * Apply the courier's per-line delivered counts at the moment the order
+   * transitions to Delivered:
+   *   - Stamp delivered_quantity on each OrderItem.
+   *   - Restore inventory for any shortfall.
+   *   - For shortfall lines flagged "backorder", spawn a pending child
+   *     order carrying the missing units and re-deduct inventory for it.
+   *   - Recompute the parent order's total_amount from delivered subtotals,
+   *     preserving the original discount ratio so a discounted order stays
+   *     proportionally discounted.
+   */
+  private function applyPartialDelivery(Order $order, array $deliveredItems): void
+  {
+    $order->loadMissing(['items.product.rawMaterials']);
+    $byId = $order->items->keyBy('id');
+
+    // Default: no entry means the line was fully delivered.
+    $resolved = [];
+    foreach ($order->items as $item) {
+      $resolved[$item->id] = [
+        'item'               => $item,
+        'delivered_quantity' => (int) $item->quantity,
+        'shortfall_action'   => null,
+      ];
+    }
+    foreach ($deliveredItems as $row) {
+      $itemId = (int) $row['order_item_id'];
+      if (!isset($resolved[$itemId])) continue;
+      $delivered = min((int) $row['delivered_quantity'], (int) $resolved[$itemId]['item']->quantity);
+      $resolved[$itemId]['delivered_quantity'] = max(0, $delivered);
+      $resolved[$itemId]['shortfall_action']   = $row['shortfall_action'] ?? null;
+    }
+
+    $originalCalculated = (float) $order->items->sum(
+      fn($i) => $i->is_gift ? 0 : (float) $i->unit_price * (int) $i->quantity
+    );
+    $originalDiscount   = (float) $order->discount_amount;
+
+    $deliveredCalculated = 0.0;
+    $restoreItems        = [];
+    $backorderItems      = [];
+
+    foreach ($resolved as $row) {
+      $item      = $row['item'];
+      $delivered = $row['delivered_quantity'];
+      $shortfall = (int) $item->quantity - $delivered;
+
+      $item->forceFill(['delivered_quantity' => $delivered])->save();
+
+      if (!$item->is_gift) {
+        $deliveredCalculated += (float) $item->unit_price * $delivered;
+      }
+
+      if ($shortfall > 0) {
+        $restoreItems[] = ['product_id' => $item->product_id, 'quantity' => $shortfall];
+
+        if ($row['shortfall_action'] === 'backorder') {
+          $backorderItems[] = [
+            'product_id' => $item->product_id,
+            'quantity'   => $shortfall,
+            'unit_price' => (float) $item->unit_price,
+            'is_gift'    => (bool) $item->is_gift,
+            'subtotal'   => $item->is_gift ? 0 : (float) $item->unit_price * $shortfall,
+          ];
+        }
+      }
+    }
+
+    if (!empty($restoreItems)) {
+      $this->adjustRawMaterialStock($restoreItems, +1);
+    }
+
+    // Recompute the parent's billable total. Preserve the original
+    // discount ratio so a 20%-off order stays 20% off on whatever was
+    // actually delivered, instead of letting the full discount swallow
+    // a partial shipment.
+    $ratio = $originalCalculated > 0
+      ? round($deliveredCalculated / $originalCalculated, 6)
+      : 0.0;
+    $discountForDelivered = round($originalDiscount * $ratio, 2);
+    $newTotal             = max(0.0, round($deliveredCalculated - $discountForDelivered, 2));
+
+    $updates = [
+      'total_amount'    => $newTotal,
+      'discount_amount' => $discountForDelivered,
+    ];
+    if ($newTotal <= 0 && (float) $order->paid_amount >= 0) {
+      $updates['payment_status'] = PaymentStatus::Paid;
+    }
+    $order->update($updates);
+
+    if (!empty($backorderItems)) {
+      $backorder = Order::create([
+        'user_id'               => $order->user_id,
+        'parent_order_id'       => $order->id,
+        'contact_name'          => $order->contact_name,
+        'contact_phone'         => $order->contact_phone,
+        'status'                => OrderStatus::Pending,
+        'delivery_address'      => $order->delivery_address,
+        'notes'                 => trim(($order->notes ? $order->notes . "\n\n" : '')
+          . "Backorder for #{$order->order_number} — shortfall from delivery on "
+          . now()->format('Y-m-d H:i') . '.'),
+        'total_amount'          => array_sum(array_column($backorderItems, 'subtotal')),
+        'discount_amount'       => 0,
+        'payment_status'        => array_sum(array_column($backorderItems, 'subtotal')) > 0
+          ? PaymentStatus::Unpaid
+          : PaymentStatus::Paid,
+        'created_by'            => auth()->id(),
+      ]);
+      $backorder->items()->createMany($backorderItems);
+
+      // The shortfall was just restored to inventory; the backorder
+      // reserves those units again so net inventory matches reality.
+      $this->adjustRawMaterialStock($backorderItems, -1);
+    }
   }
 
   /**
