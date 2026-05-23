@@ -727,6 +727,10 @@ class OrderController extends Controller
         'contact_name'          => $order->contact_name,
         'contact_phone'         => $order->contact_phone,
         'status'                => OrderStatus::Pending,
+        // No schedule by default — admin will set when the follow-up
+        // delivery is actually planned. Column is nullable per migration
+        // 2026_05_24_002518.
+        'scheduled_delivery_at' => null,
         'delivery_address'      => $order->delivery_address,
         'notes'                 => trim(($order->notes ? $order->notes . "\n\n" : '')
           . "Backorder for #{$order->order_number} — shortfall from delivery on "
