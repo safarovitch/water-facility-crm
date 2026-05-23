@@ -116,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
       Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
       Route::patch('{order}/assign',   [OrderController::class, 'assignCurrier'])->name('assign');
+      Route::delete('{order}',         [OrderController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('curriers.')->prefix('curriers')->group(function () {

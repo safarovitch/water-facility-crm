@@ -537,6 +537,39 @@ class OrderController extends Controller
     return back()->with('success', 'Order cancelled.');
   }
 
+  /**
+   * Hard-delete an order. Admin escape hatch for orders created in error,
+   * test data, etc. Inventory is restored based on what was actually
+   * deducted (delivered_quantity if delivery happened, otherwise the full
+   * ordered quantity); cancelled orders skip the restore step because
+   * cancel() already returned those units. FK constraints handle the rest:
+   *   - order_items   → cascadeOnDelete
+   *   - order_returned_materials → cascadeOnDelete
+   *   - orders.parent_order_id (child backorders) → nullOnDelete
+   * Wallet transactions remain in the ledger as orphans pointing to the
+   * deleted order id; their `meta` JSON carries the order_number for
+   * later reconstruction.
+   */
+  public function destroy(Order $order)
+  {
+    $isCancelled = $order->status->value === OrderStatus::Cancelled;
+
+    DB::transaction(function () use ($order, $isCancelled) {
+      if (!$isCancelled) {
+        $restoreSet = $order->items()->get()->map(fn($i) => [
+          'product_id' => $i->product_id,
+          'quantity'   => (int) ($i->delivered_quantity ?? $i->quantity),
+        ])->all();
+        $this->adjustRawMaterialStock($restoreSet, +1);
+      }
+
+      $order->delete();
+    });
+
+    return redirect()->route('admin.orders.index')
+      ->with('success', "Order #{$order->order_number} deleted.");
+  }
+
   public function updateStatus(Order $order)
   {
     $data = request()->validate([
@@ -751,17 +784,38 @@ class OrderController extends Controller
       return back()->with('error', 'Order is already paid.');
     }
 
-    $amountToPay = $order->balance_due;
+    $amountToPay = (float) $order->balance_due;
+    if ($amountToPay <= 0) {
+      $order->update(['payment_status' => PaymentStatus::Paid]);
+      return back()->with('success', 'Order marked as paid.');
+    }
 
     try {
-      $walletService->pay($order->client, $amountToPay, Order::class, $order->id, [
-        'order_number' => $order->order_number,
-      ]);
+      // Treat the click as "the client just paid the order's balance" — top
+      // the wallet up for the full balance and immediately withdraw it for
+      // this order. Net wallet movement is zero, but we get two ledger rows
+      // (deposit + payment) so the audit trail tells the full story.
+      DB::transaction(function () use ($order, $walletService, $amountToPay) {
+        $walletService->deposit(
+          $order->client,
+          $amountToPay,
+          Order::class,
+          $order->id,
+          [
+            'order_number' => $order->order_number,
+            'reason'       => 'auto_topup_for_order_payment',
+          ],
+        );
 
-      $order->increment('paid_amount', $amountToPay);
-      $order->update(['payment_status' => PaymentStatus::Paid]);
+        $walletService->pay($order->client, $amountToPay, Order::class, $order->id, [
+          'order_number' => $order->order_number,
+        ]);
 
-      return back()->with('success', 'Order paid successfully using wallet.');
+        $order->increment('paid_amount', $amountToPay);
+        $order->update(['payment_status' => PaymentStatus::Paid]);
+      });
+
+      return back()->with('success', 'Funds added and order paid.');
     } catch (\Exception $e) {
       return back()->with('error', $e->getMessage());
     }

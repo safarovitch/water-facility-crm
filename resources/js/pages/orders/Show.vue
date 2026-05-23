@@ -16,7 +16,7 @@ import {
 } from '@/routes/admin/orders';
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, Check, ChevronDown, Loader2, Box } from 'lucide-vue-next';
+import { Wallet, Check, ChevronDown, Loader2, Box, Trash2 } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -142,6 +142,11 @@ const nextStatuses = computed(() => validTransitions[props.order.status] ?? []);
 const isUpdatingStatus = ref(false);
 const isDeliveryModalOpen = ref(false);
 const isCancelModalOpen = ref(false);
+const isWalletPayModalOpen = ref(false);
+const walletPayProcessing = ref(false);
+const isDeleteModalOpen = ref(false);
+const deleteProcessing = ref(false);
+const deleteConfirmText = ref('');
 const cancelForm = ref({ cancellation_reason: '' });
 const cancelError = ref('');
 const isCancelled = computed(() => props.order.status === 'cancelled');
@@ -250,12 +255,32 @@ const submitCancellation = () => {
   });
 };
 
-const payWithWallet = () => {
-  const currency = (usePage().props.currency as string) || 'USD';
-  if (!confirm(`Pay ${props.order.balance_due.toFixed(2)} ${currency} from wallet?`)) return;
+const openWalletPayModal = () => {
+  isWalletPayModalOpen.value = true;
+};
+
+const confirmWalletPay = () => {
+  walletPayProcessing.value = true;
   const url = adminMode.value ? `/admin/orders/${props.order.id}/pay` : `/orders/${props.order.id}/pay`;
   router.post(url, {}, {
     preserveScroll: true,
+    onFinish: () => {
+      walletPayProcessing.value = false;
+      isWalletPayModalOpen.value = false;
+    },
+  });
+};
+
+const deleteConfirmExpected = computed(() => props.order.order_number);
+const canConfirmDelete = computed(() => deleteConfirmText.value.trim() === deleteConfirmExpected.value);
+
+const confirmDelete = () => {
+  if (!canConfirmDelete.value) return;
+  deleteProcessing.value = true;
+  router.delete(`/admin/orders/${props.order.id}`, {
+    onFinish: () => {
+      deleteProcessing.value = false;
+    },
   });
 };
 
@@ -380,6 +405,17 @@ const statusButtonClass = (s: string) => {
                 Edit Order
               </Button>
             </Link>
+            <Button
+              v-if="adminMode"
+              type="button"
+              variant="outline"
+              size="sm"
+              class="rounded-xl h-10 px-4 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
+              @click="isDeleteModalOpen = true"
+            >
+              <Trash2 class="w-4 h-4 mr-2" />
+              Delete
+            </Button>
           </div>
 
 
@@ -540,7 +576,7 @@ const statusButtonClass = (s: string) => {
           </div>
 
           <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="!isCancelled && order.balance_due > 0 && order.payment_status !== 'paid'">
-            <button @click="payWithWallet" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
+            <button @click="openWalletPayModal" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
               <Wallet class="size-5" />
               Pay with Wallet
             </button>
@@ -708,7 +744,88 @@ const statusButtonClass = (s: string) => {
         </DialogContent>
       </Dialog>
 
-      <!-- Delivery Confirmation Modal -->
+      <!-- Wallet payment confirmation -->
+      <Dialog v-model:open="isWalletPayModalOpen">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Add funds and pay</DialogTitle>
+            <DialogDescription>
+              The order's balance will be added to the client's wallet and immediately applied to this order.
+              Two ledger entries (deposit + payment) are recorded so the receipt of funds and the order payment can be audited separately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="py-3 space-y-3">
+            <div class="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-900/15 px-4 py-3 flex items-center justify-between">
+              <span class="text-xs uppercase tracking-wider font-bold text-green-700 dark:text-green-300">Amount</span>
+              <span class="font-mono text-lg font-bold text-green-900 dark:text-green-100">
+                {{ Number(order.balance_due).toFixed(2) }}
+                <span class="text-xs font-normal text-green-700/80 dark:text-green-300/80 ml-1">{{ ($page.props.currency as string) || '' }}</span>
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Add <span class="font-semibold">{{ Number(order.balance_due).toFixed(2) }} {{ ($page.props.currency as string) || '' }}</span> funds and pay for this order?
+            </p>
+            <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
+              <Button type="button" variant="outline" :disabled="walletPayProcessing" @click="isWalletPayModalOpen = false">Cancel</Button>
+              <Button type="button" class="bg-green-600 hover:bg-green-700 text-white" :disabled="walletPayProcessing" @click="confirmWalletPay">
+                <Loader2 v-if="walletPayProcessing" class="w-4 h-4 mr-2 animate-spin" />
+                <Wallet v-else class="w-4 h-4 mr-2" />
+                {{ walletPayProcessing ? 'Processing…' : 'Add funds & pay' }}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <!-- Hard-delete confirmation. Requires the admin to type the order
+           number, since deletion cascades into items and detaches any
+           backorder children (parent_order_id → NULL). -->
+      <Dialog v-model:open="isDeleteModalOpen">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold text-red-700 dark:text-red-300">Delete this order?</DialogTitle>
+            <DialogDescription>
+              The order, its line items, and its returned-materials records are removed permanently. Inventory is restored for any items still considered out of stock. Wallet transactions tied to this order stay in the ledger as historical record.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="py-3 space-y-3">
+            <div v-if="(order.backorders?.length ?? 0) > 0" class="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/15 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+              ⚠ This order has {{ order.backorders.length }} backorder{{ order.backorders.length === 1 ? '' : 's' }}. They will remain but lose their link back to this order.
+            </div>
+            <div v-if="Number(order.paid_amount) > 0" class="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/15 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+              ⚠ {{ Number(order.paid_amount).toFixed(2) }} {{ ($page.props.currency as string) || '' }} was paid against this order. Wallet entries stay; no automatic refund.
+            </div>
+
+            <label class="text-xs uppercase font-bold text-gray-500 block">
+              Type <span class="font-mono text-gray-900 dark:text-white">{{ deleteConfirmExpected }}</span> to confirm
+            </label>
+            <input
+              v-model="deleteConfirmText"
+              type="text"
+              :placeholder="deleteConfirmExpected"
+              class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+              autocomplete="off"
+            />
+
+            <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
+              <Button type="button" variant="outline" :disabled="deleteProcessing" @click="isDeleteModalOpen = false">Keep Order</Button>
+              <Button
+                type="button"
+                class="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="!canConfirmDelete || deleteProcessing"
+                @click="confirmDelete"
+              >
+                <Loader2 v-if="deleteProcessing" class="w-4 h-4 mr-2 animate-spin" />
+                <Trash2 v-else class="w-4 h-4 mr-2" />
+                {{ deleteProcessing ? 'Deleting…' : 'Delete forever' }}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <!-- Cancellation Modal -->
       <Dialog v-model:open="isCancelModalOpen">
         <DialogContent class="sm:max-w-md">
