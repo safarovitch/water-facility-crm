@@ -125,6 +125,7 @@ const statusBadgeClass: Record<string, string> = {
                         <tr>
                             <th class="px-6 py-4 font-semibold">Order #</th>
                             <th class="px-6 py-4 font-semibold">Client</th>
+                            <th class="px-6 py-4 font-semibold">Address</th>
                             <th class="px-6 py-4 font-semibold">Status</th>
                             <th class="px-6 py-4 font-semibold text-right">Total</th>
                             <th class="px-6 py-4 font-semibold text-right">Balance Due</th>
@@ -139,7 +140,12 @@ const statusBadgeClass: Record<string, string> = {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-bold text-gray-900 dark:text-white">{{ order.contact_name || order.client?.name }}</div>
-                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.contact_phone || order.client?.email }}</div>
+                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.contact_phone || order.client?.phone || '—' }}</div>
+                            </td>
+                            <td class="px-6 py-4 max-w-[18rem]">
+                                <div class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
+                                    {{ order.delivery_address || '—' }}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <Badge variant="outline" class="capitalize border-transparent relative font-semibold" :class="statusBadgeClass[order.status]">
@@ -183,7 +189,7 @@ const statusBadgeClass: Record<string, string> = {
                         <div class="flex flex-col">
                             <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
                             <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.contact_name || order.client?.name }}</span>
-                            <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.email }}</span>
+                            <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.phone || '—' }}</span>
                         </div>
                         <Badge variant="outline" class="capitalize whitespace-nowrap text-[10px] h-5 px-1.5 shrink-0 font-semibold" :class="statusBadgeClass[order.status]">
                             {{ order.status.replace('_', ' ') }}
@@ -204,16 +210,22 @@ const statusBadgeClass: Record<string, string> = {
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between pt-3 border-t border-dashed border-border/60">
+                    <div class="pt-3 border-t border-dashed border-border/60 space-y-3">
                         <div class="flex flex-col">
-                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Delivery</span>
-                            <span class="text-xs text-gray-700 dark:text-gray-300">{{ order.scheduled_delivery_at_human || 'Not scheduled' }}</span>
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Address</span>
+                            <span class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{{ order.delivery_address || '—' }}</span>
                         </div>
-                        <Link :href="showRoute(order.id).url">
-                          <Button variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
-                              <Eye class="h-4 w-4 mr-1.5" /> View
-                          </Button>
-                        </Link>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Delivery</span>
+                                <span class="text-xs text-gray-700 dark:text-gray-300">{{ order.scheduled_delivery_at_human || 'Not scheduled' }}</span>
+                            </div>
+                            <Link :href="showRoute(order.id).url">
+                              <Button variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
+                                  <Eye class="h-4 w-4 mr-1.5" /> View
+                              </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

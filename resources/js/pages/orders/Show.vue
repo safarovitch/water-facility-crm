@@ -345,7 +345,10 @@ const statusButtonClass = (s: string) => {
               </div>
             </div>
 
-            <Link v-if="editRoute && ['pending', 'confirmed'].includes(order.status)" :href="editRoute(order.id).url">
+            <!-- Editing a cancelled order would double-restore stock (cancel already
+                 +1'd inventory; OrderController::update would +1 again). All other
+                 statuses, including delivered, are safe to edit. -->
+            <Link v-if="editRoute && order.status !== 'cancelled'" :href="editRoute(order.id).url">
               <Button variant="outline" size="sm" class="rounded-xl h-10 px-4">
                 <Edit class="w-4 h-4 mr-2" />
                 Edit Order
