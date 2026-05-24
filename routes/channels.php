@@ -9,3 +9,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('orders', function ($user) {
     return $user->hasRole(['Admin', 'Officer', 'Currier', 'Manager']);
 });
+
+Broadcast::channel('client.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});

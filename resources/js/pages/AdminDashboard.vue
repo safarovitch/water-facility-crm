@@ -100,11 +100,13 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
     confirmed:    { label: 'Confirmed',    color: 'text-blue-500    bg-blue-500/10',    icon: CheckCircle },
     in_production:{ label: 'In Production',color: 'text-purple-500  bg-purple-500/10',  icon: Factory },
     ready:        { label: 'Ready',        color: 'text-green-500   bg-green-500/10',   icon: ArrowUpRight },
+    accepted:     { label: 'Picked up',    color: 'text-indigo-500  bg-indigo-500/10',  icon: Truck },
+    in_transit:   { label: 'On the way',   color: 'text-sky-500     bg-sky-500/10',     icon: Truck },
     delivered:    { label: 'Delivered',    color: 'text-emerald-500 bg-emerald-500/10', icon: Truck },
     cancelled:    { label: 'Cancelled',    color: 'text-red-500     bg-red-500/10',     icon: XCircle },
 };
 
-const allStatuses = ['pending', 'confirmed', 'in_production', 'ready', 'delivered', 'cancelled'];
+const allStatuses = ['pending', 'confirmed', 'in_production', 'ready', 'accepted', 'in_transit', 'delivered', 'cancelled'];
 const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStatus[s] ?? 0), 1);
 </script>
 

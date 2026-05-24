@@ -67,13 +67,13 @@ const initiateCall = (phone: string | null) => {
   
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-6 container mx-auto">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Clients</h1>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Clients</h1>
           <p class="text-sm text-muted-foreground mt-1">Manage external customers and their profiles.</p>
         </div>
-        <Link :href="create().url">
-          <Button class="gap-2 shadow-sm font-semibold rounded-xl">
+        <Link :href="create().url" class="w-full md:w-auto">
+          <Button class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
             <PlusCircle class="h-4 w-4" /> Add Client
           </Button>
         </Link>
@@ -82,19 +82,19 @@ const initiateCall = (phone: string | null) => {
       <Card class="shadow-sm">
         <CardContent class="p-0">
             <!-- Filters -->
-            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
-                <div class="space-y-1 relative w-64 flex-1 max-w-sm">
+            <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 grid grid-cols-1 md:flex md:flex-wrap gap-3 items-end border-b">
+                <div class="space-y-1 relative w-full md:w-64 md:max-w-sm">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
                     <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-                    <Input v-model="search" placeholder="Search accounts..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
+                    <Input v-model="search" placeholder="Search accounts..." class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
                 </div>
-                <div class="flex gap-2">
-                    <Button @click="doSearch" variant="secondary" size="sm" class="h-9">Search</Button>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <Button @click="doSearch" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Search</Button>
                 </div>
             </div>
 
-            <!-- Table -->
-            <div class="relative overflow-x-auto">
+            <!-- Table (Desktop) -->
+            <div class="hidden md:block relative overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
@@ -162,6 +162,65 @@ const initiateCall = (phone: string | null) => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Card View (Mobile) -->
+            <div class="md:hidden divide-y divide-border/60">
+                <div v-for="client in clients.data" :key="client.id" class="p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <img class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700" :src="client.avatar_url" :alt="client.name">
+                            <div>
+                                <Link :href="show(client.id).url" class="font-bold text-gray-900 dark:text-white">{{ client.name }}</Link>
+                                <div class="text-xs text-muted-foreground mt-0.5">{{ client.email }}</div>
+                            </div>
+                        </div>
+                        <Badge :variant="client.status === 'active' ? 'default' : (client.status === 'pending' ? 'secondary' : 'destructive')" class="capitalize text-[10px] h-5 px-1.5 shrink-0">
+                            {{ client.statusLabel }}
+                        </Badge>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Type</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{{ client.user_profile?.company_name ?? client.user_profile?.type ?? '—' }}</span>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Region</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ client.user_profile?.region ?? '—' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-dashed border-border/60">
+                        <div class="flex items-center gap-2">
+                            <Phone class="h-3.5 w-3.5 text-muted-foreground" />
+                            <span class="text-sm font-mono text-gray-900 dark:text-gray-100">{{ client.phone ?? '—' }}</span>
+                            <Button v-if="client.phone" variant="ghost" size="icon" class="h-8 w-8 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30" @click.prevent="initiateCall(client.phone)" title="Call">
+                                <Phone class="w-3.5 h-3.5 fill-current" />
+                            </Button>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <Link :href="show(client.id).url">
+                                <Button variant="secondary" size="sm" class="h-9 px-3 rounded-lg shadow-sm border border-border/50">
+                                    <Eye class="h-4 w-4 mr-1" /> View
+                                </Button>
+                            </Link>
+                            <Link :href="edit(client.id).url">
+                                <Button variant="ghost" size="icon" class="h-9 w-9 text-blue-600">
+                                    <Pencil class="h-4 w-4" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="clients.data.length === 0" class="md:hidden px-6 py-12 text-center text-muted-foreground">
+                <div class="flex flex-col items-center justify-center opacity-60">
+                    <Users class="h-10 w-10 mb-3 text-gray-400" />
+                    <p class="font-medium text-sm">No clients found.</p>
+                </div>
             </div>
 
             <!-- Pagination -->

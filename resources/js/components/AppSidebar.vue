@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone } from 'lucide-vue-next';
+import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Use route() helper where possible or update hardcoded paths
@@ -122,6 +122,11 @@ const mainNavItems = computed((): NavItem[] => {
             icon: UserCheck2,
           },
         ]
+      },
+      {
+        title: 'Subscriptions',
+        href: '/admin/subscriptions',
+        icon: RotateCcw,
       },
       {
         title: 'Accounting',

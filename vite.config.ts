@@ -24,4 +24,15 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor-vue': ['vue', '@inertiajs/vue3', '@vueuse/core'],
+                    'vendor-ui': ['reka-ui', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+                    'vendor-sip': ['sip.js'],
+                },
+            },
+        },
+    },
 });

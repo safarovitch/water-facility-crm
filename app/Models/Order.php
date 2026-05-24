@@ -35,6 +35,7 @@ class Order extends Model
     'cancelled_by',
     'created_by',
     'courier_id',
+    'subscription_id',
     'lat',
     'lng',
   ];
@@ -57,14 +58,8 @@ class Order extends Model
     'balance_due',
     'created_at_human',
     'created_at_formatted',
-    'updated_at_human',
-    'updated_at_formatted',
     'scheduled_delivery_at_human',
     'scheduled_delivery_at_formatted',
-    'actual_delivery_at_human',
-    'actual_delivery_at_formatted',
-    'cancelled_at_human',
-    'cancelled_at_formatted',
   ];
 
   protected static function boot(): void
@@ -228,6 +223,11 @@ class Order extends Model
   public function items(): HasMany
   {
     return $this->hasMany(OrderItem::class);
+  }
+
+  public function subscription(): BelongsTo
+  {
+    return $this->belongsTo(Subscription::class);
   }
 
   public function returnedMaterials(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

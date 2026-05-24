@@ -38,3 +38,10 @@ router.on('error', (event) => {
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Register service worker for PWA offline support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}

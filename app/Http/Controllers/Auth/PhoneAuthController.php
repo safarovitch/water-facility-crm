@@ -9,6 +9,7 @@ use App\Services\TelegramOtpService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -199,6 +200,7 @@ class PhoneAuthController extends Controller
       'name'  => ['required', 'string', 'max:255'],
       'phone' => ['required', 'string', 'max:32'],
       'code'  => ['required', 'string', 'size:6'],
+      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/'],
     ]);
 
     $user = $this->otp->verifyOtp($data['phone'], $data['code']);
@@ -208,12 +210,69 @@ class PhoneAuthController extends Controller
       ]);
     }
 
-    // First-time registration: update the auto-created shell name to what
-    // the user just typed in. If the row already had a name from a prior
-    // walk-in entry, we keep it unless the user overrides.
-    if ($user->name !== $data['name']) {
-      $user->forceFill(['name' => $data['name']])->save();
+    $user->forceFill([
+      'name' => $data['name'],
+      'pin'  => Hash::make($data['pin']),
+    ])->save();
+
+    Auth::login($user, remember: true);
+    $request->session()->regenerate();
+
+    return redirect()->intended(route('dashboard'));
+  }
+
+  /**
+   * Login with phone + PIN (no OTP required for returning users).
+   */
+  public function loginWithPin(Request $request): RedirectResponse
+  {
+    $data = $request->validate([
+      'phone' => ['required', 'string', 'max:32'],
+      'pin'   => ['required', 'string', 'min:4', 'max:6'],
+    ]);
+
+    $normalized = $this->otp->normalizePhone($data['phone']);
+
+    $userPhone = UserPhone::where('phone', $normalized)->first();
+    if (!$userPhone || !$userPhone->user) {
+      throw ValidationException::withMessages([
+        'phone' => 'No account found with this phone number.',
+      ]);
     }
+
+    $user = $userPhone->user;
+
+    if (!$user->pin || !Hash::check($data['pin'], $user->pin)) {
+      throw ValidationException::withMessages([
+        'pin' => 'Incorrect PIN.',
+      ]);
+    }
+
+    Auth::login($user, remember: true);
+    $request->session()->regenerate();
+
+    return redirect()->intended(route('dashboard'));
+  }
+
+  /**
+   * Reset PIN via Telegram OTP (forgot PIN flow).
+   */
+  public function resetPin(Request $request): RedirectResponse
+  {
+    $data = $request->validate([
+      'phone' => ['required', 'string', 'max:32'],
+      'code'  => ['required', 'string', 'size:6'],
+      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/'],
+    ]);
+
+    $user = $this->otp->verifyOtp($data['phone'], $data['code']);
+    if (!$user) {
+      throw ValidationException::withMessages([
+        'code' => 'Invalid or expired code.',
+      ]);
+    }
+
+    $user->forceFill(['pin' => Hash::make($data['pin'])])->save();
 
     Auth::login($user, remember: true);
     $request->session()->regenerate();

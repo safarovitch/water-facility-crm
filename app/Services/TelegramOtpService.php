@@ -43,6 +43,10 @@ class TelegramOtpService
     $bot = $this->getBot();
     $username = $this->getBotUsername($bot);
 
+    if (!$username) {
+      $this->generateAndLogOtp($normalized);
+    }
+
     return [
       'phone'     => $normalized,
       'token'     => $token,
@@ -214,6 +218,39 @@ class TelegramOtpService
     }
 
     return $username;
+  }
+
+  /**
+   * When Telegram bot is not configured, generate an OTP directly and log it.
+   * Also creates a stub user if none exists for this phone.
+   */
+  private function generateAndLogOtp(string $phone): void
+  {
+    $userPhone = UserPhone::where('phone', $phone)->first();
+    if (!$userPhone) {
+      $user = User::create([
+        'name'     => 'New client',
+        'email'    => null,
+        'password' => bcrypt(Str::random(32)),
+        'status'   => 'active',
+      ]);
+      $user->assignRole('Client');
+
+      UserPhone::create([
+        'user_id'    => $user->id,
+        'phone'      => $phone,
+        'label'      => 'Primary',
+        'is_default' => true,
+      ]);
+    }
+
+    $code = (string) random_int(100000, 999999);
+    OtpCode::updateOrCreate(
+      ['identifier' => $phone],
+      ['code' => $code, 'expires_at' => now()->addMinutes(self::OTP_TTL_MINUTES)],
+    );
+
+    Log::info("OTP code for {$phone}: {$code}");
   }
 
   public function normalizePhone(string $phone): string

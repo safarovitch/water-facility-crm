@@ -124,8 +124,21 @@ const statusBadge: Record<string, string> = {
   confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   in_production: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   ready: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+  accepted: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  in_transit: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
   delivered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+};
+
+const statusLabel: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  in_production: 'In Production',
+  ready: 'Ready',
+  accepted: 'Picked up',
+  in_transit: 'On the way',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 
 const validTransitions: Record<string, string[]> = {
@@ -337,7 +350,7 @@ const statusButtonClass = (s: string) => {
               class="inline-flex items-center px-4 py-2 rounded-xl font-bold uppercase text-xs border shadow-sm"
               :class="statusBadge[order.status]"
             >
-              {{ order.status.replace('_', ' ') }}
+              {{ statusLabel[order.status] ?? order.status }}
             </span>
             <div v-else class="relative" ref="dropdownContainer">
               <button
@@ -348,7 +361,7 @@ const statusButtonClass = (s: string) => {
                   isDropdownOpen ? 'ring-2 ring-primary ring-offset-2 scale-[1.02]' : ''
                 ]"
               >
-                <span>{{ order.status.replace('_', ' ') }}</span>
+                <span>{{ statusLabel[order.status] ?? order.status }}</span>
                 <ChevronDown class="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
 
@@ -385,7 +398,7 @@ const statusButtonClass = (s: string) => {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                     ]"
                   >
-                    <span class="capitalize">{{ status.replace('_', ' ') }}</span>
+                    <span class="capitalize">{{ statusLabel[status] ?? status.replace('_', ' ') }}</span>
                     <div v-if="status === pendingStatus" class="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight">
                       <Check class="w-3 h-3" />
                       Confirm
@@ -433,7 +446,7 @@ const statusButtonClass = (s: string) => {
           <Link :href="showRoute(order.parent_order.id).url" class="font-semibold hover:underline">
             #{{ order.parent_order.order_number }}
           </Link>
-          <span class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-1 capitalize">({{ order.parent_order.status.replace('_', ' ') }})</span>
+          <span class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-1 capitalize">({{ statusLabel[order.parent_order.status] ?? order.parent_order.status.replace('_', ' ') }})</span>
         </p>
         <div v-if="(order.backorders?.length ?? 0) > 0">
           <p class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mb-1">Backorders from this delivery</p>
@@ -442,7 +455,7 @@ const statusButtonClass = (s: string) => {
               <Link :href="showRoute(b.id).url" class="font-semibold text-blue-900 dark:text-blue-100 hover:underline">
                 #{{ b.order_number }}
               </Link>
-              <span class="text-xs text-blue-700/80 dark:text-blue-300/80 capitalize">{{ b.status.replace('_', ' ') }}</span>
+              <span class="text-xs text-blue-700/80 dark:text-blue-300/80 capitalize">{{ statusLabel[b.status] ?? b.status.replace('_', ' ') }}</span>
               <span v-if="b.total_amount" class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-auto font-mono">{{ Number(b.total_amount).toFixed(2) }}</span>
             </li>
           </ul>

@@ -11,14 +11,21 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // Phone + Telegram OTP — the primary auth path.
+    // Phone + PIN — the primary auth path for returning users.
     Route::get('login', [PhoneAuthController::class, 'showLogin'])->name('login');
+    Route::post('login/pin', [PhoneAuthController::class, 'loginWithPin'])->name('login.pin');
+
+    // Telegram OTP fallback (forgot PIN / first-time login before PIN is set).
     Route::post('login/otp/request', [PhoneAuthController::class, 'requestLoginOtp'])->name('login.otp.request');
     Route::post('login/otp/verify', [PhoneAuthController::class, 'verifyLoginOtp'])->name('login.otp.verify');
 
+    // Registration: verify phone via Telegram, then set PIN.
     Route::get('register', [PhoneAuthController::class, 'showRegister'])->name('register');
     Route::post('register/otp/request', [PhoneAuthController::class, 'requestRegisterOtp'])->name('register.otp.request');
     Route::post('register/otp/verify', [PhoneAuthController::class, 'verifyRegisterOtp'])->name('register.otp.verify');
+
+    // Reset PIN via Telegram OTP.
+    Route::post('login/pin/reset', [PhoneAuthController::class, 'resetPin'])->name('login.pin.reset');
 
     // Email + password fallback for legacy accounts (during the migration
     // period). Will be retired once all clients have a phone-linked Telegram.
