@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle, MessageCircle } from 'lucide-vue-next';
+import { LoaderCircle, MessageCircle, KeyRound } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 type Phase = 'details' | 'otp';
@@ -15,7 +15,7 @@ const phase = ref<Phase>('details');
 const deepLink = ref<string | null>(null);
 
 const detailsForm = useForm({ name: '', phone: '' });
-const otpForm = useForm({ name: '', phone: '', code: '' });
+const otpForm = useForm({ name: '', phone: '', code: '', pin: '' });
 
 const requestOtp = () => {
   detailsForm.post('/register/otp/request', {
@@ -36,7 +36,7 @@ const verifyOtp = () => {
 
 const backToDetails = () => {
   phase.value = 'details';
-  otpForm.reset('code');
+  otpForm.reset('code', 'pin');
   deepLink.value = null;
 };
 </script>
@@ -44,7 +44,7 @@ const backToDetails = () => {
 <template>
   <AuthBase
     title="Create your account"
-    description="Just your name and phone — we'll send a Telegram code to verify."
+    description="Your name, phone number, and a 4-6 digit PIN you'll use to sign in."
   >
     <Head title="Register" />
 
@@ -59,6 +59,7 @@ const backToDetails = () => {
             placeholder="Your name"
             required
             autofocus
+            class="h-11"
           />
           <InputError :message="detailsForm.errors.name" />
         </div>
@@ -71,14 +72,15 @@ const backToDetails = () => {
             autocomplete="tel"
             placeholder="+992 …"
             required
+            class="h-11"
           />
           <InputError :message="detailsForm.errors.phone" />
         </div>
 
-        <Button type="submit" :disabled="detailsForm.processing" class="w-full">
+        <Button type="submit" :disabled="detailsForm.processing" class="w-full h-11">
           <LoaderCircle v-if="detailsForm.processing" class="mr-2 h-4 w-4 animate-spin" />
           <MessageCircle v-else class="mr-2 h-4 w-4" />
-          Continue with Telegram
+          Verify via Telegram
         </Button>
       </form>
 
@@ -92,7 +94,7 @@ const backToDetails = () => {
       <div class="rounded-xl border border-sky-200 bg-sky-50 dark:bg-sky-900/20 dark:border-sky-900/40 px-4 py-3 text-sm">
         <p class="font-medium text-sky-900 dark:text-sky-100">Verify with Telegram</p>
         <p class="mt-1 text-xs text-sky-800/80 dark:text-sky-200/80">
-          Open the bot and confirm your number. You'll get a 6-digit code to paste below.
+          Open the bot below — it will DM you a 6-digit code for <span class="font-mono">{{ otpForm.phone }}</span>.
         </p>
         <a
           v-if="deepLink"
@@ -108,7 +110,7 @@ const backToDetails = () => {
 
       <form @submit.prevent="verifyOtp" class="flex flex-col gap-4">
         <div class="grid gap-2">
-          <Label for="code">6-digit code</Label>
+          <Label for="code">6-digit code from Telegram</Label>
           <Input
             id="code"
             v-model="otpForm.code"
@@ -116,15 +118,33 @@ const backToDetails = () => {
             autocomplete="one-time-code"
             maxlength="6"
             placeholder="123456"
-            class="text-center tracking-[0.5em] font-mono text-lg"
+            class="h-11 text-center tracking-[0.5em] font-mono text-lg"
             required
             autofocus
           />
           <InputError :message="otpForm.errors.code" />
         </div>
 
-        <Button type="submit" :disabled="otpForm.processing" class="w-full">
+        <div class="grid gap-2">
+          <Label for="pin">Choose a PIN (4-6 digits)</Label>
+          <p class="text-xs text-muted-foreground -mt-1">You'll use this PIN to sign in next time — no Telegram needed.</p>
+          <Input
+            id="pin"
+            v-model="otpForm.pin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            maxlength="6"
+            placeholder="••••"
+            required
+            class="h-11 text-center tracking-[0.3em] font-mono text-lg"
+          />
+          <InputError :message="otpForm.errors.pin" />
+        </div>
+
+        <Button type="submit" :disabled="otpForm.processing" class="w-full h-11">
           <LoaderCircle v-if="otpForm.processing" class="mr-2 h-4 w-4 animate-spin" />
+          <KeyRound v-else class="mr-2 h-4 w-4" />
           Create my account
         </Button>
 

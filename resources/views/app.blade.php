@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark', 'h-full'])>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
@@ -45,7 +45,7 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue", "resources/css/app.css"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased min-h-screen">

@@ -37,6 +37,7 @@ class User extends Authenticatable implements HasPasskeys
     'name',
     'email',
     'password',
+    'pin',
     'avatar',
     'status',
     'sip_extension',
@@ -53,6 +54,7 @@ class User extends Authenticatable implements HasPasskeys
    */
   protected $hidden = [
     'password',
+    'pin',
     'remember_token',
   ];
 
@@ -153,6 +155,11 @@ class User extends Authenticatable implements HasPasskeys
   public function orders(): HasMany
   {
     return $this->hasMany(Order::class, 'user_id');
+  }
+
+  public function subscriptions(): HasMany
+  {
+    return $this->hasMany(Subscription::class, 'user_id');
   }
 
   public function addresses(): HasMany

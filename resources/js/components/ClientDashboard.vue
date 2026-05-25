@@ -218,8 +218,9 @@ const facilityPhone = '+992884238383';
                     <Link href="/orders">View all orders</Link>
                 </Button>
             </CardHeader>
-            <CardContent>
-                <div class="relative w-full overflow-auto">
+            <CardContent class="p-0 md:p-6">
+                <!-- Desktop Table -->
+                <div class="hidden md:block relative w-full overflow-auto">
                     <table class="w-full caption-bottom text-sm">
                         <thead>
                             <tr class="border-b transition-colors">
@@ -261,6 +262,33 @@ const facilityPhone = '+992884238383';
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-border/60">
+                    <div v-for="order in orderHistory" :key="order.id" class="p-4 active:bg-muted/30 transition-colors">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex flex-col">
+                                <span class="font-mono font-bold text-primary text-sm">#{{ order.order_number }}</span>
+                                <span class="text-xs text-muted-foreground mt-0.5">{{ order.created_at_formatted }}</span>
+                            </div>
+                            <Badge :class="getStatusColor(order.status)" class="text-[10px] h-5 px-1.5 shrink-0">
+                                {{ order.statusLabel || order.status }}
+                            </Badge>
+                        </div>
+                        <div class="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-border/60">
+                            <div class="text-xs text-muted-foreground">
+                                <template v-if="order.items && order.items.length > 0">
+                                    {{ t(order.items[0].product.name) }}
+                                    <span v-if="order.items.length > 1"> +{{ order.items.length - 1 }}</span>
+                                </template>
+                            </div>
+                            <span class="text-sm font-bold text-foreground">{{ order.total_amount }}</span>
+                        </div>
+                    </div>
+                    <div v-if="orderHistory.length === 0" class="p-8 text-center text-muted-foreground italic">
+                        No order history found.
+                    </div>
                 </div>
             </CardContent>
         </Card>

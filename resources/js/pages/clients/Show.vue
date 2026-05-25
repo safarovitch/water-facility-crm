@@ -365,53 +365,83 @@ const formatDate = (dateString: string) => {
               <div v-if="orders.total === 0" class="p-8 text-center text-gray-500">
                 No orders found for this client.
               </div>
-              <div v-else class="overflow-x-auto">
-                <table class="w-full text-left">
-                  <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                      <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order #</th>
-                      <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-                      <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Items</th>
-                      <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <tr v-for="order in allOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td class="px-6 py-4">
-                        <Link :href="`/admin/orders/${order.id}`" class="text-sm font-bold text-blue-600 hover:underline">
-                          {{ order.order_number }}
-                        </Link>
-                      </td>
-                      <td class="px-6 py-4">
-                        <p class="text-sm text-gray-900 dark:text-white">{{ formatDate(order.created_at) }}</p>
-                      </td>
-                      <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-md" :class="{
-                          'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400': order.status === 'delivered',
-                          'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400': order.status === 'pending' || order.status === 'confirmed',
-                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400': order.status === 'processing',
-                          'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400': order.status === 'cancelled',
-                        }">
-                          {{ order.status }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4">
-                        <div class="flex items-center gap-1 text-xs text-gray-500">
-                          <Package class="w-3.5 h-3.5" />
-                          <span>{{ order.items.length }} items</span>
-                          <span class="mx-1">•</span>
-                          <span class="truncate max-w-[150px]">
-                            {{ order.items.map(i => i.product?.name).filter(Boolean).join(', ') }}
+              <div v-else>
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
+                  <table class="w-full text-left">
+                    <thead>
+                      <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order #</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Items</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                      <tr v-for="order in allOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                          <Link :href="`/admin/orders/${order.id}`" class="text-sm font-bold text-blue-600 hover:underline">
+                            {{ order.order_number }}
+                          </Link>
+                        </td>
+                        <td class="px-6 py-4">
+                          <p class="text-sm text-gray-900 dark:text-white">{{ formatDate(order.created_at) }}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                          <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-md" :class="{
+                            'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400': order.status === 'delivered',
+                            'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400': order.status === 'pending' || order.status === 'confirmed',
+                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400': order.status === 'processing',
+                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400': order.status === 'cancelled',
+                          }">
+                            {{ order.status }}
                           </span>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 text-right">
-                        <p class="text-sm font-black text-gray-900 dark:text-white">{{ order.total_amount }} TJS</p>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                        </td>
+                        <td class="px-6 py-4">
+                          <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <Package class="w-3.5 h-3.5" />
+                            <span>{{ order.items.length }} items</span>
+                            <span class="mx-1">•</span>
+                            <span class="truncate max-w-[150px]">
+                              {{ order.items.map(i => i.product?.name).filter(Boolean).join(', ') }}
+                            </span>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                          <p class="text-sm font-black text-gray-900 dark:text-white">{{ order.total_amount }} TJS</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                  <Link v-for="order in allOrders" :key="order.id" :href="`/admin/orders/${order.id}`" class="block p-4 active:bg-gray-50 dark:active:bg-gray-700/50 transition-colors">
+                    <div class="flex items-start justify-between mb-2">
+                      <div class="flex flex-col">
+                        <span class="font-mono text-sm font-bold text-blue-600">{{ order.order_number }}</span>
+                        <span class="text-xs text-muted-foreground mt-0.5">{{ formatDate(order.created_at) }}</span>
+                      </div>
+                      <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-md shrink-0" :class="{
+                        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400': order.status === 'delivered',
+                        'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400': order.status === 'pending' || order.status === 'confirmed',
+                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400': order.status === 'processing',
+                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400': order.status === 'cancelled',
+                      }">
+                        {{ order.status }}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-gray-100 dark:border-gray-800">
+                      <div class="flex items-center gap-1 text-xs text-gray-500">
+                        <Package class="w-3.5 h-3.5" />
+                        <span>{{ order.items.length }} items</span>
+                      </div>
+                      <span class="text-sm font-black text-gray-900 dark:text-white">{{ order.total_amount }} TJS</span>
+                    </div>
+                  </Link>
+                </div>
               </div>
               
               <!-- Load More Trigger -->

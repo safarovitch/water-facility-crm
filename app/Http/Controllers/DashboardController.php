@@ -14,14 +14,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // Clients land on the simplified single-page home; staff/admin keep
-        // their existing rich profile page.
-        if ($user->hasRole('Client') && !$user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
-            return $this->clientHome($user);
-        }
-
-        $userController = app(UserController::class);
-        return Inertia::render('users/Show', $userController->getProfileData($user));
+        return $this->clientHome($user);
     }
 
     /**

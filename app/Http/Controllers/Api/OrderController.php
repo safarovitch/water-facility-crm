@@ -80,6 +80,9 @@ class OrderController extends Controller
             }
         });
 
+        $order->refresh()->load('courier');
+        event(new \App\Events\OrderStatusUpdated($order));
+
         if (!$wasAlreadyDelivered && $request->status === OrderStatus::Delivered->value) {
             event(new \App\Events\OrderDelivered($order->fresh(['client', 'courier'])));
         }

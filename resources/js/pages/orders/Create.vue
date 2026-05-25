@@ -285,8 +285,8 @@ const toggleNewAddress = () => {
           </div>
 
           <div v-for="(item, idx) in form.items" :key="idx" class="mb-3 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <div class="grid grid-cols-12 gap-3 items-end">
-              <!-- Product -->
+            <!-- Desktop: 12-col grid -->
+            <div class="hidden md:grid grid-cols-12 gap-3 items-end">
               <div class="col-span-5 grid gap-1">
                 <Label>Product</Label>
                 <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
@@ -295,26 +295,52 @@ const toggleNewAddress = () => {
                 </select>
                 <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
               </div>
-              <!-- Qty -->
               <div class="col-span-2 grid gap-1">
                 <Label>Qty</Label>
                 <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" />
               </div>
-              <!-- Unit price -->
               <div class="col-span-2 grid gap-1">
                 <Label>Unit Price</Label>
                 <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" />
               </div>
-              <!-- Subtotal -->
               <div class="col-span-2 grid gap-1">
                 <Label>Subtotal</Label>
                 <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700" />
               </div>
-              <!-- Remove -->
               <div class="col-span-1 flex items-end pb-0.5">
                 <button type="button" @click="removeItem(idx)" class="text-red-500 hover:text-red-700 text-lg font-bold">✕</button>
               </div>
             </div>
+
+            <!-- Mobile: Stacked card -->
+            <div class="md:hidden space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 grid gap-1">
+                  <Label>Product</Label>
+                  <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
+                    <option :value="null">Select product...</option>
+                    <option v-for="p in props.products" :key="p.id" :value="p.id">{{ resolveProductName(p) }}</option>
+                  </select>
+                  <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
+                </div>
+                <button type="button" @click="removeItem(idx)" class="mt-6 text-red-500 hover:text-red-700 h-10 w-10 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800">✕</button>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="grid gap-1">
+                  <Label>Qty</Label>
+                  <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" class="h-10" />
+                </div>
+                <div class="grid gap-1">
+                  <Label>Price</Label>
+                  <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" class="h-10" />
+                </div>
+                <div class="grid gap-1">
+                  <Label>Subtotal</Label>
+                  <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700 h-10" />
+                </div>
+              </div>
+            </div>
+
             <!-- Gift toggle -->
             <div class="mt-2 flex items-center gap-2">
               <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs">

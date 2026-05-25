@@ -8,6 +8,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ClientProfileController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserPermissionController;
@@ -151,6 +152,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::post('users/{user}/wallet/deposit', [\App\Http\Controllers\WalletController::class, 'adminDeposit'])->name('wallet.deposit');
+
+    Route::name('subscriptions.')->prefix('subscriptions')->group(function () {
+      Route::get('/', [SubscriptionController::class, 'index'])->name('index');
+      Route::get('create', [SubscriptionController::class, 'create'])->name('create');
+      Route::post('store', [SubscriptionController::class, 'store'])->name('store');
+      Route::get('{subscription}', [SubscriptionController::class, 'show'])->name('show');
+      Route::patch('{subscription}/pause', [SubscriptionController::class, 'pause'])->name('pause');
+      Route::patch('{subscription}/resume', [SubscriptionController::class, 'resume'])->name('resume');
+      Route::patch('{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
+    });
   });
 
   // Client-facing orders (keep original paths but clarify they are for clients if needed)

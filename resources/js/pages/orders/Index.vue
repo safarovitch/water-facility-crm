@@ -76,8 +76,21 @@ const statusBadgeClass: Record<string, string> = {
   confirmed: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900/40 dark:text-blue-400',
   in_production: 'bg-purple-100 text-purple-800 hover:bg-purple-100/80 dark:bg-purple-900/40 dark:text-purple-400',
   ready: 'bg-cyan-100 text-cyan-800 hover:bg-cyan-100/80 dark:bg-cyan-900/40 dark:text-cyan-400',
+  accepted: 'bg-indigo-100 text-indigo-800 hover:bg-indigo-100/80 dark:bg-indigo-900/40 dark:text-indigo-400',
+  in_transit: 'bg-sky-100 text-sky-800 hover:bg-sky-100/80 dark:bg-sky-900/40 dark:text-sky-400',
   delivered: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900/40 dark:text-green-400',
   cancelled: 'bg-red-100 text-red-800 hover:bg-red-100/80 dark:bg-red-900/40 dark:text-red-400',
+};
+
+const statusLabel: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  in_production: 'In Production',
+  ready: 'Ready',
+  accepted: 'Picked up',
+  in_transit: 'On the way',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 </script>
 
@@ -149,7 +162,7 @@ const statusBadgeClass: Record<string, string> = {
                             </td>
                             <td class="px-6 py-4">
                                 <Badge variant="outline" class="capitalize border-transparent relative font-semibold" :class="statusBadgeClass[order.status]">
-                                    {{ order.status.replace('_', ' ') }}
+                                    {{ statusLabel[order.status] ?? order.status.replace('_', ' ') }}
                                 </Badge>
                             </td>
                             <td class="px-6 py-4 text-right">
@@ -192,7 +205,7 @@ const statusBadgeClass: Record<string, string> = {
                             <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.phone || '—' }}</span>
                         </div>
                         <Badge variant="outline" class="capitalize whitespace-nowrap text-[10px] h-5 px-1.5 shrink-0 font-semibold" :class="statusBadgeClass[order.status]">
-                            {{ order.status.replace('_', ' ') }}
+                            {{ statusLabel[order.status] ?? order.status.replace('_', ' ') }}
                         </Badge>
                     </div>
 

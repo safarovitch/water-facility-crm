@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import FannLogo from '@/components/FannLogo.vue';
 import OrderStage from '@/components/OrderStage.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useEcho } from '@/composables/useEcho';
 import {
   Phone,
   MapPin,
@@ -93,6 +94,36 @@ const isDetailOpen = computed({
 });
 
 const openDetail = (order: OrderSummary) => { detailOrder.value = order; };
+
+// ── Live order status updates via Echo ───────────────────────────────────────
+const liveActiveOrder = ref<OrderSummary | null>(props.activeOrder);
+
+let echoChannel: any = null;
+
+onMounted(() => {
+  const echo = useEcho();
+  if (!echo || !props.profile.id) return;
+
+  echoChannel = echo.private(`client.${props.profile.id}`)
+    .listen('.App\\Events\\OrderStatusUpdated', (data: any) => {
+      if (liveActiveOrder.value && liveActiveOrder.value.id === data.id) {
+        liveActiveOrder.value = { ...liveActiveOrder.value, status: data.status, courier: data.courier };
+      } else if (!liveActiveOrder.value && data.status !== 'delivered' && data.status !== 'cancelled') {
+        router.reload({ only: ['activeOrder'] });
+      }
+
+      if (data.status === 'delivered' || data.status === 'cancelled') {
+        liveActiveOrder.value = null;
+        router.reload({ only: ['orderHistory'] });
+      }
+    });
+});
+
+onBeforeUnmount(() => {
+  if (echoChannel) {
+    echoChannel.stopListening('.App\\Events\\OrderStatusUpdated');
+  }
+});
 </script>
 
 <template>
@@ -135,7 +166,7 @@ const openDetail = (order: OrderSummary) => { detailOrder.value = order; };
       </div>
 
       <!-- Active order stage (only when one exists) -->
-      <OrderStage v-if="activeOrder" :order="activeOrder" />
+      <OrderStage v-if="liveActiveOrder" :order="liveActiveOrder" />
 
       <!-- Profile + contact -->
       <section class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6">

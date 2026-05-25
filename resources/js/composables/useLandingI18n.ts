@@ -84,9 +84,9 @@ const en: Dictionary = {
     headline1: 'Pure mountain spring water,',
     headline2: 'delivered to your door.',
     subtitle:
-      '19-litre bottles of natural Varzob valley spring water, professionally filtered and brought to homes and offices across Tajikistan — every week, all year round.',
+      '19-litre bottles of natural Varzob valley spring water, professionally filtered and brought to homes and offices across Tajikistan — all year round.',
     callToOrder: 'Call to order',
-    whatsapp: 'WhatsApp',
+    whatsapp: 'Order on WhatsApp',
     statBottleLabel: 'Bottle size',
     statBottleValue: '19 L',
     statDeliveryLabel: 'Delivery',
@@ -96,7 +96,7 @@ const en: Dictionary = {
   },
   about: {
     eyebrow: 'Our source',
-    title: 'From the Varzob valley, untouched and unhurried.',
+    title: 'From the Varzob valley.',
     body:
       'Our water is collected in the Varzob gorge, where the Hisor mountains feed deep, natural springs with snow-melt that has been filtering through stone for years. We bottle it close to the source to preserve its mineral profile and crisp taste.',
     bullet1: 'Naturally cold, naturally clean — no chemical treatment required.',
@@ -125,7 +125,7 @@ const en: Dictionary = {
   },
   how: {
     eyebrow: 'How it works',
-    title: 'Three steps. No paperwork.',
+    title: 'Three steps.',
     step1Title: 'Place an order',
     step1Text: 'Call, WhatsApp or send a quick message — tell us how many bottles and where.',
     step2Title: 'We deliver',
@@ -156,8 +156,8 @@ const en: Dictionary = {
     homeCta: 'Order Home Pack',
     officeName: 'Office Plan',
     officePer: '8+ bottles per delivery',
-    officeF1: 'Dedicated account manager',
-    officeF2: 'Dispensers available',
+    officeF1: 'Discount on every bottle',
+    officeF2: 'Automatic recurring orders',
     officeF3: 'Invoiced billing',
     officeCta: 'Request a quote',
   },
@@ -184,7 +184,7 @@ const en: Dictionary = {
     serviceLabel: 'Service area',
     serviceValue: 'Dushanbe & surrounding districts',
     hoursLabel: 'Hours',
-    hoursValue: 'Daily, 11:00 – 03:00',
+    hoursValue: 'Daily, 09:00 – 17:00',
   },
   footer: {
     rights: 'All rights reserved.',
@@ -210,11 +210,10 @@ const ru: Dictionary = {
   },
   hero: {
     badge: 'fann · из Варзобского ущелья, Таджикистан',
-    headline1: 'Чистая горная родниковая вода,',
+    headline1: 'Горная родниковая вода,',
     headline2: 'с доставкой к вашей двери.',
-    subtitle:
-      '19-литровые бутыли натуральной родниковой воды из Варзобской долины — профессионально очищенные и доставленные в дома и офисы Таджикистана каждую неделю, круглый год.',
-    callToOrder: 'Позвонить и заказать',
+    subtitle: '19-литровые бутылки натуральной родниковой воды из долины Варжоб — профессионально очищенной и доставляемой на дом и в офис.',
+    callToOrder: 'Заказать по телефону',
     whatsapp: 'WhatsApp',
     statBottleLabel: 'Объём бутыли',
     statBottleValue: '19 л',
@@ -225,7 +224,7 @@ const ru: Dictionary = {
   },
   about: {
     eyebrow: 'Наш источник',
-    title: 'Из Варзобской долины — нетронутой и неспешной.',
+    title: 'Из Варзобской долины.',
     body:
       'Наша вода собирается в Варзобском ущелье, где Гиссарские горы питают глубокие природные родники талыми снегами, годами фильтровавшимися сквозь камень. Мы разливаем её рядом с источником, чтобы сохранить минеральный состав и свежий вкус.',
     bullet1: 'От природы холодная, от природы чистая — без химической обработки.',
@@ -236,7 +235,7 @@ const ru: Dictionary = {
   },
   features: {
     eyebrow: 'Почему мы',
-    title: 'Чистая вода не должна быть сложной.',
+    title: 'Доступная чистая вода.',
     body:
       'Мы делаем одно дело: привозим настоящую горную родниковую воду к вам домой или в офис — надёжно и по честной цене.',
     sourceTitle: 'Горный родниковый источник',
@@ -244,7 +243,7 @@ const ru: Dictionary = {
       'Розлив прямо у источника в Варзобской долине, где альпийская талая вода Таджикистана питает чистые подземные родники.',
     filtrationTitle: 'Многоступенчатая фильтрация',
     filtrationDesc:
-      'Механическая, угольная и УФ-фильтрация сохраняют природные минералы и удаляют любые примеси.',
+      'Механическая, угольная и ультрафиолетовая фильтрация сохраняют природные минералы и удаляют любые примеси.',
     deliveryTitle: 'Бесплатная доставка домой и в офис',
     deliveryDesc:
       'Круглогодичная доставка по Душанбе и пригородам. Один график — и мы всегда пополняем ваш запас.',
@@ -254,7 +253,7 @@ const ru: Dictionary = {
   },
   how: {
     eyebrow: 'Как это работает',
-    title: 'Три шага. Без бумажной волокиты.',
+    title: 'Три шага.',
     step1Title: 'Сделайте заказ',
     step1Text: 'Позвоните, напишите в WhatsApp или отправьте короткое сообщение — укажите количество бутылей и адрес.',
     step2Title: 'Мы доставим',
@@ -285,16 +284,16 @@ const ru: Dictionary = {
     homeCta: 'Заказать пакет',
     officeName: 'Для офиса',
     officePer: 'от 8 бутылей за доставку',
-    officeF1: 'Персональный менеджер',
-    officeF2: 'Кулеры в аренду',
+    officeF1: 'Скидка на каждую бутылку',
+    officeF2: 'Автоматические повторяющиеся заказы',
     officeF3: 'Оплата по счёту',
-    officeCta: 'Запросить расчёт',
+    officeCta: 'Заказать пакет',
   },
   coverage: {
     eyebrow: 'Зона доставки',
     title: 'Доставляем по всему Душанбе.',
     body:
-      'Наши курьеры покрывают центр города и пригороды круглый год. Адрес вне зоны? Позвоните нам — мы постараемся помочь.',
+      'Наши курьеры покрывают центр города и пригороды круглый год.',
     whereIsMyWater: 'Где моя вода?',
     mapAria: 'Карта курьеров fann в реальном времени',
     loading: 'Загрузка карты…',
@@ -313,7 +312,7 @@ const ru: Dictionary = {
     serviceLabel: 'Зона обслуживания',
     serviceValue: 'Душанбе и пригороды',
     hoursLabel: 'Часы работы',
-    hoursValue: 'Ежедневно, 11:00 – 03:00',
+    hoursValue: 'Ежедневно, 09:00 – 17:00',
   },
   footer: {
     rights: 'Все права защищены.',

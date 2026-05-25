@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.ts'],
+            input: ['resources/js/app.ts', "resources/css/app.css"],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
@@ -24,4 +24,15 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor-vue': ['vue', '@inertiajs/vue3', '@vueuse/core'],
+                    'vendor-ui': ['reka-ui', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+                    'vendor-sip': ['sip.js'],
+                },
+            },
+        },
+    },
 });

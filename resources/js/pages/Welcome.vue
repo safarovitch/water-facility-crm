@@ -487,12 +487,13 @@ const couriersLabel = (count: number) => {
                         class="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-sky-100 via-cyan-50 to-white p-8 shadow-inner"
                     >
                         <div class="absolute inset-0 opacity-90">
-                            <svg viewBox="0 0 400 300" class="h-full w-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <!-- <svg viewBox="0 0 400 300" class="h-full w-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M0 220 L80 140 L130 180 L200 90 L260 160 L320 110 L400 200 L400 300 L0 300 Z" fill="#0ea5e9" opacity="0.18" />
                                 <path d="M0 240 L60 180 L120 210 L180 150 L240 200 L300 160 L360 220 L400 200 L400 300 L0 300 Z" fill="#0ea5e9" opacity="0.32" />
                                 <path d="M0 270 L100 240 L200 260 L300 235 L400 260 L400 300 L0 300 Z" fill="#0284c7" opacity="0.45" />
                                 <circle cx="320" cy="60" r="22" fill="#fde68a" opacity="0.9" />
-                            </svg>
+                            </svg> -->
+                            <img src="/storage/varzob-waterfall-768x1024.jpg" alt="Varzob valley, Tajikistan" class="h-full w-full object-cover object-center" />
                         </div>
                         <div class="relative flex h-full flex-col justify-end">
                             <div class="rounded-xl bg-white/85 p-4 backdrop-blur">
