@@ -28,35 +28,11 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    // Only chunk physical files inside node_modules
-                    if (!id.includes('node_modules')) {
-                        return;
-                    }
-
-                    // vendor-vue (Safely catches vue, inertia, and vueuse)
-                    if (
-                        id.includes('node_modules/vue/') || 
-                        id.includes('node_modules/@inertiajs/vue3') || 
-                        id.includes('node_modules/@vueuse/core')
-                    ) {
-                        return 'vendor-vue';
-                    }
-
-                    // vendor-ui
-                    if (
-                        id.includes('node_modules/reka-ui') || 
-                        id.includes('node_modules/class-variance-authority') || 
-                        id.includes('node_modules/clsx') || 
-                        id.includes('node_modules/tailwind-merge')
-                    ) {
-                        return 'vendor-ui';
-                    }
-
-                    // vendor-sip
+                    // Only isolate sip.js — do not split vue from reka-ui (causes TDZ circular chunk errors).
                     if (id.includes('node_modules/sip.js')) {
                         return 'vendor-sip';
                     }
-                }
+                },
             },
         },
     },
