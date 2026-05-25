@@ -55,6 +55,7 @@ class Order extends Model
   ];
 
   protected $appends = [
+    'grand_total',
     'balance_due',
     'created_at_human',
     'created_at_formatted',
@@ -83,9 +84,14 @@ class Order extends Model
     return 'WF-' . $year . '-' . str_pad($latest + 1, 5, '0', STR_PAD_LEFT);
   }
 
+  public function getGrandTotalAttribute(): float
+  {
+    return (float) $this->total_amount + (float) $this->deposit_charge;
+  }
+
   public function getBalanceDueAttribute(): float
   {
-    return (float) $this->total_amount + (float) $this->deposit_charge - (float) $this->paid_amount;
+    return $this->grand_total - (float) $this->paid_amount;
   }
 
   /**

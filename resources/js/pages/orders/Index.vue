@@ -29,6 +29,8 @@ interface Order {
   status: string;
   payment_status: string;
   total_amount: string;
+  deposit_charge?: string | number;
+  grand_total?: number;
   paid_amount: string;
   balance_due: number;
   delivery_date: string | null;
@@ -81,6 +83,11 @@ const statusBadgeClass: Record<string, string> = {
   delivered: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900/40 dark:text-green-400',
   cancelled: 'bg-red-100 text-red-800 hover:bg-red-100/80 dark:bg-red-900/40 dark:text-red-400',
 };
+
+const orderGrandTotal = (order: Order): number =>
+  order.grand_total ?? Number(order.total_amount) + Number(order.deposit_charge ?? 0);
+
+const formatAmount = (value: number): string => value.toFixed(2);
 
 const statusLabel: Record<string, string> = {
   pending: 'Pending',
@@ -166,8 +173,14 @@ const statusLabel: Record<string, string> = {
                                 </Badge>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <span class="font-bold text-gray-900 dark:text-white">{{ order.total_amount }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ formatAmount(orderGrandTotal(order)) }}</span>
                                 <span class="text-[10px] text-muted-foreground ml-1">{{ $page.props.currency }}</span>
+                                <div
+                                    v-if="Number(order.deposit_charge ?? 0) > 0"
+                                    class="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5"
+                                >
+                                    incl. {{ formatAmount(Number(order.deposit_charge)) }} deposit
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <span class="font-bold" :class="order.balance_due > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'">
@@ -212,7 +225,13 @@ const statusLabel: Record<string, string> = {
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Total</span>
-                            <span class="font-bold text-sm text-gray-900 dark:text-white">{{ order.total_amount }} <span class="text-[10px] font-normal">{{ $page.props.currency }}</span></span>
+                            <span class="font-bold text-sm text-gray-900 dark:text-white">{{ formatAmount(orderGrandTotal(order)) }} <span class="text-[10px] font-normal">{{ $page.props.currency }}</span></span>
+                            <span
+                                v-if="Number(order.deposit_charge ?? 0) > 0"
+                                class="text-[10px] text-blue-600 dark:text-blue-400"
+                            >
+                                incl. {{ formatAmount(Number(order.deposit_charge)) }} deposit
+                            </span>
                         </div>
                         <div class="flex flex-col text-right">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Balance Due</span>

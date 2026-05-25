@@ -650,8 +650,18 @@ const statusButtonClass = (s: string) => {
           </tbody>
           <tfoot v-if="adminMode">
             <tr class="bg-gray-50 dark:bg-gray-700">
-              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Total</td>
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Items total</td>
               <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">{{ order.total_amount }}</td>
+            </tr>
+            <tr v-if="Number(order.deposit_charge) > 0" class="bg-gray-50 dark:bg-gray-700">
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-blue-700 dark:text-blue-300">Bottle deposit</td>
+              <td class="px-6 py-3 text-right font-bold text-blue-700 dark:text-blue-300">+{{ Number(order.deposit_charge).toFixed(2) }}</td>
+            </tr>
+            <tr v-if="Number(order.deposit_charge) > 0" class="bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600">
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">Grand total</td>
+              <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">
+                {{ (Number(order.total_amount) + Number(order.deposit_charge)).toFixed(2) }}
+              </td>
             </tr>
           </tfoot>
         </table>
