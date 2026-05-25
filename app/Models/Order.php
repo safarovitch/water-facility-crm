@@ -94,6 +94,35 @@ class Order extends Model
     return $this->grand_total - (float) $this->paid_amount;
   }
 
+  public function isFullyPaid(): bool
+  {
+    return $this->balance_due <= 0;
+  }
+
+  public function overpaymentAmount(): float
+  {
+    return max(0, round((float) $this->paid_amount - $this->grand_total, 2));
+  }
+
+  /**
+   * Align payment_status with paid_amount vs grand_total after totals change.
+   */
+  public function reconcilePaymentStatus(): void
+  {
+    $grandTotal = $this->grand_total;
+    $paidAmount = (float) $this->paid_amount;
+
+    if ($paidAmount >= $grandTotal && $grandTotal > 0) {
+      $this->payment_status = PaymentStatus::Paid;
+    } elseif ($paidAmount > 0) {
+      $this->payment_status = PaymentStatus::Partial;
+    } else {
+      $this->payment_status = $grandTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid;
+    }
+
+    $this->save();
+  }
+
   /**
    * For each reusable raw material used by the items in this order, return:
    *   raw_material_id => [
@@ -258,5 +287,10 @@ class Order extends Model
   public function backorders(): HasMany
   {
     return $this->hasMany(Order::class, 'parent_order_id');
+  }
+
+  public function financialRecords(): \Illuminate\Database\Eloquent\Relations\MorphMany
+  {
+    return $this->morphMany(FinancialRecord::class, 'recordable');
   }
 }

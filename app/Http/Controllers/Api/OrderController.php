@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Services\OrderAccountingService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -103,17 +103,11 @@ class OrderController extends Controller
         }
 
         $order->deposit_charge = $charge;
-
-        $newTotal = (float) $order->total_amount + $charge;
-        if ((float) $order->paid_amount >= $newTotal && $newTotal > 0) {
-            $order->payment_status = PaymentStatus::Paid;
-        } elseif ((float) $order->paid_amount > 0) {
-            $order->payment_status = PaymentStatus::Partial;
-        } else {
-            $order->payment_status = $newTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid;
-        }
-
         $order->save();
+
+        $order->refresh()->reconcilePaymentStatus();
+
+        app(OrderAccountingService::class)->syncPaymentRecord($order);
     }
 
     public function reject(Request $request, $id)

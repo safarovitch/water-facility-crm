@@ -25,6 +25,8 @@ class UpdateOrderRequest extends FormRequest
       'items.*.quantity'   => ['required', 'integer', 'min:1'],
       'items.*.unit_price' => ['required', 'numeric', 'min:0'],
       'items.*.is_gift'    => ['nullable', 'boolean'],
+      'refund_overpayment' => ['nullable', 'boolean'],
+      'skip_pending_overpayment_refund' => ['nullable', 'boolean'],
     ];
   }
 }

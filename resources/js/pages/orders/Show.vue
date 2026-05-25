@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -157,6 +157,26 @@ const isDeliveryModalOpen = ref(false);
 const isCancelModalOpen = ref(false);
 const isWalletPayModalOpen = ref(false);
 const walletPayProcessing = ref(false);
+const isOverpaymentRefundModalOpen = ref(false);
+const overpaymentRefundProcessing = ref(false);
+
+const page = usePage();
+const overpaymentOnOrder = computed(() => {
+  const paid = Number(props.order.paid_amount);
+  const grand = Number(props.order.total_amount) + Number(props.order.deposit_charge ?? 0);
+  const diff = paid - grand;
+  return diff > 0.005 ? Number(diff.toFixed(2)) : 0;
+});
+
+watch(
+  () => (page.props.flash as { pending_overpayment_refund?: { amount: number } })?.pending_overpayment_refund,
+  (pending) => {
+    if (pending && adminMode.value) {
+      isOverpaymentRefundModalOpen.value = true;
+    }
+  },
+  { immediate: true },
+);
 const isDeleteModalOpen = ref(false);
 const deleteProcessing = ref(false);
 const deleteConfirmText = ref('');
@@ -280,6 +300,17 @@ const confirmWalletPay = () => {
     onFinish: () => {
       walletPayProcessing.value = false;
       isWalletPayModalOpen.value = false;
+    },
+  });
+};
+
+const confirmOverpaymentRefund = () => {
+  overpaymentRefundProcessing.value = true;
+  router.post(`/admin/orders/${props.order.id}/refund-overpayment`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      overpaymentRefundProcessing.value = false;
+      isOverpaymentRefundModalOpen.value = false;
     },
   });
 };
@@ -763,6 +794,32 @@ const statusButtonClass = (s: string) => {
                 </div>
               </div>
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <!-- Overpayment refund confirmation -->
+      <Dialog v-model:open="isOverpaymentRefundModalOpen">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Return overpayment to wallet?</DialogTitle>
+            <DialogDescription>
+              Credit {{ (overpaymentOnOrder || (page.props.flash as any)?.pending_overpayment_refund?.amount || 0).toFixed(2) }}
+              to <strong>{{ order.client.name }}</strong>'s wallet and align the order's paid amount with the new total.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" :disabled="overpaymentRefundProcessing" @click="isOverpaymentRefundModalOpen = false">
+              Not now
+            </Button>
+            <Button
+              type="button"
+              class="bg-amber-600 hover:bg-amber-700 text-white"
+              :disabled="overpaymentRefundProcessing"
+              @click="confirmOverpaymentRefund"
+            >
+              {{ overpaymentRefundProcessing ? 'Processing…' : 'Refund to wallet' }}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

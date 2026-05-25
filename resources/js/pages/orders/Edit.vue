@@ -6,8 +6,9 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { index, show, update } from '@/routes/admin/orders';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface UserProfile { company_name: string | null; type: string; }
 interface Client { id: number; name: string; email: string; user_profile: UserProfile | null; }
@@ -31,7 +32,10 @@ interface Order {
   notes: string | null;
   total_amount: string | number;
   discount_amount: string | number;
+  paid_amount: string | number;
+  deposit_charge?: string | number;
   items: OrderItem[];
+  client?: { name: string };
 }
 
 const props = defineProps<{ order: Order; clients: Client[]; products: Product[]; }>();
@@ -134,7 +138,41 @@ const discount = computed(() => {
 
 const clearCustomTotal = () => { form.custom_total = null; };
 
-const submitForm = () => { form.post(update(props.order.id).url); };
+const paidAmount = computed(() => Number(props.order.paid_amount));
+const depositCharge = computed(() => Number(props.order.deposit_charge ?? 0));
+const projectedGrandTotal = computed(() => effectiveTotal.value + depositCharge.value);
+
+const overpaymentAmount = computed(() => {
+  const diff = paidAmount.value - projectedGrandTotal.value;
+  return diff > 0.005 ? Number(diff.toFixed(2)) : 0;
+});
+
+const isRefundModalOpen = ref(false);
+
+const postUpdate = (refundOverpayment: boolean, skipPendingRefundAlert = false) => {
+  form
+    .transform(data => ({
+      ...data,
+      refund_overpayment: refundOverpayment,
+      skip_pending_overpayment_refund: skipPendingRefundAlert,
+    }))
+    .post(update(props.order.id).url, {
+      onFinish: () => {
+        isRefundModalOpen.value = false;
+      },
+    });
+};
+
+const submitForm = () => {
+  if (overpaymentAmount.value > 0) {
+    isRefundModalOpen.value = true;
+    return;
+  }
+  postUpdate(false);
+};
+
+const confirmRefundAndSave = () => postUpdate(true);
+const saveWithoutRefund = () => postUpdate(false, true);
 
 const clientLabel = (c: Client) =>
   c.user_profile?.company_name ? `${c.name} (${c.user_profile.company_name})` : c.name;
@@ -286,6 +324,16 @@ const clientLabel = (c: Client) =>
               <span class="text-gray-900 dark:text-white font-bold uppercase text-xs tracking-wider">Order Total</span>
               <span class="font-mono font-bold text-base text-gray-900 dark:text-white w-32 text-right">{{ effectiveTotal.toFixed(2) }}</span>
             </div>
+            <div
+              v-if="overpaymentAmount > 0"
+              class="flex justify-end items-center gap-6 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/15 px-3 py-2"
+            >
+              <span class="text-amber-800 dark:text-amber-200 text-xs">
+                Paid {{ paidAmount.toFixed(2) }} exceeds new total
+                <span v-if="depositCharge > 0"> (incl. {{ depositCharge.toFixed(2) }} deposit)</span>
+              </span>
+              <span class="font-mono font-bold text-amber-700 dark:text-amber-300 w-32 text-right">+{{ overpaymentAmount.toFixed(2) }}</span>
+            </div>
           </div>
         </div>
 
@@ -309,6 +357,34 @@ const clientLabel = (c: Client) =>
           </Button>
         </div>
       </form>
+
+      <Dialog v-model:open="isRefundModalOpen">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle class="text-xl font-bold">Return overpayment to wallet?</DialogTitle>
+            <DialogDescription>
+              The client paid {{ paidAmount.toFixed(2) }}, but the new order total is
+              {{ projectedGrandTotal.toFixed(2) }}.
+              <span v-if="order.client?.name" class="block mt-2 font-medium text-gray-900 dark:text-white">
+                Refund {{ overpaymentAmount.toFixed(2) }} to {{ order.client.name }}'s wallet?
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div class="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" :disabled="form.processing" @click="saveWithoutRefund">
+              Save without refund
+            </Button>
+            <Button
+              type="button"
+              class="bg-green-600 hover:bg-green-700 text-white"
+              :disabled="form.processing"
+              @click="confirmRefundAndSave"
+            >
+              {{ form.processing ? 'Saving…' : `Refund ${overpaymentAmount.toFixed(2)} & save` }}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
 </template>

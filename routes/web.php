@@ -113,6 +113,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::get('{order}',            [OrderController::class, 'show'])->name('show');
       Route::get('edit/{order}',       [OrderController::class, 'edit'])->name('edit');
       Route::post('update/{order}',    [OrderController::class, 'update'])->name('update');
+      Route::post('{order}/refund-overpayment', [OrderController::class, 'refundOverpayment'])->name('refundOverpayment');
       Route::patch('{order}/cancel',   [OrderController::class, 'cancel'])->name('cancel');
       Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
       Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');

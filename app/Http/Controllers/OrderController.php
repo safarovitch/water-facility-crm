@@ -7,6 +7,8 @@ use App\Enums\PaymentStatus;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
+use App\Services\OrderAccountingService;
+use App\Services\WalletService;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\User;
@@ -451,6 +453,8 @@ class OrderController extends Controller
   {
     $order->load(['items.product']);
 
+    $order->load('client');
+
     return Inertia::render('orders/Edit')->with([
       'order'    => $order,
       'clients'  => User::role('Client')->with('userProfile')->get(['id', 'name', 'email']),
@@ -458,7 +462,27 @@ class OrderController extends Controller
     ]);
   }
 
-  public function update(UpdateOrderRequest $request, Order $order)
+  /**
+   * Credit the client's wallet for any amount paid above the current bill.
+   */
+  private function refundOrderOverpayment(Order $order, WalletService $walletService): float
+  {
+    $amount = $order->overpaymentAmount();
+    if ($amount <= 0) {
+      return 0.0;
+    }
+
+    $order->loadMissing('client');
+    $walletService->refund($order->client, $amount, Order::class, $order->id, [
+      'order_number' => $order->order_number,
+      'reason'       => 'order_price_adjustment',
+    ]);
+    $order->update(['paid_amount' => $order->grand_total]);
+
+    return $amount;
+  }
+
+  public function update(UpdateOrderRequest $request, Order $order, WalletService $walletService)
   {
     DB::transaction(function () use ($request, $order) {
       $isDelivered = $order->status->value === OrderStatus::Delivered;
@@ -494,10 +518,6 @@ class OrderController extends Controller
         'discount_amount'       => $discount,
       ];
 
-      if ($finalTotal <= 0) {
-        $updates['payment_status'] = PaymentStatus::Paid;
-      }
-
       $order->update($updates);
 
       // Restore inventory by what was *actually* deducted, not what was
@@ -515,10 +535,53 @@ class OrderController extends Controller
       $order->items()->createMany($items->toArray());
 
       $this->adjustRawMaterialStock($items, -1);
+
+      $order->refresh()->reconcilePaymentStatus();
     });
 
-    return redirect()->route('admin.orders.show', $order)
-      ->with('success', 'Order updated successfully.');
+    $order->refresh();
+
+    $refunded = 0.0;
+    if ($request->boolean('refund_overpayment')) {
+      $refunded = DB::transaction(fn () => $this->refundOrderOverpayment($order, $walletService));
+      $order->refresh()->reconcilePaymentStatus();
+    }
+
+    app(OrderAccountingService::class)->syncPaymentRecord($order->fresh());
+
+    $redirect = redirect()->route('admin.orders.show', $order);
+
+    if ($refunded > 0) {
+      return $redirect->with('success', "Order updated. {$refunded} refunded to the client's wallet.");
+    }
+
+    $overpayment = $order->overpaymentAmount();
+    if ($overpayment > 0 && ! $request->boolean('skip_pending_overpayment_refund')) {
+      return $redirect
+        ->with('success', 'Order updated successfully.')
+        ->with('pending_overpayment_refund', [
+          'amount'       => $overpayment,
+          'paid_amount'  => (float) $order->paid_amount,
+          'grand_total'  => $order->grand_total,
+        ]);
+    }
+
+    return $redirect->with('success', 'Order updated successfully.');
+  }
+
+  public function refundOverpayment(Order $order, WalletService $walletService)
+  {
+    $order->refresh();
+
+    if ($order->overpaymentAmount() <= 0) {
+      return back()->with('error', 'This order has no overpayment to refund.');
+    }
+
+    $refunded = DB::transaction(fn () => $this->refundOrderOverpayment($order, $walletService));
+    $order->refresh()->reconcilePaymentStatus();
+    app(OrderAccountingService::class)->syncPaymentRecord($order);
+
+    return back()->with('success', number_format($refunded, 2) . " refunded to the client's wallet.");
   }
 
   public function cancel(Order $order)
@@ -727,14 +790,12 @@ class OrderController extends Controller
     $discountForDelivered = round($originalDiscount * $ratio, 2);
     $newTotal             = max(0.0, round($deliveredCalculated - $discountForDelivered, 2));
 
-    $updates = [
+    $order->update([
       'total_amount'    => $newTotal,
       'discount_amount' => $discountForDelivered,
-    ];
-    if ($newTotal <= 0 && (float) $order->paid_amount >= 0) {
-      $updates['payment_status'] = PaymentStatus::Paid;
-    }
-    $order->update($updates);
+    ]);
+
+    $order->refresh()->reconcilePaymentStatus();
 
     if (!empty($backorderItems)) {
       $backorder = Order::create([
@@ -764,6 +825,8 @@ class OrderController extends Controller
       // reserves those units again so net inventory matches reality.
       $this->adjustRawMaterialStock($backorderItems, -1);
     }
+
+    app(OrderAccountingService::class)->syncPaymentRecord($order);
   }
 
   /**
@@ -781,32 +844,30 @@ class OrderController extends Controller
     }
 
     $order->deposit_charge = $charge;
-
-    $newTotal = (float) $order->total_amount + $charge;
-    if ((float) $order->paid_amount >= $newTotal && $newTotal > 0) {
-        $order->payment_status = PaymentStatus::Paid;
-    } elseif ((float) $order->paid_amount > 0) {
-        $order->payment_status = PaymentStatus::Partial;
-    } else {
-        $order->payment_status = $newTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid;
-    }
-
     $order->save();
+
+    $order->refresh()->reconcilePaymentStatus();
+
+    app(OrderAccountingService::class)->syncPaymentRecord($order);
   }
 
-  public function payWithWallet(Order $order, \App\Services\WalletService $walletService)
+  public function payWithWallet(Order $order, \App\Services\WalletService $walletService, OrderAccountingService $orderAccounting)
   {
     if ($order->status->value === OrderStatus::Cancelled) {
       return back()->with('error', 'Cancelled orders cannot be paid.');
     }
 
-    if ($order->payment_status->value === PaymentStatus::Paid) {
+    if ($order->isFullyPaid()) {
+      $order->reconcilePaymentStatus();
+
       return back()->with('error', 'Order is already paid.');
     }
 
     $amountToPay = (float) $order->balance_due;
     if ($amountToPay <= 0) {
-      $order->update(['payment_status' => PaymentStatus::Paid]);
+      $order->reconcilePaymentStatus();
+      $orderAccounting->syncPaymentRecord($order->fresh());
+
       return back()->with('success', 'Order marked as paid.');
     }
 
@@ -815,7 +876,7 @@ class OrderController extends Controller
       // the wallet up for the full balance and immediately withdraw it for
       // this order. Net wallet movement is zero, but we get two ledger rows
       // (deposit + payment) so the audit trail tells the full story.
-      DB::transaction(function () use ($order, $walletService, $amountToPay) {
+      DB::transaction(function () use ($order, $walletService, $amountToPay, $orderAccounting) {
         $walletService->deposit(
           $order->client,
           $amountToPay,
@@ -832,7 +893,9 @@ class OrderController extends Controller
         ]);
 
         $order->increment('paid_amount', $amountToPay);
-        $order->update(['payment_status' => PaymentStatus::Paid]);
+        $order->refresh()->reconcilePaymentStatus();
+
+        $orderAccounting->syncPaymentRecord($order);
       });
 
       return back()->with('success', 'Funds added and order paid.');

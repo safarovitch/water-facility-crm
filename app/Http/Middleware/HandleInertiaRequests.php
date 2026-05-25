@@ -62,6 +62,7 @@ class HandleInertiaRequests extends Middleware
       'flash' => [
         'success' => $request->session()->get('success'),
         'error'   => $request->session()->get('error'),
+        'pending_overpayment_refund' => $request->session()->get('pending_overpayment_refund'),
       ],
       // Surface the result of the phone-OTP staging endpoints so the auth
       // Vue pages can pick up the Telegram deep-link without needing extra
