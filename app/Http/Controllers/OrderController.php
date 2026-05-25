@@ -38,6 +38,19 @@ class OrderController extends Controller
   }
 
   /**
+   * Use the admin-entered unit price when present; otherwise fall back to
+   * the product's current catalog price (sale_price if set, else price).
+   */
+  private function resolveItemUnitPrice(array $item, Product $product): float
+  {
+    if (array_key_exists('unit_price', $item) && $item['unit_price'] !== null && $item['unit_price'] !== '') {
+      return round((float) $item['unit_price'], 2);
+    }
+
+    return (float) ($product->sale_price > 0 ? $product->sale_price : $product->price);
+  }
+
+  /**
    * Apply inventory changes for a set of order items. Decrements when
    * $direction is -1 (new order / new items on edit), restores when +1
    * (cancellation / replaced items on edit).
@@ -333,7 +346,7 @@ class OrderController extends Controller
     $order = DB::transaction(function () use ($request) {
       $items = collect($request->items)->map(function ($item) {
         $product   = Product::findOrFail($item['product_id']);
-        $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
+        $unitPrice = $this->resolveItemUnitPrice($item, $product);
         $isGift    = (bool) ($item['is_gift'] ?? false);
         $subtotal  = $isGift ? 0 : $unitPrice * $item['quantity'];
 
@@ -452,7 +465,7 @@ class OrderController extends Controller
 
       $items = collect($request->items)->map(function ($item) use ($isDelivered) {
         $product   = Product::findOrFail($item['product_id']);
-        $unitPrice = $product->sale_price > 0 ? $product->sale_price : $product->price;
+        $unitPrice = $this->resolveItemUnitPrice($item, $product);
         $isGift    = (bool) ($item['is_gift'] ?? false);
         $subtotal  = $isGift ? 0 : $unitPrice * $item['quantity'];
 
