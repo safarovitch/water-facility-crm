@@ -378,7 +378,7 @@ const statusButtonClass = (s: string) => {
               <div
                 v-if="isDropdownOpen"
                 class="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border border-b-0 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-2xl py-2 animate-in slide-in-from-bottom duration-150
-                       sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:w-56 sm:rounded-2xl sm:border-b sm:origin-top-right sm:animate-none"
+                       sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:w-56 sm:rounded-2xl sm:border-b sm:origin-top-right sm:animate-none mb-8"
               >
                 <!-- Mobile drag handle -->
                 <div class="mx-auto mb-2 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden"></div>
@@ -386,7 +386,7 @@ const statusButtonClass = (s: string) => {
                 <div class="px-4 py-2 border-b border-gray-50 dark:border-gray-700/50 mb-1">
                   <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Order Status</p>
                 </div>
-                <div class="px-1 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+                <div class="px-1 pb-safe sm:pb-16">
                   <button
                     v-for="status in statuses"
                     :key="status"

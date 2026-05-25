@@ -74,6 +74,10 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+    
+    .pb-safe {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 50px);
+    }
 }
 
 @layer utilities {
