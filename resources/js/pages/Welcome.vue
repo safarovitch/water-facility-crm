@@ -493,7 +493,7 @@ const couriersLabel = (count: number) => {
                                 <path d="M0 270 L100 240 L200 260 L300 235 L400 260 L400 300 L0 300 Z" fill="#0284c7" opacity="0.45" />
                                 <circle cx="320" cy="60" r="22" fill="#fde68a" opacity="0.9" />
                             </svg> -->
-                            <img src="/storage/varzob-waterfall-768x1024.jpg" alt="Varzob valley, Tajikistan" class="h-full w-full object-cover object-center" />
+                            <img src="/varzob-waterfall-768x1024.jpg" alt="Varzob valley, Tajikistan" class="h-full w-full object-cover object-center" />
                         </div>
                         <div class="relative flex h-full flex-col justify-end">
                             <div class="rounded-xl bg-white/85 p-4 backdrop-blur">
