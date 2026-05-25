@@ -44,6 +44,9 @@ class TelegramOtpService
     $username = $this->getBotUsername($bot);
 
     if (!$username) {
+      Log::error('TelegramOtpService: bot username unavailable — deep link cannot be built. Set TELEGRAM_ORDER_BOT_USERNAME or run app:setup-telegram-bot.', [
+        'phone' => $normalized,
+      ]);
       $this->generateAndLogOtp($normalized);
     }
 
@@ -91,15 +94,17 @@ class TelegramOtpService
     );
 
     try {
-      $chat->message("🔐 Ваш код входа: *{$code}*\n\nКод действителен 5 минут. Никому его не сообщайте.")
-        ->send();
+      $chat->message(
+        "🔐 Ваш код входа: <b>{$code}</b>\n\nКод действителен 5 минут. Никому его не сообщайте."
+      )->send();
     } catch (\Throwable $e) {
       // Failing to send is logged but not fatal — the OTP is still in DB and
       // we can show it to the user via the fallback log path during dev.
-      Log::warning('TelegramOtpService: failed to send OTP DM', [
+      Log::error('TelegramOtpService: failed to send OTP DM', [
         'chat_id' => $chat->chat_id,
         'phone'   => $normalized,
         'error'   => $e->getMessage(),
+        'class'   => $e::class,
       ]);
     }
 
@@ -205,7 +210,8 @@ class TelegramOtpService
     if ($cached) return $cached;
 
     try {
-      $username = $bot->info()?->username ?? null;
+      $info = $bot->info();
+      $username = is_array($info) ? ($info['username'] ?? null) : null;
     } catch (\Throwable $e) {
       Log::warning('TelegramOtpService: getMe() failed', ['error' => $e->getMessage()]);
       $username = null;

@@ -59,6 +59,17 @@ class SetupTelegramBot extends Command
 
             if ($response->telegraphOk()) {
                 $this->info('✅ Telegram Bot Webhook successfully registered and bound to Laravel Forge environment!');
+
+                try {
+                    $info = $bot->info();
+                    $username = is_array($info) ? ($info['username'] ?? null) : null;
+                    if ($username) {
+                        $this->info("Bot username: @{$username}");
+                        $this->comment('Set TELEGRAM_ORDER_BOT_USERNAME=' . $username . ' in production .env');
+                    }
+                } catch (\Exception $e) {
+                    $this->warn('Could not fetch bot username: ' . $e->getMessage());
+                }
             } else {
                 $this->error('❌ Failed to register Webhook. Telegram response: ' . $response->body());
                 return 1;

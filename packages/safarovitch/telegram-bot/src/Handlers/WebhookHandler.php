@@ -115,15 +115,16 @@ class WebhookHandler extends DefStudioWebhookHandler
 
     protected function handleContactSharing($contact): void
     {
-        $phone = $contact->phoneNumber();
-        if (!$phone) {
+        $rawPhone = $contact->phoneNumber();
+        if (!$rawPhone) {
             $this->reply('Не удалось получить номер телефона. Попробуйте еще раз.');
             return;
         }
 
-        if (!Str::startsWith($phone, '+')) {
-            $phone = '+' . $phone;
-        }
+        $otpService = app(\App\Services\TelegramOtpService::class);
+        $phone = $otpService->normalizePhone(
+            Str::startsWith($rawPhone, '+') ? $rawPhone : '+' . $rawPhone
+        );
 
         // If we landed here via a login deep-link, the cached phone must match
         // the contact the user just shared — otherwise someone is trying to
