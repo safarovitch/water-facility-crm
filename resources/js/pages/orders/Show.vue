@@ -6,17 +6,17 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
 import { index as guestIndex, show as guestShow, pay as guestPay } from '@/routes/orders';
-import { 
-  index as adminIndex, 
-  show as adminShow, 
-  edit as adminEdit, 
-  cancel as adminCancel, 
-  updateStatus as adminUpdateStatus, 
-  assign as adminAssignRoute 
+import {
+  index as adminIndex,
+  show as adminShow,
+  edit as adminEdit,
+  cancel as adminCancel,
+  updateStatus as adminUpdateStatus,
+  assign as adminAssignRoute
 } from '@/routes/admin/orders';
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, Check, ChevronDown, Loader2, Box, Trash2 } from 'lucide-vue-next';
+import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -519,12 +519,22 @@ const statusButtonClass = (s: string) => {
               {{ order.contact_name || order.client.name }}
             </Link>
           </p>
-          <p class="text-sm text-gray-500" v-if="order.contact_phone">{{ order.contact_phone }}</p>
+          <p class="text-sm text-gray-500 flex items-center gap-2" v-if="order.contact_phone">
+            {{ order.contact_phone }}
+            <a :href="`tel:${order.contact_phone}`" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+              <Phone class="w-4 h-4" />
+            </a>
+          </p>
           <p v-if="order.contact_name && order.client.name !== order.contact_name" class="text-[11px] text-gray-400 mt-1">
             Linked to account: {{ order.client.name }}
           </p>
           <p class="text-sm text-gray-500" :class="{ 'mt-2': order.contact_name }">{{ order.client.email }}</p>
-          <p class="text-sm text-gray-500" v-if="order.client.phone && order.client.phone !== order.contact_phone">{{ order.client.phone }}</p>
+          <p class="text-sm text-gray-500 flex items-center gap-2" v-if="order.client.phone && order.client.phone !== order.contact_phone">
+            {{ order.client.phone }}
+            <a :href="`tel:${order.client.phone}`" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+              <Phone class="w-4 h-4" />
+            </a>
+          </p>
           <p class="text-sm text-gray-500 mt-1" v-if="order.client.user_profile?.region">
             📍 {{ order.client.user_profile.region }}
           </p>
