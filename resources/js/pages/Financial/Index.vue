@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit, DollarSign } from 'lucide-vue-next';
+import { useTableSort } from '@/composables/useTableSort';
 
 interface FinancialRecord {
   id: number;
@@ -121,13 +122,27 @@ const filterForm = useForm({
     to: props.filters.to || '',
 });
 
+const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
+
 const applyFilters = () => {
-    router.get('/admin/financial-records', filterForm.data(), { preserveState: true });
+    router.get('/admin/financial-records', {
+        ...filterForm.data(),
+        ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }),
+    }, { preserveState: true });
 };
 
 const resetFilters = () => {
     filterForm.reset();
     applyFilters();
+};
+
+const handleSort = (column: string) => {
+  toggleSort(column);
+  const newSort = isSorted(column) ? sort.value : null;
+  router.get('/admin/financial-records', {
+    ...filterForm.data(),
+    ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
+  }, { preserveState: true });
 };
 
 const categoryBadgeClass = (category: string) => {
@@ -262,11 +277,17 @@ const formatCurrency = (value: number) => {
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
-                            <th class="px-6 py-4 font-medium">Date</th>
-                            <th class="px-6 py-4 font-medium">Category</th>
+                            <th class="px-6 py-4 font-medium cursor-pointer hover:text-foreground transition-colors" @click="handleSort('transaction_date')">
+                                <div class="flex items-center gap-2">Date <span class="text-xs">{{ isSorted('transaction_date') ? getSortIcon('transaction_date') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-medium cursor-pointer hover:text-foreground transition-colors" @click="handleSort('category')">
+                                <div class="flex items-center gap-2">Category <span class="text-xs">{{ isSorted('category') ? getSortIcon('category') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-medium">Description</th>
                             <th class="px-6 py-4 font-medium">Recorder</th>
-                            <th class="px-6 py-4 font-medium text-right">Amount</th>
+                            <th class="px-6 py-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors" @click="handleSort('amount')">
+                                <div class="flex items-center justify-end gap-2">Amount <span class="text-xs">{{ isSorted('amount') ? getSortIcon('amount') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-medium text-center">Receipt</th>
                             <th class="px-6 py-4 font-medium text-center">Actions</th>
                         </tr>
@@ -368,13 +389,13 @@ const formatCurrency = (value: number) => {
                     Showing {{ records.from }} to {{ records.to }} of {{ records.total }} entries
                 </div>
                 <div class="flex gap-2">
-                    <Button 
-                        v-for="link in records.links.filter((l: any) => !isNaN(parseInt(l.label)) || l.label === '&laquo; Previous' || l.label === 'Next &raquo;')" 
+                    <Button
+                        v-for="link in records.links.filter((l: any) => !isNaN(parseInt(l.label)) || l.label === '&laquo; Previous' || l.label === 'Next &raquo;')"
                         :key="link.label"
                         :variant="link.active ? 'default' : 'outline'"
                         size="sm"
                         :disabled="!link.url"
-                        @click="router.get(link.url, {}, { preserveState: true })"
+                        @click="router.get(link.url, { type: filterForm.type, category: filterForm.category, from: filterForm.from, to: filterForm.to, ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }) }, { preserveState: true })"
                         v-html="link.label"
                     />
                 </div>

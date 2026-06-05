@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTableSort } from '@/composables/useTableSort';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Clients', href: index().url },
@@ -45,9 +46,28 @@ const props = defineProps<{
 }>();
 
 const search = ref('');
+const statusFilter = ref('');
+const typeFilter = ref('');
+const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
 
 const doSearch = () => {
-  router.get(index().url, { search: search.value }, { preserveState: true, preserveScroll: true });
+  router.get(index().url, {
+    search: search.value,
+    status: statusFilter.value || undefined,
+    type: typeFilter.value || undefined,
+    ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }),
+  }, { preserveState: true, preserveScroll: true });
+};
+
+const handleSort = (column: string) => {
+  toggleSort(column);
+  const newSort = isSorted(column) ? sort.value : null;
+  router.get(index().url, {
+    search: search.value,
+    status: statusFilter.value || undefined,
+    type: typeFilter.value || undefined,
+    ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
+  }, { preserveState: true, preserveScroll: true });
 };
 
 const deleteClient = (client: Client) => {
@@ -88,6 +108,23 @@ const initiateCall = (phone: string | null) => {
                     <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
                     <Input v-model="search" placeholder="Search accounts..." class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
                 </div>
+                <div class="space-y-1 w-full md:w-40">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
+                    <select v-model="statusFilter" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="space-y-1 w-full md:w-40">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Type</Label>
+                    <select v-model="typeFilter" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm">
+                        <option value="">All Types</option>
+                        <option value="individual">Individual</option>
+                        <option value="business">Business</option>
+                    </select>
+                </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="doSearch" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Search</Button>
                 </div>
@@ -98,11 +135,17 @@ const initiateCall = (phone: string | null) => {
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Client</th>
-                            <th class="px-6 py-4 font-semibold">Type</th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('name')">
+                                <div class="flex items-center gap-2">Client <span class="text-xs">{{ isSorted('name') ? getSortIcon('name') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('user_profile')">
+                                <div class="flex items-center gap-2">Type <span class="text-xs">{{ isSorted('user_profile') ? getSortIcon('user_profile') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold">Phone</th>
                             <th class="px-6 py-4 font-semibold">Region</th>
-                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('status')">
+                                <div class="flex items-center gap-2">Status <span class="text-xs">{{ isSorted('status') ? getSortIcon('status') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
@@ -227,7 +270,7 @@ const initiateCall = (phone: string | null) => {
             <div v-if="clients.meta?.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
                 <template v-for="(link, key) in clients.meta.links" :key="key">
                     <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
-                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
+                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search, status: statusFilter, type: typeFilter, ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }) }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
                 </template>
             </div>
         </CardContent>

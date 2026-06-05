@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Eye, ShoppingCart } from 'lucide-vue-next';
+import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown } from 'lucide-vue-next';
+import { useTableSort } from '@/composables/useTableSort';
 
 const adminMode = computed(() => !!usePage().props.adminMode);
 
@@ -56,11 +57,23 @@ const props = defineProps<{
 
 const statusFilter = ref('');
 const search = ref('');
+const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
 
 const applyFilter = () => {
   router.get(indexRoute.value().url, {
     status: statusFilter.value || undefined,
     search: search.value || undefined,
+    ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }),
+  }, { preserveState: true, preserveScroll: true });
+};
+
+const handleSort = (column: string) => {
+  toggleSort(column);
+  const newSort = isSorted(column) ? sort.value : null;
+  router.get(indexRoute.value().url, {
+    status: statusFilter.value || undefined,
+    search: search.value || undefined,
+    ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
   }, { preserveState: true, preserveScroll: true });
 };
 
@@ -143,13 +156,25 @@ const statusLabel: Record<string, string> = {
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Order #</th>
-                            <th class="px-6 py-4 font-semibold">Client</th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('order_number')">
+                                <div class="flex items-center gap-2">Order # <span class="text-xs">{{ isSorted('order_number') ? getSortIcon('order_number') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('client_id')">
+                                <div class="flex items-center gap-2">Client <span class="text-xs">{{ isSorted('client_id') ? getSortIcon('client_id') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold">Address</th>
-                            <th class="px-6 py-4 font-semibold">Status</th>
-                            <th class="px-6 py-4 font-semibold text-right">Total</th>
-                            <th class="px-6 py-4 font-semibold text-right">Balance Due</th>
-                            <th class="px-6 py-4 font-semibold">Delivery</th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('status')">
+                                <div class="flex items-center gap-2">Status <span class="text-xs">{{ isSorted('status') ? getSortIcon('status') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-semibold text-right cursor-pointer hover:text-foreground transition-colors" @click="handleSort('total_amount')">
+                                <div class="flex items-center justify-end gap-2">Total <span class="text-xs">{{ isSorted('total_amount') ? getSortIcon('total_amount') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-semibold text-right cursor-pointer hover:text-foreground transition-colors" @click="handleSort('balance_due')">
+                                <div class="flex items-center justify-end gap-2">Balance Due <span class="text-xs">{{ isSorted('balance_due') ? getSortIcon('balance_due') : '⇅' }}</span></div>
+                            </th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('scheduled_delivery_at')">
+                                <div class="flex items-center gap-2">Delivery <span class="text-xs">{{ isSorted('scheduled_delivery_at') ? getSortIcon('scheduled_delivery_at') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
@@ -274,7 +299,7 @@ const statusLabel: Record<string, string> = {
             <div v-if="orders.meta?.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
                 <template v-for="(link, key) in orders.meta.links" :key="key">
                     <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
-                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { status: statusFilter, search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
+                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { status: statusFilter, search: search, ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }) }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
                 </template>
             </div>
         </CardContent>
