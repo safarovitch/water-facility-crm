@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit } from 'lucide-vue-next';
+import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit, DollarSign } from 'lucide-vue-next';
 
 interface FinancialRecord {
   id: number;
@@ -39,6 +39,7 @@ interface Paginated<T> {
 const props = defineProps<{
   records: Paginated<FinancialRecord>;
   summary: {
+    total_revenue: number;
     total_income: number;
     total_expense: number;
     balance: number;
@@ -165,7 +166,19 @@ const formatCurrency = (value: number) => {
       </div>
 
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <Card class="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-all overflow-hidden group">
+          <CardHeader class="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle class="text-sm font-medium">Total Revenue</CardTitle>
+            <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-full group-hover:scale-110 transition-transform">
+              <DollarSign class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ formatCurrency(summary.total_revenue) }}</div>
+            <p class="text-xs text-muted-foreground mt-1">From delivered orders</p>
+          </CardContent>
+        </Card>
         <Card class="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-all overflow-hidden group">
           <CardHeader class="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle class="text-sm font-medium">Total Income</CardTitle>

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\FinancialTransactionCategory;
 use App\Enums\FinancialTransactionType;
+use App\Enums\OrderStatus;
 use App\Models\FinancialRecord;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,12 +34,16 @@ class FinancialRecordController extends Controller
 
         // Clone query for totals before pagination
         $totalsQuery = clone $query;
-        
+
         $totalIncome = (float) $totalsQuery->where('type', FinancialTransactionType::Income)->sum('amount');
-        
+
         // Reset type for expense calculation
         $totalsQuery = clone $query;
         $totalExpense = (float) $totalsQuery->where('type', FinancialTransactionType::Expense)->sum('amount');
+
+        // Calculate total order revenue (from delivered orders)
+        $totalRevenue = (float) Order::where('status', OrderStatus::Delivered)
+            ->sum('total_amount');
 
         $records = $query->latest('transaction_date')->latest('id')->paginate(50);
 
@@ -54,6 +60,7 @@ class FinancialRecordController extends Controller
         return Inertia::render('Financial/Index', [
             'records'      => $records,
             'summary'      => [
+                'total_revenue' => $totalRevenue,
                 'total_income'  => $totalIncome,
                 'total_expense' => $totalExpense,
                 'balance'       => $totalIncome - $totalExpense,

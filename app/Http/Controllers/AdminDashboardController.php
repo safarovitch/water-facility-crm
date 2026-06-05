@@ -42,7 +42,8 @@ class AdminDashboardController extends Controller
                 ->toArray();
 
             $totalRevenue = (float) Order::sum('paid_amount');
-            $totalOutstanding = (float) Order::whereColumn('paid_amount', '<', 'total_amount')
+            $totalOutstanding = (float) Order::where('status', '!=', OrderStatus::Cancelled)
+                ->whereColumn('paid_amount', '<', 'total_amount')
                 ->selectRaw('SUM(total_amount - paid_amount) as outstanding')
                 ->value('outstanding');
             $monthRevenue = (float) Order::where('created_at', '>=', $thisMonth)->sum('paid_amount');
