@@ -40,6 +40,7 @@ interface TopProduct {
     id: number;
     name: string;
     total_sold: number;
+    total_gifted: number;
 }
 
 interface PerformanceStats {
@@ -306,7 +307,10 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                                     {{ idx + 1 }}
                                 </span>
                                 <span class="flex-1 truncate text-xs font-medium text-foreground">{{ t(product.name) }}</span>
-                                <span class="text-xs text-muted-foreground">{{ product.total_sold }} sold</span>
+                                <div class="flex gap-2 text-xs text-muted-foreground">
+                                    <span>{{ product.total_sold }} sold</span>
+                                    <span class="text-emerald-500">{{ product.total_gifted }} gifted</span>
+                                </div>
                             </div>
                         </div>
                         <p v-else class="text-xs text-muted-foreground">No sales data yet.</p>

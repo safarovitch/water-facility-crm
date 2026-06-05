@@ -90,7 +90,12 @@ class AdminDashboardController extends Controller
         $topProducts = Cache::remember('admin_dashboard:top_products', 300, function () {
             return DB::table('order_items')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
-                ->select('products.id', 'products.name', DB::raw('SUM(order_items.quantity) as total_sold'))
+                ->select(
+                    'products.id',
+                    'products.name',
+                    DB::raw('SUM(CASE WHEN order_items.is_gift = false THEN order_items.quantity ELSE 0 END) as total_sold'),
+                    DB::raw('SUM(CASE WHEN order_items.is_gift = true THEN order_items.quantity ELSE 0 END) as total_gifted')
+                )
                 ->groupBy('products.id', 'products.name')
                 ->orderByDesc('total_sold')
                 ->limit(5)
