@@ -278,7 +278,7 @@ const submit = () => {
         <h2 class="text-base font-semibold">When &amp; notes</h2>
 
         <div class="grid gap-2">
-          <Label for="scheduled_delivery_at">Preferred delivery date &amp; time <span class="text-xs text-slate-400 font-normal">(optional)</span></Label>
+          <Label for="scheduled_delivery_at">Preferred delivery date &amp; time <span class="text-xs text-slate-400 font-normal">(optional, past dates allowed)</span></Label>
           <Input
             id="scheduled_delivery_at"
             type="datetime-local"

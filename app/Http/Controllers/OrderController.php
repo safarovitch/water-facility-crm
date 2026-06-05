@@ -87,6 +87,7 @@ class OrderController extends Controller
     foreach ($items as $item) {
       $productId = is_array($item) ? $item['product_id'] : $item->product_id;
       $quantity  = (int) (is_array($item) ? $item['quantity'] : $item->quantity);
+      $isGift    = is_array($item) ? ($item['is_gift'] ?? false) : ($item->is_gift ?? false);
       $product   = $products[$productId] ?? null;
       if (!$product || $quantity <= 0) continue;
 
@@ -100,6 +101,11 @@ class OrderController extends Controller
       }
 
       // 2) Raw-material consumables per the product's BOM.
+      // Skip if this item is marked as a gift — don't consume materials for gifts.
+      if ($isGift) {
+        continue;
+      }
+
       foreach ($product->rawMaterials as $material) {
         $perUnit = (float) ($material->pivot->quantity ?? 0);
         if ($perUnit <= 0) continue;
@@ -223,7 +229,7 @@ class OrderController extends Controller
   public function clientStore(\Illuminate\Http\Request $request)
   {
     $data = $request->validate([
-      'scheduled_delivery_at' => ['nullable', 'date', 'after_or_equal:today'],
+      'scheduled_delivery_at' => ['nullable', 'date'],
       'delivery_address'      => ['nullable', 'string'],
       'new_address'           => ['nullable', 'string'],
       'new_address_label'     => ['nullable', 'string', 'max:50'],
@@ -853,6 +859,10 @@ class OrderController extends Controller
 
   public function payWithWallet(Order $order, \App\Services\WalletService $walletService, OrderAccountingService $orderAccounting)
   {
+    // Ensure we have the latest order state, especially after partial delivery
+    // where total_amount gets recalculated
+    $order = $order->fresh(['items.product.rawMaterials', 'returnedMaterials']);
+
     if ($order->status->value === OrderStatus::Cancelled) {
       return back()->with('error', 'Cancelled orders cannot be paid.');
     }

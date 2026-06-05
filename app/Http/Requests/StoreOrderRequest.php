@@ -18,7 +18,7 @@ class StoreOrderRequest extends FormRequest
       // we'll resolve or create the user in the controller. Phone is the
       // primary identifier; email is optional.
       'user_id'                 => ['nullable', 'required_without:new_contact.phone', 'exists:users,id'],
-      'scheduled_delivery_at'   => ['nullable', 'date', 'after_or_equal:today'],
+      'scheduled_delivery_at'   => ['nullable', 'date'],
       'delivery_address'        => ['nullable', 'string'],
       'notes'                   => ['nullable', 'string'],
       'custom_total'            => ['nullable', 'numeric', 'min:0'],

@@ -206,7 +206,7 @@ const clientLabel = (c: Client) =>
               <InputError :message="form.errors.user_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time</Label>
+              <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time <span class="text-gray-400 font-normal text-xs">(past dates allowed)</span></Label>
               <Input id="scheduled_delivery_at" type="datetime-local" v-model="form.scheduled_delivery_at" step="60" />
               <InputError :message="form.errors.scheduled_delivery_at" />
             </div>
