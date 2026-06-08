@@ -3,6 +3,7 @@
 namespace Safarovitch\TelegramBot;
 
 use Illuminate\Support\ServiceProvider;
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use Safarovitch\TelegramBot\Models\TelegraphChat;
 use DefStudio\Telegraph\Keyboard\Button;
@@ -22,10 +23,10 @@ class TelegramBotServiceProvider extends ServiceProvider
                 // Find associated native chat model locally
                 $chat = TelegraphChat::where('user_id', $order->user_id)->first();
                 if ($chat) {
-                    $status = $order->status->name ?? $order->status;
-                    $chat->message("🔔 Статус заказа #{$order->order_number} обновлен!\nНовый статус: {$status} ")
+                    $status = OrderStatus::label($order->status->value);
+                    $chat->message("🔔 Статус заказа #{$order->order_number} обновлён!\nНовый статус: {$status}")
                          ->keyboard(Keyboard::make()->buttons([
-                             Button::make('🔍 Отследить заказ')->url(config('app.url') . "/orders/{$order->id}")
+                             Button::make('📦 Подробнее')->action('actionOrderDetail')->param('id', (string) $order->id)
                          ]))
                          ->send();
                 }

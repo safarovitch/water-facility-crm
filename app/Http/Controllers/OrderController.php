@@ -207,9 +207,17 @@ class OrderController extends Controller
    * addresses so they can pick one; no client picker, no price overrides,
    * no gifts — those are admin-only concerns.
    */
-  public function clientCreate(): Response
+  public function clientCreate()
   {
     $user = auth()->user();
+
+    // Phone verification is deferred from signup to the first order. Bounce
+    // unverified clients to the Telegram OTP setup before they reach the form.
+    if ($user->phone_verified_at === null) {
+      return redirect()->route('account.setup-phone')
+        ->with('warning', 'Verify your phone via Telegram before placing your first order.');
+    }
+
     $user->load('addresses');
 
     return Inertia::render('orders/ClientCreate')->with([
@@ -239,7 +247,15 @@ class OrderController extends Controller
       'items.*.quantity'      => ['required', 'integer', 'min:1'],
     ]);
 
-    $userId = auth()->id();
+    $user = auth()->user();
+
+    // Require phone verification before the first order (deferred from signup).
+    if ($user->phone_verified_at === null) {
+      return redirect()->route('account.setup-phone')
+        ->with('warning', 'Verify your phone via Telegram before placing your first order.');
+    }
+
+    $userId = $user->id;
 
     $order = DB::transaction(function () use ($data, $userId) {
       $items = collect($data['items'])->map(function ($item) {

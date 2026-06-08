@@ -19,10 +19,10 @@ Route::middleware('guest')->group(function () {
     Route::post('login/otp/request', [PhoneAuthController::class, 'requestLoginOtp'])->name('login.otp.request');
     Route::post('login/otp/verify', [PhoneAuthController::class, 'verifyLoginOtp'])->name('login.otp.verify');
 
-    // Registration: verify phone via Telegram, then set PIN.
+    // Registration: name + phone + PIN, no Telegram OTP. Phone verification is
+    // deferred until the first order.
     Route::get('register', [PhoneAuthController::class, 'showRegister'])->name('register');
-    Route::post('register/otp/request', [PhoneAuthController::class, 'requestRegisterOtp'])->name('register.otp.request');
-    Route::post('register/otp/verify', [PhoneAuthController::class, 'verifyRegisterOtp'])->name('register.otp.verify');
+    Route::post('register', [PhoneAuthController::class, 'register'])->name('register.store');
 
     // Reset PIN via Telegram OTP.
     Route::post('login/pin/reset', [PhoneAuthController::class, 'resetPin'])->name('login.pin.reset');

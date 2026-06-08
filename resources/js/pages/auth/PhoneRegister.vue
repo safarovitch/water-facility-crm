@@ -6,38 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle, MessageCircle, KeyRound } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { LoaderCircle, KeyRound } from 'lucide-vue-next';
 
-type Phase = 'details' | 'otp';
+const form = useForm({ name: '', phone: '', pin: '', pin_confirmation: '' });
 
-const phase = ref<Phase>('details');
-const deepLink = ref<string | null>(null);
-
-const detailsForm = useForm({ name: '', phone: '' });
-const otpForm = useForm({ name: '', phone: '', code: '', pin: '' });
-
-const requestOtp = () => {
-  detailsForm.post('/register/otp/request', {
+const submit = () => {
+  form.post('/register', {
     preserveScroll: true,
-    onSuccess: (page) => {
-      const flow = (page.props as Record<string, any>).otpFlow ?? {};
-      otpForm.name = flow.name ?? detailsForm.name;
-      otpForm.phone = flow.phone ?? detailsForm.phone;
-      deepLink.value = flow.deep_link ?? null;
-      phase.value = 'otp';
-    },
+    onError: () => form.reset('pin', 'pin_confirmation'),
   });
-};
-
-const verifyOtp = () => {
-  otpForm.post('/register/otp/verify', { preserveScroll: true });
-};
-
-const backToDetails = () => {
-  phase.value = 'details';
-  otpForm.reset('code', 'pin');
-  deepLink.value = null;
 };
 </script>
 
@@ -48,89 +25,42 @@ const backToDetails = () => {
   >
     <Head title="Register" />
 
-    <div v-if="phase === 'details'" class="flex flex-col gap-5">
-      <form @submit.prevent="requestOtp" class="flex flex-col gap-4">
+    <div class="flex flex-col gap-5">
+      <form @submit.prevent="submit" class="flex flex-col gap-4">
         <div class="grid gap-2">
           <Label for="name">Full name</Label>
           <Input
             id="name"
-            v-model="detailsForm.name"
+            v-model="form.name"
             autocomplete="name"
             placeholder="Your name"
             required
             autofocus
             class="h-11"
           />
-          <InputError :message="detailsForm.errors.name" />
+          <InputError :message="form.errors.name" />
         </div>
+
         <div class="grid gap-2">
           <Label for="phone">Phone number</Label>
           <Input
             id="phone"
-            v-model="detailsForm.phone"
+            v-model="form.phone"
             type="tel"
             autocomplete="tel"
             placeholder="+992 …"
             required
             class="h-11"
           />
-          <InputError :message="detailsForm.errors.phone" />
-        </div>
-
-        <Button type="submit" :disabled="detailsForm.processing" class="w-full h-11">
-          <LoaderCircle v-if="detailsForm.processing" class="mr-2 h-4 w-4 animate-spin" />
-          <MessageCircle v-else class="mr-2 h-4 w-4" />
-          Verify via Telegram
-        </Button>
-      </form>
-
-      <div class="text-center text-sm text-muted-foreground">
-        Already have an account?
-        <TextLink href="/login" class="ml-1">Sign in</TextLink>
-      </div>
-    </div>
-
-    <div v-else class="flex flex-col gap-5">
-      <div class="rounded-xl border border-sky-200 bg-sky-50 dark:bg-sky-900/20 dark:border-sky-900/40 px-4 py-3 text-sm">
-        <p class="font-medium text-sky-900 dark:text-sky-100">Verify with Telegram</p>
-        <p class="mt-1 text-xs text-sky-800/80 dark:text-sky-200/80">
-          Open the bot below — it will DM you a 6-digit code for <span class="font-mono">{{ otpForm.phone }}</span>.
-        </p>
-        <a
-          v-if="deepLink"
-          :href="deepLink"
-          target="_blank"
-          rel="noopener"
-          class="mt-3 inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600"
-        >
-          <MessageCircle class="h-4 w-4" />
-          Open Telegram bot
-        </a>
-      </div>
-
-      <form @submit.prevent="verifyOtp" class="flex flex-col gap-4">
-        <div class="grid gap-2">
-          <Label for="code">6-digit code from Telegram</Label>
-          <Input
-            id="code"
-            v-model="otpForm.code"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            maxlength="6"
-            placeholder="123456"
-            class="h-11 text-center tracking-[0.5em] font-mono text-lg"
-            required
-            autofocus
-          />
-          <InputError :message="otpForm.errors.code" />
+          <InputError :message="form.errors.phone" />
         </div>
 
         <div class="grid gap-2">
-          <Label for="pin">Choose a PIN (4-6 digits)</Label>
-          <p class="text-xs text-muted-foreground -mt-1">You'll use this PIN to sign in next time — no Telegram needed.</p>
+          <Label for="pin">Choose a PIN code (4-6 digits)</Label>
+          <p class="text-xs text-muted-foreground -mt-1">You'll use this PIN to sign in.</p>
           <Input
             id="pin"
-            v-model="otpForm.pin"
+            v-model="form.pin"
             type="password"
             inputmode="numeric"
             autocomplete="new-password"
@@ -139,23 +69,36 @@ const backToDetails = () => {
             required
             class="h-11 text-center tracking-[0.3em] font-mono text-lg"
           />
-          <InputError :message="otpForm.errors.pin" />
+          <InputError :message="form.errors.pin" />
         </div>
 
-        <Button type="submit" :disabled="otpForm.processing" class="w-full h-11">
-          <LoaderCircle v-if="otpForm.processing" class="mr-2 h-4 w-4 animate-spin" />
+        <div class="grid gap-2">
+          <Label for="pin_confirmation">Confirm PIN code</Label>
+          <Input
+            id="pin_confirmation"
+            v-model="form.pin_confirmation"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            maxlength="6"
+            placeholder="••••"
+            required
+            class="h-11 text-center tracking-[0.3em] font-mono text-lg"
+          />
+          <InputError :message="form.errors.pin_confirmation" />
+        </div>
+
+        <Button type="submit" :disabled="form.processing" class="w-full h-11">
+          <LoaderCircle v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
           <KeyRound v-else class="mr-2 h-4 w-4" />
           Create my account
         </Button>
-
-        <button
-          type="button"
-          @click="backToDetails"
-          class="text-center text-xs text-muted-foreground hover:text-foreground"
-        >
-          ← Edit my details
-        </button>
       </form>
+
+      <div class="text-center text-sm text-muted-foreground">
+        Already have an account?
+        <TextLink href="/login" class="ml-1">Sign in</TextLink>
+      </div>
     </div>
   </AuthBase>
 </template>

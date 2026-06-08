@@ -77,38 +77,60 @@ class PhoneAuthController extends Controller
   }
 
   /**
-   * Stage a registration. Same OTP loop as login, but if the user hasn't
-   * verified yet we'll create the shell row when the bot dispatches the OTP
-   * (the OTP service stubs a user keyed by phone). On verifyRegistration()
-   * we update the user's name + claim the row.
+   * Direct registration: name + phone + PIN, no Telegram OTP. The account is
+   * created (or an unclaimed shell/bot row is adopted) and the user is logged
+   * in immediately. Phone verification is deferred — it's required only before
+   * the first order (see OrderController::clientStore / EnsurePhoneVerified).
    */
-  public function requestRegisterOtp(Request $request): RedirectResponse
+  public function register(Request $request): RedirectResponse
   {
     $data = $request->validate([
       'name'  => ['required', 'string', 'max:255'],
       'phone' => ['required', 'string', 'max:32'],
+      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/', 'confirmed'],
     ]);
 
     $normalized = $this->otp->normalizePhone($data['phone']);
 
-    // Block already-claimed accounts from being re-registered. Shell users
-    // (claimed_at IS NULL) are adoptable.
     $existingPhone = UserPhone::where('phone', $normalized)->first();
+
+    // Already-claimed accounts can't be re-registered — send them to sign in.
     if ($existingPhone && $existingPhone->user && $existingPhone->user->claimed_at !== null) {
       throw ValidationException::withMessages([
-        'phone' => 'This phone is already registered. Use it to sign in.',
+        'phone' => 'This phone is already registered. Sign in instead.',
       ]);
     }
 
-    $info = $this->otp->requestLogin($normalized);
-    session()->flash('pending_register_name', $data['name']);
+    if ($existingPhone && $existingPhone->user) {
+      // Adopt the unclaimed shell/bot row: name it, set the PIN, claim it.
+      $user = $existingPhone->user;
+      $user->forceFill([
+        'name'       => $data['name'],
+        'pin'        => Hash::make($data['pin']),
+        'claimed_at' => now(),
+      ])->save();
+    } else {
+      $user = User::create([
+        'name'     => $data['name'],
+        'email'    => null,
+        'pin'      => Hash::make($data['pin']),
+        'status'   => 'active',
+        'claimed_at' => now(),
+      ]);
+      $user->assignRole('Client');
 
-    return back()->with([
-      'phone'        => $info['phone'],
-      'deep_link'    => $info['deep_link'],
-      'name'         => $data['name'],
-      'awaiting_otp' => true,
-    ]);
+      UserPhone::create([
+        'user_id'    => $user->id,
+        'phone'      => $normalized,
+        'label'      => 'Primary',
+        'is_default' => true,
+      ]);
+    }
+
+    Auth::login($user, remember: true);
+    $request->session()->regenerate();
+
+    return redirect()->intended(route('dashboard'));
   }
 
   /**
@@ -190,33 +212,6 @@ class PhoneAuthController extends Controller
     }
 
     $user->forceFill(['phone_verified_at' => now()])->save();
-
-    return redirect()->intended(route('dashboard'));
-  }
-
-  public function verifyRegisterOtp(Request $request): RedirectResponse
-  {
-    $data = $request->validate([
-      'name'  => ['required', 'string', 'max:255'],
-      'phone' => ['required', 'string', 'max:32'],
-      'code'  => ['required', 'string', 'size:6'],
-      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/'],
-    ]);
-
-    $user = $this->otp->verifyOtp($data['phone'], $data['code']);
-    if (!$user) {
-      throw ValidationException::withMessages([
-        'code' => 'Invalid or expired code.',
-      ]);
-    }
-
-    $user->forceFill([
-      'name' => $data['name'],
-      'pin'  => Hash::make($data['pin']),
-    ])->save();
-
-    Auth::login($user, remember: true);
-    $request->session()->regenerate();
 
     return redirect()->intended(route('dashboard'));
   }

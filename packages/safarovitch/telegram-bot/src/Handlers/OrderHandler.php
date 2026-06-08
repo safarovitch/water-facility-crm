@@ -5,6 +5,7 @@ namespace Safarovitch\TelegramBot\Handlers;
 use Safarovitch\TelegramBot\Models\TelegraphChat;
 use DefStudio\Telegraph\Models\TelegraphBot;
 use Safarovitch\TelegramBot\Keyboards\OrderFlowKeyboard;
+use Safarovitch\TelegramBot\Keyboards\PostOrderKeyboard;
 use Illuminate\Support\Stringable;
 
 class OrderHandler
@@ -28,6 +29,30 @@ class OrderHandler
 
     public function handleSelectProduct(int $productId): void
     {
+        // Offer quick-pick quantities; "Другое количество" falls back to typing.
+        $this->chat->message("Сколько бутылей? Выберите или введите своё количество:")
+            ->keyboard(OrderFlowKeyboard::quantities($productId))->send();
+    }
+
+    /**
+     * A quantity was picked via a quick button — jump straight to the address.
+     */
+    public function applyQuantity(int $productId, int $qty): void
+    {
+        if ($qty <= 0) {
+            $this->chat->message("Пожалуйста, введите корректное число.")->send();
+            return;
+        }
+
+        $this->chat->updateState('order_waiting_address', ['product_id' => $productId, 'quantity' => $qty]);
+        $this->chat->message("Количество: {$qty}. Теперь отправьте ваш адрес доставки (улица, дом, кв) текстом:")->send();
+    }
+
+    /**
+     * User chose "Другое количество" — switch to the typed-input path.
+     */
+    public function promptCustomQuantity(int $productId): void
+    {
         $this->chat->updateState('order_waiting_quantity', ['product_id' => $productId]);
         $this->chat->message("Введите количество бутылей (например: 4):")->send();
     }
@@ -40,9 +65,7 @@ class OrderHandler
             return;
         }
 
-        $productId = $data['product_id'];
-        $this->chat->updateState('order_waiting_address', ['product_id' => $productId, 'quantity' => $qty]);
-        $this->chat->message("Количество: $qty. Теперь отправьте ваш адрес доставки (улица, дом, кв) текстом:")->send();
+        $this->applyQuantity($data['product_id'], $qty);
     }
 
     public function processAddressInput(Stringable $text, array $data): void
@@ -77,7 +100,7 @@ class OrderHandler
     public function confirmOrder(array $data): void
     {
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $order = \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
                 $order = \App\Models\Order::create([
                     'user_id'               => $this->chat->user_id,
                     'delivery_address'      => $data['address'],
@@ -93,16 +116,19 @@ class OrderHandler
                     'unit_price' => $data['total'] / $data['quantity'],
                     'subtotal'   => $data['total'],
                 ]);
+
+                return $order;
             });
 
             $this->chat->clearState();
-            $this->chat->message("✅ Заказ успешно создан! Ожидайте доставку.")->send();
+            $this->chat->message("✅ Заказ #{$order->order_number} создан! Ожидайте доставку.")
+                ->keyboard(PostOrderKeyboard::make($order->id))->send();
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Telegram bot order creation failed', [
                 'error' => $e->getMessage(),
                 'data'  => $data,
             ]);
-            $this->chat->message("❌ Ошибка при создании заказа: " . $e->getMessage())->send();
+            $this->chat->message("❌ Не удалось создать заказ, попробуйте позже.")->send();
         }
     }
 

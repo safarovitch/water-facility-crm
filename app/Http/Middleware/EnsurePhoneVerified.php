@@ -51,6 +51,14 @@ class EnsurePhoneVerified
       return $next($request);
     }
 
+    // Users registered via the phone+PIN flow have a PIN set. Their phone
+    // verification is deferred to first order (enforced in OrderController),
+    // not globally — so let them through here. Legacy email accounts (no PIN)
+    // keep the blanket setup-phone gate below.
+    if ($user->pin !== null) {
+      return $next($request);
+    }
+
     if ($this->isAllowed($request)) {
       return $next($request);
     }

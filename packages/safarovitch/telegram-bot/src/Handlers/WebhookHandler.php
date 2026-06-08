@@ -158,6 +158,12 @@ class WebhookHandler extends DefStudioWebhookHandler
             ]);
         }
 
+        // Sharing a contact proves phone ownership, so mark the phone verified.
+        // This keeps bot clients clear of the web first-order verification gate.
+        if ($user->phone_verified_at === null) {
+            $user->forceFill(['phone_verified_at' => now()])->save();
+        }
+
         $this->chat->user_id = $user->id;
         $this->chat->save();
 
@@ -208,10 +214,36 @@ class WebhookHandler extends DefStudioWebhookHandler
             return;
         }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        // confirmOrder sends its own post-order keyboard — don't dump the full menu.
         (new OrderHandler($this->chat, $this->bot))->confirmOrder($stateData);
+    }
+
+    public function actionSelectQuantity(): void
+    {
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        (new OrderHandler($this->chat, $this->bot))->applyQuantity(
+            (int) $this->data->get('id'),
+            (int) $this->data->get('qty')
+        );
+    }
+
+    public function actionCustomQuantity(): void
+    {
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        (new OrderHandler($this->chat, $this->bot))->promptCustomQuantity((int) $this->data->get('id'));
+    }
+
+    public function actionOrderDetail(): void
+    {
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        (new TrackingHandler($this->chat, $this->bot))->handleOrderDetail((int) $this->data->get('id'));
+    }
+
+    public function actionMainMenu(): void
+    {
         $this->mainMenu();
     }
-    
+
     public function actionCancelOrder(): void
     {
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }

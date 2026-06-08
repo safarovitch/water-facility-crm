@@ -22,6 +22,25 @@ class OrderFlowKeyboard
         return Keyboard::make()->row($buttons);
     }
 
+    public static function quantities(int $productId): Keyboard
+    {
+        $quick = [];
+        foreach ([1, 2, 3, 5] as $qty) {
+            $quick[] = Button::make((string) $qty)
+                ->action('actionSelectQuantity')
+                ->param('id', (string) $productId)
+                ->param('qty', (string) $qty);
+        }
+
+        return Keyboard::make()
+            ->row($quick)
+            ->row([
+                Button::make('✏️ Другое количество')
+                    ->action('actionCustomQuantity')
+                    ->param('id', (string) $productId),
+            ]);
+    }
+
     public static function confirm(): Keyboard
     {
         return Keyboard::make()->buttons([
