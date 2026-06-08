@@ -148,6 +148,12 @@ class Order extends Model
       // a short-shipped bottle isn't a missing return, it's a missing
       // delivery. Pre-delivery (delivered_quantity null) we fall back to
       // the ordered amount so admins can preview the expected return set.
+      // Gift items carry their raw materials as gifts too — a free bottle
+      // isn't a deposit the client owes back, so it never enters the
+      // expected-return set and is never charged.
+      if ($item->is_gift) {
+        continue;
+      }
       $countedQty = $item->delivered_quantity ?? $item->quantity;
       if ($countedQty <= 0) {
         continue;
