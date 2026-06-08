@@ -17,7 +17,7 @@ const verifiedPhone = ref('');
 
 const pinForm = useForm({ phone: '', pin: '' });
 const phoneForm = useForm({ phone: '' });
-const otpForm = useForm({ phone: '', code: '' });
+const otpForm = useForm({ phone: '', code: '', pin: '', pin_confirmation: '' });
 
 const loginWithPin = () => {
   pinForm.post('/login/pin', { preserveScroll: true });
@@ -42,12 +42,15 @@ const requestOtp = () => {
 };
 
 const verifyOtp = () => {
-  otpForm.post('/login/otp/verify', { preserveScroll: true });
+  otpForm.post('/login/pin/reset', {
+    preserveScroll: true,
+    onError: () => otpForm.reset('pin', 'pin_confirmation'),
+  });
 };
 
 const backToPin = () => {
   phase.value = 'pin';
-  otpForm.reset('code');
+  otpForm.reset('code', 'pin', 'pin_confirmation');
   deepLink.value = null;
 };
 </script>
@@ -119,7 +122,7 @@ const backToPin = () => {
       <div class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-900/40 px-4 py-3 text-sm">
         <p class="font-medium text-amber-900 dark:text-amber-100">Reset your PIN via Telegram</p>
         <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-200/80">
-          We'll send a verification code to your Telegram. After verifying, you can sign in directly.
+          We'll send a verification code to your Telegram. Enter it, then choose a new PIN to sign in.
         </p>
       </div>
 
@@ -187,9 +190,40 @@ const backToPin = () => {
           <InputError :message="otpForm.errors.code" />
         </div>
 
+        <div class="grid gap-2">
+          <Label for="new-pin">New PIN code (4-6 digits)</Label>
+          <Input
+            id="new-pin"
+            v-model="otpForm.pin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            maxlength="6"
+            placeholder="••••"
+            required
+            class="h-11 text-center tracking-[0.3em] font-mono text-lg"
+          />
+          <InputError :message="otpForm.errors.pin" />
+        </div>
+
+        <div class="grid gap-2">
+          <Label for="new-pin-confirm">Confirm new PIN</Label>
+          <Input
+            id="new-pin-confirm"
+            v-model="otpForm.pin_confirmation"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            maxlength="6"
+            placeholder="••••"
+            required
+            class="h-11 text-center tracking-[0.3em] font-mono text-lg"
+          />
+        </div>
+
         <Button type="submit" :disabled="otpForm.processing" class="w-full h-11">
           <LoaderCircle v-if="otpForm.processing" class="mr-2 h-4 w-4 animate-spin" />
-          Verify & sign in
+          Set new PIN & sign in
         </Button>
 
         <button type="button" @click="backToPin" class="text-center text-xs text-muted-foreground hover:text-foreground">

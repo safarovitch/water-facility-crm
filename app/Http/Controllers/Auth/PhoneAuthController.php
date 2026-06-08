@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -257,7 +256,7 @@ class PhoneAuthController extends Controller
     $data = $request->validate([
       'phone' => ['required', 'string', 'max:32'],
       'code'  => ['required', 'string', 'size:6'],
-      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/'],
+      'pin'   => ['required', 'string', 'min:4', 'max:6', 'regex:/^\d+$/', 'confirmed'],
     ]);
 
     $user = $this->otp->verifyOtp($data['phone'], $data['code']);

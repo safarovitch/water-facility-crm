@@ -691,7 +691,7 @@ const couriersLabel = (count: number) => {
             <div class="overflow-hidden rounded-3xl bg-slate-900 text-white">
                 <div class="grid gap-10 p-10 md:grid-cols-2 md:p-14">
                     <div>
-                        <FannLogo variant="stacked" class="mb-6 h-24 w-auto text-white" :show-tagline="true" />
+                        <FannLogo light class="mb-6 h-20 w-auto" />
                         <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
                             {{ t('contact.title') }}
                         </h2>
