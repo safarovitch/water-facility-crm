@@ -2,6 +2,7 @@
 import FannLogo from '@/components/FannLogo.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { useLandingI18n } from '@/composables/useLandingI18n';
+import { DUSHANBE, MAP_STYLE, SYNTHETIC_ROUTES, createHtmlMarker, lerp, loadMapLibre, motoMarkerHtml } from '@/lib/maps';
 import { dashboard, login, register } from '@/routes';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
@@ -12,6 +13,7 @@ import {
     MapPin,
     Mountain,
     Phone,
+    Send,
     ShieldCheck,
     Truck,
 } from 'lucide-vue-next';
@@ -35,52 +37,32 @@ function onWhereIsMyWater(event: MouseEvent) {
 const phone = '+992 17 860 50 05';
 const phoneHref = 'tel:+992178605005';
 const whatsappHref = 'https://wa.me/992178605005';
+const telegramHref = 'https://t.me/fannwaterbot';
 const email = 'water@fann.tj';
 
-// --- Live courier map -------------------------------------------------------
+// --- Live courier map (2GIS MapGL) -----------------------------------------
 const mapEl = ref<HTMLDivElement | null>(null);
 const courierCount = ref(0);
 const mapReady = ref(false);
 const trackingMode = ref<'idle' | 'personal' | 'public'>('idle');
-let leafletMap: any = null;
-let markersLayer: any = null;
+
+let maplibregl: any = null;
+let map: any = null;
 let pollTimer: number | null = null;
+let rafId: number | null = null;
 
-const LEAFLET_VERSION = '1.9.4';
-const LEAFLET_CSS = `https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.css`;
-const LEAFLET_JS = `https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.js`;
+type CourierFix = { id?: string; lat: number; lng: number; updated_at?: string };
 
-function loadLeaflet(): Promise<any> {
-    if (typeof window === 'undefined') return Promise.resolve(null);
-    const w = window as any;
-    if (w.L) return Promise.resolve(w.L);
+// Real-courier markers, keyed by anonymised id. Each eases from its current
+// position toward the latest polled target every animation frame, so couriers
+// appear to drive between the 15s location refreshes.
+type LiveMarker = { marker: any; cur: [number, number]; tgt: [number, number] };
+const liveMarkers = new Map<string, LiveMarker>();
 
-    if (!document.querySelector(`link[href="${LEAFLET_CSS}"]`)) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = LEAFLET_CSS;
-        document.head.appendChild(link);
-    }
-
-    return new Promise((resolve, reject) => {
-        const existing = document.querySelector<HTMLScriptElement>(
-            `script[src="${LEAFLET_JS}"]`,
-        );
-        if (existing) {
-            existing.addEventListener('load', () => resolve((window as any).L));
-            existing.addEventListener('error', reject);
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = LEAFLET_JS;
-        script.async = true;
-        script.onload = () => resolve((window as any).L);
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-type CourierFix = { lat: number; lng: number; updated_at: string };
+// Synthetic motorbikes looping preset Dushanbe routes — shown to logged-out
+// visitors only when no real courier is online, to imitate active delivery.
+type SynthMarker = { marker: any; route: [number, number][]; seg: number; t: number; speed: number };
+let synthMarkers: SynthMarker[] = [];
 
 async function fetchPersonalTracking(): Promise<CourierFix | null> {
     try {
@@ -99,56 +81,99 @@ async function fetchPersonalTracking(): Promise<CourierFix | null> {
     }
 }
 
-async function fetchPublicLocations(): Promise<CourierFix[]> {
-    try {
-        const res = await fetch('/api/v1/public/curriers/locations', {
-            cache: 'no-store',
-            headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) return [];
-        const data = (await res.json()) as { count: number; locations: CourierFix[] };
-        return data.locations;
-    } catch {
-        return [];
+function makeMoto(coords: [number, number]) {
+    return createHtmlMarker(maplibregl, map, coords, motoMarkerHtml(), 'center');
+}
+
+// Reconcile live markers against the latest fixes: add new couriers, retarget
+// existing ones (the rAF loop eases them over), drop those gone.
+function setLiveMarkers(fixes: CourierFix[]) {
+    const seen = new Set<string>();
+    fixes.forEach((fix, i) => {
+        const id = fix.id ?? `c${i}`;
+        seen.add(id);
+        const coords: [number, number] = [fix.lng, fix.lat];
+        const existing = liveMarkers.get(id);
+        if (existing) {
+            existing.tgt = coords;
+        } else {
+            liveMarkers.set(id, { marker: makeMoto(coords), cur: coords, tgt: coords });
+        }
+    });
+    for (const [id, lm] of liveMarkers) {
+        if (!seen.has(id)) {
+            lm.marker.destroy();
+            liveMarkers.delete(id);
+        }
     }
 }
 
-function renderMarkers(L: any, fixes: CourierFix[]) {
-    if (!leafletMap || !markersLayer) return;
-    markersLayer.clearLayers();
-    for (const fix of fixes) {
-        const marker = L.marker([fix.lat, fix.lng], {
-            icon: L.divIcon({
-                className: 'fann-courier-marker',
-                html: '<span class="dot"></span><span class="pulse"></span>',
-                iconSize: [22, 22],
-                iconAnchor: [11, 11],
-            }),
-            keyboard: false,
-            interactive: false,
-        });
-        markersLayer.addLayer(marker);
-    }
+function clearLiveMarkers() {
+    for (const lm of liveMarkers.values()) lm.marker.destroy();
+    liveMarkers.clear();
 }
 
-async function refreshMap(L: any) {
+function startSynthetic() {
+    if (synthMarkers.length) return;
+    synthMarkers = SYNTHETIC_ROUTES.map((route, i) => ({
+        marker: makeMoto(route[0]),
+        route,
+        seg: 0,
+        t: 0,
+        // Vary speed deterministically so they don't move in lockstep.
+        speed: 0.0035 + (i % 5) * 0.001,
+    }));
+    courierCount.value = synthMarkers.length;
+}
+
+function stopSynthetic() {
+    for (const s of synthMarkers) s.marker.destroy();
+    synthMarkers = [];
+}
+
+function tick() {
+    for (const lm of liveMarkers.values()) {
+        lm.cur = lerp(lm.cur, lm.tgt, 0.06);
+        lm.marker.setCoordinates(lm.cur);
+    }
+    for (const s of synthMarkers) {
+        s.t += s.speed;
+        while (s.t >= 1) {
+            s.t -= 1;
+            s.seg = (s.seg + 1) % (s.route.length - 1);
+        }
+        s.marker.setCoordinates(lerp(s.route[s.seg], s.route[s.seg + 1], s.t));
+    }
+    rafId = requestAnimationFrame(tick);
+}
+
+async function refreshMap() {
+    if (!map) return;
+
     if (isLoggedIn.value) {
+        // Signed-in users see only the courier delivering their own order —
+        // never the mock demo couriers.
+        stopSynthetic();
         const own = await fetchPersonalTracking();
         if (own) {
             trackingMode.value = 'personal';
             courierCount.value = 1;
-            renderMarkers(L, [own]);
-            // Re-center on the user's courier so it's always in view
-            leafletMap?.setView([own.lat, own.lng], Math.max(leafletMap.getZoom(), 13), {
-                animate: true,
-            });
-            return;
+            setLiveMarkers([{ ...own, id: 'self' }]);
+            map.setCenter([own.lng, own.lat]);
+            if (map.getZoom() < 13) map.setZoom(13);
+        } else {
+            // No active delivery — show nothing.
+            trackingMode.value = 'public';
+            courierCount.value = 0;
+            clearLiveMarkers();
         }
+        return;
     }
-    const fixes = await fetchPublicLocations();
+
+    // Logged-out visitors always see the looping mock motorbikes.
+    clearLiveMarkers();
     trackingMode.value = 'public';
-    courierCount.value = fixes.length;
-    renderMarkers(L, fixes);
+    startSynthetic();
 }
 
 function scrollToTargetIfPresent() {
@@ -198,24 +223,20 @@ onMounted(async () => {
 
     if (!mapEl.value) return;
     try {
-        const L = await loadLeaflet();
-        if (!L || !mapEl.value) return;
-        leafletMap = L.map(mapEl.value, {
-            center: [38.5598, 68.787],
+        maplibregl = await loadMapLibre();
+        if (!maplibregl || !mapEl.value) return;
+        map = new maplibregl.Map({
+            container: mapEl.value,
+            style: MAP_STYLE,
+            center: DUSHANBE,
             zoom: 12,
-            scrollWheelZoom: false,
-            attributionControl: true,
         });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap',
-            maxZoom: 19,
-        }).addTo(leafletMap);
-        markersLayer = L.layerGroup().addTo(leafletMap);
         mapReady.value = true;
-        refreshMap(L);
-        pollTimer = window.setInterval(() => refreshMap(L), 15000);
+        rafId = requestAnimationFrame(tick);
+        await refreshMap();
+        pollTimer = window.setInterval(refreshMap, 15000);
     } catch {
-        /* leaflet failed to load – section still shows the static map column */
+        /* MapLibre failed to load — the section just shows an empty map column */
     }
 });
 
@@ -224,9 +245,15 @@ onBeforeUnmount(() => {
         clearInterval(pollTimer);
         pollTimer = null;
     }
-    if (leafletMap) {
-        leafletMap.remove();
-        leafletMap = null;
+    if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+    stopSynthetic();
+    clearLiveMarkers();
+    if (map) {
+        map.remove();
+        map = null;
     }
 });
 
@@ -297,13 +324,11 @@ const couriersLabel = (count: number) => {
         <header class="sticky top-0 z-[1000] border-b border-sky-100/80 bg-[#f6f6f6]/80 backdrop-blur">
             <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <a href="#top" class="flex items-center text-slate-900">
-                    <FannLogo variant="inline" class="h-9 w-auto" />
+                    <FannLogo variant="inline" class="h-7 w-auto" />
                 </a>
 
-                <nav class="hidden items-center gap-7 text-sm text-slate-600 md:flex">
+                <nav class="hidden items-center gap-7 text-slate-600 md:flex">
                     <a href="#about" class="hover:text-sky-600">{{ t('nav.about') }}</a>
-                    <a href="#features" class="hover:text-sky-600">{{ t('nav.whyUs') }}</a>
-                    <a href="#how" class="hover:text-sky-600">{{ t('nav.howItWorks') }}</a>
                     <a href="#pricing" class="hover:text-sky-600">{{ t('nav.pricing') }}</a>
                     <a href="#coverage" class="hover:text-sky-600">{{ t('nav.delivery') }}</a>
                     <a href="#contact" class="hover:text-sky-600">{{ t('nav.contact') }}</a>
@@ -352,7 +377,7 @@ const couriersLabel = (count: number) => {
                         <Mountain class="h-3.5 w-3.5" />
                         {{ t('hero.badge') }}
                     </span>
-                    <h1 class="mt-6 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+                    <h1 class="mt-6 text-4xl font-semibold tracking-tight text-sky-600 sm:text-5xl md:text-6xl">
                         {{ t('hero.headline1') }}<br />
                         <span class="text-sky-600">{{ t('hero.headline2') }}</span>
                     </h1>
@@ -360,13 +385,25 @@ const couriersLabel = (count: number) => {
                         {{ t('hero.subtitle') }}
                     </p>
 
-                    <div class="mt-8 flex flex-wrap items-center gap-3">
+                    <p class="mt-8 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {{ t('hero.orderVia') }}
+                    </p>
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
                         <a
                             :href="phoneHref"
                             class="inline-flex items-center gap-2 rounded-full bg-sky-500 px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-sky-600"
                         >
                             <Phone class="h-5 w-5" />
                             {{ t('hero.callToOrder') }}
+                        </a>
+                        <a
+                            :href="telegramHref"
+                            target="_blank"
+                            rel="noopener"
+                            class="inline-flex items-center gap-2 rounded-full bg-[#229ED9] px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-[#1c8ec2]"
+                        >
+                            <Send class="h-5 w-5" />
+                            Telegram
                         </a>
                         <a
                             :href="whatsappHref"
@@ -408,17 +445,17 @@ const couriersLabel = (count: number) => {
 
                         <!-- on-bottle wordmark + slogan, lower-left of the upright bottle -->
                         <div
-                            class="pointer-events-none absolute top-[64%] left-[22%] translate-x-[calc(-50%_+_9px)] translate-y-[calc(calc(1_/_2_*_100%)_*_-2_+_10px)] text-center"
+                            class="pointer-events-none absolute top-[62%] left-[22%] translate-x-[calc(-50%_+_9px)] translate-y-[calc(calc(1_/_2_*_100%)_*_-2_+_10px)] text-center"
                         >
                             <FannLogo
                                 variant="wordmark"
                                 :show-tagline="false"
-                                class="mx-auto h-14 w-auto text-sky-950"
+                                class="mx-auto h-7 w-auto text-sky-950"
                             />
                             <svg
                                 aria-hidden="true"
                                 viewBox="0 0 220 22"
-                                class="mx-auto -mt-3 block h-[17px] w-auto text-sky-900/80"
+                                class="mx-auto block h-[17px] w-auto text-sky-900/80"
                                 preserveAspectRatio="xMidYMid meet"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
@@ -434,7 +471,7 @@ const couriersLabel = (count: number) => {
                                     font-family="'Inter', 'Instrument Sans', system-ui, sans-serif"
                                     font-size="9"
                                     font-weight="600"
-                                    letter-spacing="3"
+                                    letter-spacing="2"
                                 >
                                     <textPath
                                         href="#fann-slug-arc"
@@ -708,6 +745,15 @@ const couriersLabel = (count: number) => {
                                 {{ t('contact.call') }}
                             </a>
                             <a
+                                :href="telegramHref"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex items-center gap-2 rounded-full bg-[#229ED9] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1c8ec2]"
+                            >
+                                <Send class="h-4 w-4" />
+                                Telegram
+                            </a>
+                            <a
                                 :href="whatsappHref"
                                 target="_blank"
                                 rel="noopener"
@@ -772,42 +818,38 @@ const couriersLabel = (count: number) => {
 </template>
 
 <style>
-/* Leaflet creates marker DOM at runtime, so these rules must be unscoped. */
-.fann-courier-marker {
+/* MapGL builds the HtmlMarker DOM at runtime, so these rules must be unscoped. */
+.fann-moto {
     position: relative;
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
 }
-.fann-courier-marker .dot {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 9999px;
-    background: #0ea5e9;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.45);
+.fann-moto__icon {
+    position: relative;
     z-index: 2;
+    font-size: 20px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
-.fann-courier-marker .pulse {
+.fann-moto__pulse {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 22px;
-    height: 22px;
+    inset: 4px;
     border-radius: 9999px;
-    background: rgba(14, 165, 233, 0.45);
+    background: rgba(38, 90, 128, 0.4);
     transform-origin: center;
-    animation: fann-courier-pulse 1.6s ease-out infinite;
+    animation: fann-moto-pulse 1.8s ease-out infinite;
 }
-@keyframes fann-courier-pulse {
+@keyframes fann-moto-pulse {
     0% {
         transform: scale(0.5);
-        opacity: 1;
+        opacity: 0.9;
     }
     100% {
-        transform: scale(1.7);
+        transform: scale(1.9);
         opacity: 0;
     }
 }

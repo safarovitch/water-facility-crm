@@ -43,8 +43,9 @@ class LocationController extends Controller
 
     /**
      * Public, anonymized feed of currently-active courier positions.
-     * Returns only couriers active in the last 15 minutes.
-     * No names, no IDs — just lat/lng/updated_at.
+     * Returns only couriers active in the last 15 minutes. The `id` is an
+     * opaque hash (no PII) the map uses to match couriers across polls and
+     * animate them smoothly between fixes.
      */
     public function publicLocations()
     {
@@ -59,6 +60,7 @@ class LocationController extends Controller
         $payload = [
             'count' => $couriers->count(),
             'locations' => $couriers->values()->map(fn ($u) => [
+                'id' => substr(hash('sha256', $u->id . '|' . config('app.key')), 0, 12),
                 'lat' => (float) $u->lastLocation->lat,
                 'lng' => (float) $u->lastLocation->lng,
                 'updated_at' => $u->lastLocation->updated_at->toIso8601String(),

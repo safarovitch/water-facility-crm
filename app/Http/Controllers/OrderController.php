@@ -675,7 +675,10 @@ class OrderController extends Controller
       'actual_delivery_at' => ['nullable', 'date'],
       'returned_materials' => ['nullable', 'array'],
       'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
-      'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
+      'returned_materials.*.quantity' => ['required', 'integer', 'min:0'],
+      // Empties the courier opted to collect on a later visit instead of
+      // charging a deposit for them.
+      'returned_materials.*.deferred_quantity' => ['nullable', 'integer', 'min:0'],
       // Partial delivery: per-line actual delivered count and what to do
       // with any shortfall. Optional — when absent or empty, the existing
       // "fully delivered" behavior applies.
@@ -704,10 +707,22 @@ class OrderController extends Controller
         if (isset($data['returned_materials']) && $data['status'] === OrderStatus::Delivered) {
             $syncData = [];
             foreach ($data['returned_materials'] as $rm) {
-                $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
+                $collected = (int) ($rm['quantity'] ?? 0);
+                $deferred  = (int) ($rm['deferred_quantity'] ?? 0);
+                if ($collected <= 0 && $deferred <= 0) {
+                    continue;
+                }
+                $syncData[$rm['raw_material_id']] = [
+                    'quantity'           => $collected,
+                    'deferred_quantity'  => $deferred,
+                ];
 
-                \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
-                  ->increment('current_stock', $rm['quantity']);
+                // Only containers actually back in hand re-enter stock; the
+                // deferred ones are still out with the client.
+                if ($collected > 0) {
+                    \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
+                      ->increment('current_stock', $collected);
+                }
             }
             $order->returnedMaterials()->sync($syncData);
         }

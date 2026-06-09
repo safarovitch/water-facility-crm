@@ -20,6 +20,7 @@ import {
   MapPin,
   Truck
 } from 'lucide-vue-next';
+import { MAP_STYLE, createHtmlMarker, loadMapLibre } from '@/lib/maps';
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 
 const props = defineProps<{
@@ -41,135 +42,83 @@ const filteredCurriers = computed(() => {
   );
 });
 
-// ── Leaflet Setup ──────────────────────────────────────────────────────────
+// ── 2GIS MapGL setup ────────────────────────────────────────────────────────
 
 const mapEl = ref<HTMLElement | null>(null);
+let maplibregl: any = null;
 let mapInstance: any = null;
 let markers: { id: number, marker: any }[] = [];
-
-function loadLeaflet(): Promise<void> {
-  if ((window as any).L) return Promise.resolve();
-
-  return new Promise((resolve, reject) => {
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.onload = () => resolve();
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
+const selectedCourier = ref<any | null>(null);
 
 function isCurrierOnline(currier: any) {
-    const lastActive = currier.last_active_at ? new Date(currier.last_active_at) : 
+    const lastActive = currier.last_active_at ? new Date(currier.last_active_at) :
                       (currier.last_location ? new Date(currier.last_location.created_at) : null);
-    
+
     if (!lastActive) return false;
-    
+
     const now = new Date();
     // Online if active in last 5 minutes (more strict than before)
     return (now.getTime() - lastActive.getTime()) < 5 * 60 * 1000;
 }
 
+function avatarMarkerHtml(currier: any, isOnline: boolean): string {
+    return `
+      <div class="moto-avatar" data-courier-id="${currier.id}">
+        <div class="moto-avatar__ring ${isOnline ? 'is-online' : 'is-offline'}">
+          <img src="${currier.avatar_url}" alt="" />
+        </div>
+        <span class="moto-avatar__dot ${isOnline ? 'is-online' : 'is-offline'}"></span>
+      </div>`;
+}
+
+// MapGL HtmlMarkers have no native popup, so we delegate clicks off the map
+// container and surface the courier detail in a Vue-rendered card overlay.
+function onMapClick(e: MouseEvent) {
+    const el = (e.target as HTMLElement)?.closest?.('[data-courier-id]') as HTMLElement | null;
+    if (!el) return;
+    const id = Number(el.dataset.courierId);
+    const c = props.curriers.find((cc: any) => cc.id === id);
+    if (c) selectedCourier.value = c;
+}
+
 async function initMap() {
   if (viewMode.value !== 'map') return;
-  await loadLeaflet();
-  const L = (window as any).L;
+  maplibregl = await loadMapLibre();
+  if (!maplibregl || !mapEl.value) return;
 
-  if (mapInstance) {
-      mapInstance.remove();
-  }
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
 
-  // Find center (average of all currier locations or default to center of activity)
-  const locations = props.curriers.filter(c => c.last_location).map(c => [c.last_location.lat, c.last_location.lng]);
-  const centerLat = locations.length > 0 ? locations.reduce((sum, l) => sum + l[0], 0) / locations.length : 38.5358;
-  const centerLng = locations.length > 0 ? locations.reduce((sum, l) => sum + l[1], 0) / locations.length : 68.7791;
+  // Center on the average of known courier positions, else Dushanbe. MapLibre
+  // takes [lng, lat] (the opposite of Leaflet).
+  const locs = props.curriers
+    .filter(c => c.last_location)
+    .map(c => [c.last_location.lng, c.last_location.lat] as [number, number]);
+  const center: [number, number] = locs.length > 0
+    ? [locs.reduce((s, l) => s + l[0], 0) / locs.length, locs.reduce((s, l) => s + l[1], 0) / locs.length]
+    : [68.7791, 38.5358];
 
-  mapInstance = L.map(mapEl.value).setView([centerLat, centerLng], 13);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-  }).addTo(mapInstance);
+  mapInstance = new maplibregl.Map({ container: mapEl.value, style: MAP_STYLE, center, zoom: 13 });
+  mapEl.value.addEventListener('click', onMapClick);
 
   updateMarkers();
 }
 
 function updateMarkers() {
   if (!mapInstance) return;
-  const L = (window as any).L;
 
-  // Clear existing markers
-  markers.forEach(m => m.marker.remove());
+  markers.forEach(m => m.marker.destroy());
   markers = [];
 
   props.curriers.forEach(currier => {
     if (!currier.last_location) return;
-
     const isOnline = isCurrierOnline(currier);
-    
-    // Create custom icon
-    const icon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `
-          <div class="relative">
-            <div class="h-10 w-10 rounded-full border-2 ${isOnline ? 'border-emerald-500 bg-emerald-50' : 'border-gray-400 bg-gray-50'} overflow-hidden shadow-lg transition-transform hover:scale-110">
-              <img src="${currier.avatar_url}" class="h-full w-full object-cover" />
-            </div>
-            <div class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-500' : 'bg-gray-400'}"></div>
-          </div>
-        `,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40]
-    });
-
-    const marker = L.marker([currier.last_location.lat, currier.last_location.lng], { icon })
-        .addTo(mapInstance);
-
-    const activeOrders = currier.orders || [];
-
-    marker.bindPopup(`
-        <div class="w-64 p-1">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                    <img src="${currier.avatar_url}" class="h-full w-full object-cover" />
-                </div>
-                <div>
-                    <p class="text-sm font-black">${currier.name}</p>
-                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                        ${isOnline ? 'Online' : 'Offline'}
-                    </p>
-                </div>
-            </div>
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-[10px] font-bold">
-                    <span class="text-muted-foreground uppercase tracking-wider">Active Tasks:</span>
-                    <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded">${activeOrders.length}</span>
-                </div>
-                <!-- Time recorded -->
-                <div class="flex items-center justify-between text-[10px] font-bold">
-                    <span class="text-muted-foreground uppercase tracking-wider">Recorded:</span>
-                    <span class="text-orange-500">${currier.last_location?.created_at_human || 'Unknown'}</span>
-                </div>
-                ${activeOrders.length > 0 ? `
-                    <div class="p-2 rounded-lg bg-muted/50 border border-sidebar-border/40 mt-1">
-                        <p class="text-[10px] font-black uppercase tracking-wider mb-1">Current Route:</p>
-                        <div class="flex items-start gap-1.5 min-w-0">
-                            <i class="lucide-navigation h-3 w-3 text-primary mt-0.5"></i>
-                            <p class="text-[9px] font-bold truncate">${activeOrders[0].delivery_address}</p>
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-    `, { className: 'custom-leaflet-popup' });
-
+    const marker = createHtmlMarker(
+      maplibregl,
+      mapInstance,
+      [currier.last_location.lng, currier.last_location.lat],
+      avatarMarkerHtml(currier, isOnline),
+      'bottom',
+    );
     markers.push({ id: currier.id, marker });
   });
 }
@@ -185,32 +134,26 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-    if (mapInstance) mapInstance.remove();
+    mapEl.value?.removeEventListener('click', onMapClick);
+    markers.forEach(m => m.marker.destroy());
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; }
 });
 
 const focusOnMap = async (currier: any) => {
     if (!currier.last_location) return;
-    
+
     viewMode.value = 'map';
-    
+
     await nextTick();
     if (!mapInstance) {
         await initMap();
     }
-    
-    // Allow leaf map size bindings to catch up when display toggle triggers
+
     setTimeout(() => {
         if (!mapInstance) return;
-        mapInstance.invalidateSize();
-        mapInstance.flyTo([currier.last_location.lat, currier.last_location.lng], 16, {
-            animate: true,
-            duration: 1
-        });
-        
-        const m = markers.find(m => m.id === currier.id);
-        if (m) {
-            m.marker.openPopup();
-        }
+        mapInstance.setCenter([currier.last_location.lng, currier.last_location.lat]);
+        mapInstance.setZoom(16);
+        selectedCourier.value = currier;
     }, 200);
 };
 </script>
@@ -327,7 +270,41 @@ const focusOnMap = async (currier: any) => {
       <div v-show="viewMode === 'map'" class="h-[700px] w-full relative">
         <Card class="h-full border-sidebar-border/60 shadow-xl overflow-hidden">
             <div ref="mapEl" class="h-full w-full z-0"></div>
-            
+
+            <!-- Selected courier detail -->
+            <div v-if="selectedCourier" class="absolute top-6 left-6 z-10 w-72 bg-white/95 dark:bg-sidebar/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-sidebar-border/60">
+                <button class="absolute top-3 right-3 text-muted-foreground hover:text-foreground" @click="selectedCourier = null">✕</button>
+                <div class="flex items-center gap-3 mb-3">
+                    <Avatar class="h-10 w-10">
+                        <AvatarImage :src="selectedCourier.avatar_url" />
+                        <AvatarFallback>{{ selectedCourier.name[0] }}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p class="text-sm font-black leading-tight">{{ selectedCourier.name }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest" :class="isCurrierOnline(selectedCourier) ? 'text-emerald-500' : 'text-muted-foreground'">
+                            {{ isCurrierOnline(selectedCourier) ? 'Online' : 'Offline' }}
+                        </p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-[11px] font-bold">
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted-foreground uppercase tracking-wider">Active tasks</span>
+                        <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded">{{ selectedCourier.orders?.length || 0 }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted-foreground uppercase tracking-wider">Recorded</span>
+                        <span class="text-orange-500">{{ selectedCourier.last_location?.created_at_human || 'Unknown' }}</span>
+                    </div>
+                    <div v-if="selectedCourier.orders?.length" class="p-2 rounded-lg bg-muted/50 border border-sidebar-border/40 mt-1">
+                        <p class="text-[10px] font-black uppercase tracking-wider mb-1">Current route</p>
+                        <div class="flex items-start gap-1.5 min-w-0">
+                            <Navigation class="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                            <p class="text-[10px] font-bold truncate">{{ selectedCourier.orders[0].delivery_address }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Map Legend -->
             <div class="absolute bottom-6 right-6 z-10 bg-white/90 dark:bg-sidebar/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-sidebar-border/60">
                 <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">Live Status</p>
@@ -349,18 +326,50 @@ const focusOnMap = async (currier: any) => {
 </template>
 
 <style>
-@reference "../../../css/app.css";
-
-.custom-leaflet-popup .leaflet-popup-content-wrapper {
-    @apply rounded-2xl shadow-xl border border-sidebar-border/40 bg-white/95 dark:bg-sidebar/95 backdrop-blur-sm p-0 overflow-hidden;
+/* MapGL builds HtmlMarker DOM at runtime, so these rules must be unscoped. */
+.moto-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
 }
-.custom-leaflet-popup .leaflet-popup-content {
-    @apply m-0 p-3;
+.moto-avatar__ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    border: 2px solid;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease;
 }
-.custom-leaflet-popup .leaflet-popup-tip {
-    @apply bg-white/95 dark:bg-sidebar/95 shadow-none;
+.moto-avatar:hover .moto-avatar__ring {
+    transform: scale(1.1);
 }
-.leaflet-container {
-    @apply font-sans;
+.moto-avatar__ring.is-online {
+    border-color: #10b981;
+}
+.moto-avatar__ring.is-offline {
+    border-color: #9ca3af;
+}
+.moto-avatar__ring img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.moto-avatar__dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    border: 2px solid #fff;
+}
+.moto-avatar__dot.is-online {
+    background: #10b981;
+}
+.moto-avatar__dot.is-offline {
+    background: #9ca3af;
 }
 </style>

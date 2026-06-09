@@ -46,7 +46,10 @@ class OrderController extends Controller
             'status' => 'required|string',
             'returned_materials' => ['nullable', 'array'],
             'returned_materials.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
-            'returned_materials.*.quantity' => ['required', 'integer', 'min:1'],
+            'returned_materials.*.quantity' => ['required', 'integer', 'min:0'],
+            // Empties the courier opted to collect on a later visit rather than
+            // charge a deposit for.
+            'returned_materials.*.deferred_quantity' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $order = Order::where('courier_id', $request->user()->id)
@@ -63,10 +66,20 @@ class OrderController extends Controller
             if ($request->has('returned_materials') && $request->status === OrderStatus::Delivered->value) {
                 $syncData = [];
                 foreach ($request->input('returned_materials') as $rm) {
-                    $syncData[$rm['raw_material_id']] = ['quantity' => $rm['quantity']];
+                    $collected = (int) ($rm['quantity'] ?? 0);
+                    $deferred  = (int) ($rm['deferred_quantity'] ?? 0);
+                    if ($collected <= 0 && $deferred <= 0) {
+                        continue;
+                    }
+                    $syncData[$rm['raw_material_id']] = [
+                        'quantity'          => $collected,
+                        'deferred_quantity' => $deferred,
+                    ];
 
-                    \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
-                        ->increment('current_stock', $rm['quantity']);
+                    if ($collected > 0) {
+                        \App\Models\RawMaterial::where('id', $rm['raw_material_id'])
+                            ->increment('current_stock', $collected);
+                    }
                 }
                 $order->returnedMaterials()->sync($syncData);
             }

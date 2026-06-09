@@ -59,6 +59,26 @@
 }
 
 /*
+ * Brand palette. The app uses Tailwind's `sky-*` scale as the brand colour
+ * (bg-sky-500 buttons, sky-50/100 tints, sky-600 hovers, sky-700 text). Remap
+ * the whole ramp to a navy centred on #265a80 = hsl(205 54% 33%) at 500, so
+ * every sky utility shifts to the new brand colour cohesively.
+ */
+@theme {
+    --color-sky-50: hsl(204 55% 96%);
+    --color-sky-100: hsl(204 54% 91%);
+    --color-sky-200: hsl(205 53% 82%);
+    --color-sky-300: hsl(205 53% 70%);
+    --color-sky-400: hsl(205 54% 52%);
+    --color-sky-500: hsl(205 54% 33%); /* #265a80 */
+    --color-sky-600: hsl(205 56% 29%);
+    --color-sky-700: hsl(206 57% 24%);
+    --color-sky-800: hsl(206 58% 20%);
+    --color-sky-900: hsl(207 56% 16%);
+    --color-sky-950: hsl(208 60% 10%);
+}
+
+/*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
@@ -95,7 +115,7 @@
     --card-foreground: hsl(0 0% 3.9%);
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
+    --primary: hsl(205 54% 33%);
     --primary-foreground: hsl(0 0% 98%);
     --secondary: hsl(0 0% 92.1%);
     --secondary-foreground: hsl(0 0% 9%);
@@ -116,7 +136,7 @@
     --radius: 0.5rem;
     --sidebar-background: hsl(0 0% 98%);
     --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
+    --sidebar-primary: hsl(205 54% 33%);
     --sidebar-primary-foreground: hsl(0 0% 98%);
     --sidebar-accent: hsl(0 0% 94%);
     --sidebar-accent-foreground: hsl(0 0% 30%);
@@ -132,8 +152,8 @@
     --card-foreground: hsl(0 0% 98%);
     --popover: hsl(0 0% 3.9%);
     --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
+    --primary: hsl(205 54% 33%);
+    --primary-foreground: hsl(0 0% 98%);
     --secondary: hsl(0 0% 14.9%);
     --secondary-foreground: hsl(0 0% 98%);
     --muted: hsl(0 0% 16.08%);
@@ -152,7 +172,7 @@
     --chart-5: hsl(340 75% 55%);
     --sidebar-background: hsl(0 0% 7%);
     --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
+    --sidebar-primary: hsl(205 54% 33%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(0 0% 15.9%);
     --sidebar-accent-foreground: hsl(240 4.8% 95.9%);

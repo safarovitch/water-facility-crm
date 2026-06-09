@@ -178,21 +178,30 @@ class Order extends Model
 
     $this->loadMissing('returnedMaterials');
     $returned = [];
+    $deferred = [];
     foreach ($this->returnedMaterials as $rm) {
       $returned[$rm->id] = ($returned[$rm->id] ?? 0) + (int) ($rm->pivot->quantity ?? 0);
+      $deferred[$rm->id] = ($deferred[$rm->id] ?? 0) + (int) ($rm->pivot->deferred_quantity ?? 0);
     }
 
     $summary = [];
     foreach ($expected as $rmId => $exp) {
       $ret = (int) ($returned[$rmId] ?? 0);
+      // Empties flagged "collect later" — not yet returned, but not charged
+      // either. Capped so deferring more than is outstanding never makes the
+      // chargeable count go negative.
+      $def = min((int) ($deferred[$rmId] ?? 0), max($exp - $ret, 0));
       $missing = max($exp - $ret, 0);
+      $chargeable = max($missing - $def, 0);
       $material = $materials[$rmId];
       $summary[$rmId] = [
         'raw_material' => $material,
         'expected'     => $exp,
         'returned'     => $ret,
+        'deferred'     => $def,
         'missing'      => $missing,
-        'charge'       => round($missing * (float) $material->deposit_price, 2),
+        'chargeable'   => $chargeable,
+        'charge'       => round($chargeable * (float) $material->deposit_price, 2),
       ];
     }
 
@@ -274,7 +283,7 @@ class Order extends Model
   public function returnedMaterials(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
   {
     return $this->belongsToMany(RawMaterial::class, 'order_returned_materials')
-        ->withPivot('quantity')
+        ->withPivot('quantity', 'deferred_quantity')
         ->withTimestamps();
   }
 

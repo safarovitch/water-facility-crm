@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DUSHANBE, MAP_STYLE, createHtmlMarker, lerp, loadMapLibre, motoMarkerHtml, type CourierMarker } from '@/lib/maps';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 interface Fix { lat: number; lng: number }
@@ -11,60 +12,35 @@ const props = defineProps<{
 
 const mapEl = ref<HTMLDivElement | null>(null);
 const ready = ref(false);
-let leafletMap: any = null;
-let marker: any = null;
+let maplibregl: any = null;
+let map: any = null;
+let marker: CourierMarker | null = null;
 let pollTimer: number | null = null;
+let rafId: number | null = null;
 
-const LEAFLET_VERSION = '1.9.4';
-const LEAFLET_CSS = `https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.css`;
-const LEAFLET_JS = `https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.js`;
+// Current (animated) and target courier positions, in [lng, lat] order.
+let cur: [number, number] | null = null;
+let tgt: [number, number] | null = null;
 
-function loadLeaflet(): Promise<any> {
-  if (typeof window === 'undefined') return Promise.resolve(null);
-  const w = window as any;
-  if (w.L) return Promise.resolve(w.L);
-
-  if (!document.querySelector(`link[href="${LEAFLET_CSS}"]`)) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = LEAFLET_CSS;
-    document.head.appendChild(link);
+function setTarget(fix: Fix, recenter = true) {
+  const coords: [number, number] = [fix.lng, fix.lat];
+  tgt = coords;
+  if (!marker) {
+    cur = coords;
+    marker = createHtmlMarker(maplibregl, map, coords, motoMarkerHtml(), 'center');
   }
-
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${LEAFLET_JS}"]`);
-    if (existing) {
-      existing.addEventListener('load', () => resolve((window as any).L));
-      existing.addEventListener('error', reject);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = LEAFLET_JS;
-    script.async = true;
-    script.onload = () => resolve((window as any).L);
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
+  if (recenter && map) {
+    map.setCenter(coords);
+    if (map.getZoom() < 14) map.setZoom(14);
+  }
 }
 
-function renderFix(L: any, fix: Fix) {
-  if (!leafletMap) return;
-  const latlng = [fix.lat, fix.lng];
-  if (!marker) {
-    marker = L.marker(latlng, {
-      icon: L.divIcon({
-        className: 'fann-courier-marker',
-        html: '<span class="dot"></span><span class="pulse"></span>',
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
-      }),
-      keyboard: false,
-      interactive: false,
-    }).addTo(leafletMap);
-  } else {
-    marker.setLatLng(latlng);
+function tick() {
+  if (marker && cur && tgt) {
+    cur = lerp(cur, tgt, 0.08);
+    marker.setCoordinates(cur);
   }
-  leafletMap.setView(latlng, Math.max(leafletMap.getZoom?.() ?? 12, 14), { animate: true });
+  rafId = requestAnimationFrame(tick);
 }
 
 async function poll() {
@@ -78,8 +54,7 @@ async function poll() {
     if (!res.ok) return;
     const data = await res.json();
     if (data.tracking && data.courier) {
-      const L = (window as any).L;
-      if (L) renderFix(L, { lat: data.courier.lat, lng: data.courier.lng });
+      setTarget({ lat: data.courier.lat, lng: data.courier.lng });
     }
   } catch {
     /* swallow — next tick will retry */
@@ -89,41 +64,33 @@ async function poll() {
 onMounted(async () => {
   if (!mapEl.value) return;
   try {
-    const L = await loadLeaflet();
-    if (!L || !mapEl.value) return;
+    maplibregl = await loadMapLibre();
+    if (!maplibregl || !mapEl.value) return;
     const center: [number, number] = props.initial
-      ? [props.initial.lat, props.initial.lng]
-      : [38.5598, 68.787]; // Dushanbe fallback
-    leafletMap = L.map(mapEl.value, {
-      center,
-      zoom: 13,
-      scrollWheelZoom: false,
-      attributionControl: true,
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 19,
-    }).addTo(leafletMap);
-    if (props.initial) renderFix(L, props.initial);
+      ? [props.initial.lng, props.initial.lat]
+      : DUSHANBE;
+    map = new maplibregl.Map({ container: mapEl.value, style: MAP_STYLE, center, zoom: 13 });
+    rafId = requestAnimationFrame(tick);
+    if (props.initial) setTarget(props.initial);
     ready.value = true;
     if (props.pollUrl) {
       poll();
       pollTimer = window.setInterval(poll, 15000);
     }
   } catch {
-    /* leaflet failed — section just stays blank */
+    /* MapLibre failed — section just stays blank */
   }
 });
 
 onBeforeUnmount(() => {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-  if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (marker) { marker.destroy(); marker = null; }
+  if (map) { map.remove(); map = null; }
 });
 
 watch(() => props.initial, (fix) => {
-  if (!fix) return;
-  const L = (window as any).L;
-  if (L) renderFix(L, fix);
+  if (fix && map) setTarget(fix);
 });
 </script>
 
@@ -132,20 +99,32 @@ watch(() => props.initial, (fix) => {
 </template>
 
 <style>
-/* Leaflet builds the marker DOM at runtime, so these must be unscoped. */
-.fann-courier-marker { position: relative; width: 22px; height: 22px; }
-.fann-courier-marker .dot {
-  position: absolute; top: 5px; left: 5px; width: 12px; height: 12px;
-  border-radius: 9999px; background: #0ea5e9; border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.45); z-index: 2;
+/* MapGL builds the HtmlMarker DOM at runtime, so these must be unscoped. */
+.fann-moto {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
-.fann-courier-marker .pulse {
-  position: absolute; top: 0; left: 0; width: 22px; height: 22px;
-  border-radius: 9999px; background: rgba(14, 165, 233, 0.45);
-  animation: fann-courier-pulse 1.6s ease-out infinite;
+.fann-moto__icon {
+  position: relative;
+  z-index: 2;
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
-@keyframes fann-courier-pulse {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(1.7); opacity: 0; }
+.fann-moto__pulse {
+  position: absolute;
+  inset: 4px;
+  border-radius: 9999px;
+  background: rgba(38, 90, 128, 0.4);
+  animation: fann-moto-pulse 1.8s ease-out infinite;
+}
+@keyframes fann-moto-pulse {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0; }
 }
 </style>

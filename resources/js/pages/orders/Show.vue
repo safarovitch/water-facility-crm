@@ -33,7 +33,7 @@ interface ReturnedMaterial {
   id: number;
   name: string;
   unit: string;
-  pivot: { quantity: number; };
+  pivot: { quantity: number; deferred_quantity?: number; };
 }
 interface Order {
   id: number;
@@ -93,7 +93,9 @@ interface ReusableSummaryRow {
   raw_material: { id: number; name: string; unit: string; deposit_price: string };
   expected: number;
   returned: number;
+  deferred: number;
   missing: number;
+  chargeable: number;
   charge: number;
 }
 
@@ -202,7 +204,7 @@ interface DeliveredLine {
 const statusForm = ref({
   status: '',
   actual_delivery_at: '',
-  returned_materials: [] as { raw_material_id: number; quantity: number }[],
+  returned_materials: [] as { raw_material_id: number; quantity: number; deferred_quantity: number }[],
   delivered_items: [] as DeliveredLine[],
 });
 
@@ -235,7 +237,14 @@ const confirmStatusUpdate = (status: string) => {
     statusForm.value.status = status;
     statusForm.value.actual_delivery_at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
 
-    statusForm.value.returned_materials = [];
+    // Seed one returned-container row per reusable material expected in this
+    // order. The admin records how many empties were collected now vs. left to
+    // collect later; whatever remains is charged at the deposit price.
+    statusForm.value.returned_materials = (props.reusable_summary ?? []).map(r => ({
+      raw_material_id: r.raw_material.id,
+      quantity: r.returned ?? 0,
+      deferred_quantity: r.deferred ?? 0,
+    }));
 
     // Seed delivered_items with "fully delivered" for every line. The
     // admin can lower the count per row; rows where they go below
@@ -258,6 +267,20 @@ const confirmStatusUpdate = (status: string) => {
       }
     });
   }
+};
+
+const reusableSummaryById = computed(() => {
+  const map: Record<number, ReusableSummaryRow> = {};
+  for (const r of props.reusable_summary ?? []) map[r.raw_material.id] = r;
+  return map;
+});
+
+// Live deposit for a row = whatever is neither collected now nor deferred.
+const lineCharge = (row: { raw_material_id: number; quantity: number; deferred_quantity: number }) => {
+  const s = reusableSummaryById.value[row.raw_material_id];
+  if (!s) return 0;
+  const remaining = Math.max(s.expected - (Number(row.quantity) || 0) - (Number(row.deferred_quantity) || 0), 0);
+  return remaining * Number(s.raw_material.deposit_price);
 };
 
 const submitStatusUpdate = () => {
@@ -715,13 +738,14 @@ const statusButtonClass = (s: string) => {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package-check"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7.08 12 12 20.71 7.08"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
             Returned Materials Log
           </h2>
-          <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 py-0.5 px-2.5 rounded-full font-bold">Successfully Collected</span>
+          <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 py-0.5 px-2.5 rounded-full font-bold">Collected & pending</span>
         </div>
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-400">
             <tr>
               <th class="px-6 py-3 font-semibold">Material Model</th>
-              <th class="px-6 py-3 text-right font-semibold">Quantity Returned</th>
+              <th class="px-6 py-3 text-right font-semibold">Collected</th>
+              <th class="px-6 py-3 text-right font-semibold">To collect later</th>
             </tr>
           </thead>
           <tbody>
@@ -732,6 +756,10 @@ const statusButtonClass = (s: string) => {
               </td>
               <td class="px-6 py-3.5 text-right font-black text-gray-900 dark:text-gray-100 text-base">
                 +{{ item.pivot.quantity }} <span class="text-[10px] uppercase font-bold text-gray-400 ml-0.5">{{ item.unit }}</span>
+              </td>
+              <td class="px-6 py-3.5 text-right">
+                <span v-if="(item.pivot.deferred_quantity || 0) > 0" class="font-bold text-amber-600 dark:text-amber-400 text-base">⏳ {{ item.pivot.deferred_quantity }}</span>
+                <span v-else class="text-gray-300 dark:text-gray-600">—</span>
               </td>
             </tr>
           </tbody>
@@ -1021,43 +1049,48 @@ const statusButtonClass = (s: string) => {
               </p>
             </div>
 
-            <div v-if="(props.reusable_summary ?? []).length > 0" class="rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-900/10 p-4 space-y-2">
-                <p class="text-xs uppercase font-bold text-blue-700 dark:text-blue-300">Reusable containers in this order</p>
-                <p class="text-[11px] text-blue-700/80 dark:text-blue-300/80">Any container the client doesn't hand back is added to the order total at its deposit price.</p>
-                <ul class="divide-y divide-blue-100 dark:divide-blue-900/40">
-                  <li v-for="row in props.reusable_summary" :key="row.raw_material.id" class="py-2 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span class="font-medium text-gray-900 dark:text-white flex-1 min-w-0 truncate">{{ row.raw_material.name }}</span>
-                    <span class="text-xs text-gray-500">
-                      Expected <span class="font-semibold text-gray-700 dark:text-gray-200">{{ row.expected }}</span>
-                      · Returned <span class="font-semibold text-gray-700 dark:text-gray-200">{{ row.returned }}</span>
-                    </span>
-                    <span v-if="row.missing > 0" class="text-xs font-semibold text-red-600 dark:text-red-400">
-                      Charge {{ row.missing }} × {{ Number(row.raw_material.deposit_price).toFixed(2) }} = {{ row.charge.toFixed(2) }}
-                    </span>
-                    <span v-else class="text-xs font-semibold text-green-600 dark:text-green-400">All returned</span>
-                  </li>
-                </ul>
-            </div>
+            <div v-if="statusForm.returned_materials.length > 0" class="rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-900/10 p-4 space-y-3">
+                <div>
+                  <p class="text-xs uppercase font-bold text-blue-700 dark:text-blue-300">Empty containers</p>
+                  <p class="text-[11px] text-blue-700/80 dark:text-blue-300/80">Record how many empties you collected now and how many you'll collect later. Whatever is left is charged at the deposit price.</p>
+                </div>
 
-            <div v-if="(props.reusable_materials ?? []).length > 0" class="flex flex-col gap-2 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <label class="text-xs uppercase font-bold text-gray-500">Returned Containers</label>
-                
-                <div v-if="statusForm.returned_materials.length === 0" class="text-xs text-gray-400 py-3 italic text-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-                    No items marked for return. Tracking none.
+                <div
+                  v-for="rm in statusForm.returned_materials"
+                  :key="rm.raw_material_id"
+                  class="rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 p-3 space-y-2"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ reusableSummaryById[rm.raw_material_id]?.raw_material.name }}</span>
+                    <span class="text-[11px] text-gray-500">Expected <span class="font-semibold text-gray-700 dark:text-gray-200">{{ reusableSummaryById[rm.raw_material_id]?.expected }}</span></span>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[11px] font-semibold text-gray-500 uppercase">Collected now</span>
+                      <input
+                        type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
+                        v-model.number="rm.quantity"
+                        class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase">Collect later</span>
+                      <input
+                        type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
+                        v-model.number="rm.deferred_quantity"
+                        class="bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-900/50 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </label>
+                  </div>
+
+                  <div class="flex items-center justify-between text-xs">
+                    <span v-if="(rm.deferred_quantity || 0) > 0" class="text-amber-600 dark:text-amber-400 font-medium">⏳ {{ rm.deferred_quantity }} to collect later</span>
+                    <span v-else></span>
+                    <span v-if="lineCharge(rm) > 0" class="font-semibold text-red-600 dark:text-red-400">Deposit charge {{ lineCharge(rm).toFixed(2) }}</span>
+                    <span v-else class="font-semibold text-green-600 dark:text-green-400">No deposit charge</span>
+                  </div>
                 </div>
-                
-                <div v-for="(rm, index) in statusForm.returned_materials" :key="index" class="flex items-center gap-2 mb-1">
-                    <select v-model="statusForm.returned_materials[index].raw_material_id" class="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 outline-none">
-                      <option disabled :value="0">Select material</option>
-                      <option v-for="material in props.reusable_materials" :key="material.id" :value="material.id">{{ material.name }}</option>
-                    </select>
-                    <input type="number" min="1" v-model="statusForm.returned_materials[index].quantity" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 w-24 text-sm outline-none" placeholder="Qty" />
-                    <button type="button" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors" @click="statusForm.returned_materials.splice(index, 1)">✕</button>
-                </div>
-                
-                <Button variant="outline" type="button" @click="statusForm.returned_materials.push({ raw_material_id: 0, quantity: 1 })" class="mt-2 w-full border-dashed border-2 bg-transparent">
-                  + Add returned material
-                </Button>
             </div>
             
             <div class="flex justify-end gap-3 pt-4 border-t mt-4">
