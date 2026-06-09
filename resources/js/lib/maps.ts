@@ -15,6 +15,14 @@ export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 // Dushanbe city center, in [lng, lat] order (MapLibre/GeoJSON convention).
 export const DUSHANBE: [number, number] = [68.787, 38.5598];
 
+// Bounding box covering greater Dushanbe, as [[swLng, swLat], [neLng, neLat]].
+// The homepage fits this on load so the whole city is in frame (rather than a
+// fixed zoom that crops the edges on tall/narrow viewports).
+export const DUSHANBE_BOUNDS: [[number, number], [number, number]] = [
+    [68.700, 38.485],
+    [68.870, 38.635],
+];
+
 let loaderPromise: Promise<any> | null = null;
 
 /** Load MapLibre GL (JS + CSS) and resolve with the global `maplibregl`. */
@@ -86,9 +94,11 @@ export function lerp(a: [number, number], b: [number, number], t: number): [numb
     return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 }
 
-// Preset loops roughly tracing Dushanbe's main road grid. Synthetic couriers
-// drive along these (looping) to imitate active deliveries for logged-out
-// visitors when no real courier is online. Coordinates are [lng, lat].
+// Preset loops whose waypoints sit on Dushanbe's main avenues. They are only a
+// coarse skeleton — `snapRouteToRoads` turns each into a dense, road-following
+// polyline so synthetic couriers drive along actual streets rather than cutting
+// across blocks. Coordinates are [lng, lat]; each route ends where it starts so
+// it loops cleanly.
 export const SYNTHETIC_ROUTES: [number, number][][] = [
     [[68.780, 38.553], [68.787, 38.557], [68.792, 38.563], [68.788, 38.570], [68.781, 38.567], [68.776, 38.560], [68.780, 38.553]],
     [[68.785, 38.575], [68.793, 38.580], [68.800, 38.585], [68.794, 38.590], [68.786, 38.586], [68.785, 38.575]],
@@ -96,3 +106,53 @@ export const SYNTHETIC_ROUTES: [number, number][][] = [
     [[68.795, 38.555], [68.803, 38.560], [68.808, 38.566], [68.801, 38.570], [68.795, 38.564], [68.795, 38.555]],
     [[68.765, 38.560], [68.772, 38.565], [68.778, 38.570], [68.772, 38.575], [68.764, 38.569], [68.765, 38.560]],
 ];
+
+// Public OSRM demo server: free, keyless road routing over OSM data.
+const OSRM_DRIVING = 'https://router.project-osrm.org/route/v1/driving/';
+
+/**
+ * Snap a list of waypoints to a real driving path along Dushanbe's roads,
+ * returning a dense [lng, lat] polyline. Falls back to the raw waypoints if the
+ * routing service is unavailable so the map still animates offline.
+ */
+export async function snapRouteToRoads(waypoints: [number, number][]): Promise<[number, number][]> {
+    try {
+        const coords = waypoints.map(([lng, lat]) => `${lng},${lat}`).join(';');
+        const res = await fetch(`${OSRM_DRIVING}${coords}?overview=full&geometries=geojson`);
+        if (!res.ok) return waypoints;
+        const data = await res.json();
+        const line = data?.routes?.[0]?.geometry?.coordinates;
+        return Array.isArray(line) && line.length > 1 ? (line as [number, number][]) : waypoints;
+    } catch {
+        return waypoints;
+    }
+}
+
+// A polyline with precomputed cumulative segment lengths, so a marker can be
+// placed at a constant ground speed regardless of how the points are spaced.
+export interface RoadPath {
+    points: [number, number][];
+    cum: number[];
+    total: number;
+}
+
+/** Precompute cumulative distances along a polyline for distance-based animation. */
+export function buildRoadPath(points: [number, number][]): RoadPath {
+    const cum = [0];
+    for (let i = 1; i < points.length; i++) {
+        cum.push(cum[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
+    }
+    return { points, cum, total: cum[cum.length - 1] || 1 };
+}
+
+/** Position [lng, lat] at distance `d` along a road path; wraps for seamless looping. */
+export function pointAtDistance(path: RoadPath, d: number): [number, number] {
+    const { points, cum, total } = path;
+    if (points.length < 2) return points[0];
+    const dist = ((d % total) + total) % total;
+    let i = 1;
+    while (i < cum.length && cum[i] < dist) i++;
+    if (i >= cum.length) return points[points.length - 1];
+    const segLen = cum[i] - cum[i - 1] || 1;
+    return lerp(points[i - 1], points[i], (dist - cum[i - 1]) / segLen);
+}

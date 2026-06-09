@@ -2,7 +2,8 @@
 import FannLogo from '@/components/FannLogo.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { useLandingI18n } from '@/composables/useLandingI18n';
-import { DUSHANBE, MAP_STYLE, SYNTHETIC_ROUTES, createHtmlMarker, lerp, loadMapLibre, motoMarkerHtml } from '@/lib/maps';
+import type { RoadPath } from '@/lib/maps';
+import { DUSHANBE_BOUNDS, MAP_STYLE, SYNTHETIC_ROUTES, buildRoadPath, createHtmlMarker, lerp, loadMapLibre, motoMarkerHtml, pointAtDistance, snapRouteToRoads } from '@/lib/maps';
 import { dashboard, login, register } from '@/routes';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
@@ -44,7 +45,7 @@ const email = 'water@fann.tj';
 const mapEl = ref<HTMLDivElement | null>(null);
 const courierCount = ref(0);
 const mapReady = ref(false);
-const trackingMode = ref<'idle' | 'personal' | 'public'>('idle');
+const trackingMode = ref<'idle' | 'personal' | 'public' | 'noOrder'>('idle');
 
 let maplibregl: any = null;
 let map: any = null;
@@ -61,8 +62,13 @@ const liveMarkers = new Map<string, LiveMarker>();
 
 // Synthetic motorbikes looping preset Dushanbe routes — shown to logged-out
 // visitors only when no real courier is online, to imitate active delivery.
-type SynthMarker = { marker: any; route: [number, number][]; seg: number; t: number; speed: number };
+// Each synthetic courier rides a road-snapped path at a constant ground speed,
+// `dist` advancing along the polyline and wrapping at its end to loop forever.
+type SynthMarker = { marker: any; path: RoadPath; dist: number; speed: number };
 let synthMarkers: SynthMarker[] = [];
+// Road-snapped paths, fetched once from OSRM then reused across re-starts.
+let syntheticPaths: RoadPath[] | null = null;
+let synthStarting = false;
 
 async function fetchPersonalTracking(): Promise<CourierFix | null> {
     try {
@@ -113,15 +119,32 @@ function clearLiveMarkers() {
     liveMarkers.clear();
 }
 
-function startSynthetic() {
-    if (synthMarkers.length) return;
-    synthMarkers = SYNTHETIC_ROUTES.map((route, i) => ({
-        marker: makeMoto(route[0]),
-        route,
-        seg: 0,
-        t: 0,
-        // Vary speed deterministically so they don't move in lockstep.
-        speed: 0.0035 + (i % 5) * 0.001,
+// Snap the preset routes to real roads once, then cache. Falls back to raw
+// waypoints inside snapRouteToRoads if the routing service is unreachable.
+async function getSyntheticPaths(): Promise<RoadPath[]> {
+    if (syntheticPaths) return syntheticPaths;
+    const snapped = await Promise.all(SYNTHETIC_ROUTES.map(snapRouteToRoads));
+    syntheticPaths = snapped.map(buildRoadPath);
+    return syntheticPaths;
+}
+
+async function startSynthetic() {
+    if (synthMarkers.length || synthStarting) return;
+    synthStarting = true;
+    const paths = await getSyntheticPaths();
+    synthStarting = false;
+    // The map may have been torn down, or a real courier may have taken over,
+    // while we awaited the route snapping.
+    if (!map || trackingMode.value !== 'public' || synthMarkers.length) return;
+    synthMarkers = paths.map((path, i) => ({
+        marker: makeMoto(path.points[0]),
+        path,
+        // Stagger starts so couriers spread along their loops, not bunched up.
+        dist: (path.total / paths.length) * i,
+        // Constant ground speed tuned to feel like a real motorbike weaving
+        // through city traffic (~3–4 min per loop at 60fps). Vary the loop period
+        // deterministically so they don't move in lockstep.
+        speed: path.total / (120000 + (i % 5) * 2000),
     }));
     courierCount.value = synthMarkers.length;
 }
@@ -137,12 +160,8 @@ function tick() {
         lm.marker.setCoordinates(lm.cur);
     }
     for (const s of synthMarkers) {
-        s.t += s.speed;
-        while (s.t >= 1) {
-            s.t -= 1;
-            s.seg = (s.seg + 1) % (s.route.length - 1);
-        }
-        s.marker.setCoordinates(lerp(s.route[s.seg], s.route[s.seg + 1], s.t));
+        s.dist = (s.dist + s.speed) % s.path.total;
+        s.marker.setCoordinates(pointAtDistance(s.path, s.dist));
     }
     rafId = requestAnimationFrame(tick);
 }
@@ -150,30 +169,33 @@ function tick() {
 async function refreshMap() {
     if (!map) return;
 
+    // A logged-in user with a real delivery in progress sees their own courier
+    // (and nothing else). Everyone else — logged-out visitors, or signed-in
+    // users without an active order — gets the lively mock motorbikes so the
+    // homepage map is never empty.
     if (isLoggedIn.value) {
-        // Signed-in users see only the courier delivering their own order —
-        // never the mock demo couriers.
-        stopSynthetic();
         const own = await fetchPersonalTracking();
         if (own) {
+            stopSynthetic();
             trackingMode.value = 'personal';
             courierCount.value = 1;
             setLiveMarkers([{ ...own, id: 'self' }]);
             map.setCenter([own.lng, own.lat]);
             if (map.getZoom() < 13) map.setZoom(13);
-        } else {
-            // No active delivery — show nothing.
-            trackingMode.value = 'public';
-            courierCount.value = 0;
-            clearLiveMarkers();
+            return;
         }
+        stopSynthetic();
+        clearLiveMarkers();
+        trackingMode.value = 'noOrder';
+        courierCount.value = 0;
         return;
     }
 
-    // Logged-out visitors always see the looping mock motorbikes.
+    // Logged-out visitors get the lively mock motorbikes looping Dushanbe roads
+    // so the homepage map is never empty.
     clearLiveMarkers();
     trackingMode.value = 'public';
-    startSynthetic();
+    await startSynthetic();
 }
 
 function scrollToTargetIfPresent() {
@@ -228,8 +250,10 @@ onMounted(async () => {
         map = new maplibregl.Map({
             container: mapEl.value,
             style: MAP_STYLE,
-            center: DUSHANBE,
-            zoom: 12,
+            // Fit the whole city in frame on load instead of a fixed zoom that
+            // crops the edges on tall/narrow viewports.
+            bounds: DUSHANBE_BOUNDS,
+            fitBoundsOptions: { padding: 24 },
         });
         mapReady.value = true;
         rafId = requestAnimationFrame(tick);
@@ -714,6 +738,9 @@ const couriersLabel = (count: number) => {
                         <template v-else-if="trackingMode === 'personal'">
                             {{ t('coverage.personal') }}
                         </template>
+                        <template v-else-if="trackingMode === 'noOrder'">
+                            {{ t('coverage.noActiveOrder') }}
+                        </template>
                         <template v-else-if="courierCount > 0">
                             {{ couriersLabel(courierCount) }}
                         </template>
@@ -728,7 +755,7 @@ const couriersLabel = (count: number) => {
             <div class="overflow-hidden rounded-3xl bg-slate-900 text-white">
                 <div class="grid gap-10 p-10 md:grid-cols-2 md:p-14">
                     <div>
-                        <FannLogo light class="mb-6 h-20 w-auto" />
+                        <FannLogo light class="mb-6 h-16 w-auto" />
                         <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
                             {{ t('contact.title') }}
                         </h2>
