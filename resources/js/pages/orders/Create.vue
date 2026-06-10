@@ -7,6 +7,7 @@ import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
+import ClientCombobox from '@/components/ClientCombobox.vue';
 import { index, store } from '@/routes/admin/orders';
 import { computed, ref } from 'vue';
 
@@ -106,9 +107,6 @@ const clearCustomTotal = () => { form.custom_total = null; };
 
 const submitForm = () => { form.post(store().url); };
 
-const clientLabel = (c: Client) =>
-  c.user_profile?.company_name ? `${c.name} (${c.user_profile.company_name})` : c.name;
-
 const selectedClient = computed(() => props.clients.find(c => c.id === form.user_id));
 const clientAddresses = computed(() => (selectedClient.value as any)?.addresses || []);
 
@@ -162,16 +160,12 @@ const toggleNewAddress = () => {
                 </button>
               </div>
 
-              <select
+              <ClientCombobox
                 v-if="!isNewContact"
                 id="user_id"
                 v-model="form.user_id"
-                :required="!isNewContact"
-                class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white"
-              >
-                <option :value="null">Select client...</option>
-                <option v-for="c in props.clients" :key="c.id" :value="c.id">{{ clientLabel(c) }}</option>
-              </select>
+                :clients="props.clients"
+              />
 
               <div
                 v-else

@@ -20,8 +20,10 @@ class ProductController extends Controller
     $query = Product::query();
 
     if ($request->filled('search')) {
-      $query->where('sku', 'like', '%' . $request->search . '%')
-            ->orWhere('name', 'like', '%' . $request->search . '%');
+      $query->where(function ($q) use ($request) {
+        $q->where('sku', 'like', '%' . $request->search . '%')
+          ->orWhere('name', 'like', '%' . $request->search . '%');
+      });
     }
 
     $products = $query->latest()->paginate(50)->withQueryString();

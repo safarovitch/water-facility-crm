@@ -33,17 +33,8 @@ class UserController extends Controller
             });
         }
 
-        $pagination = request()->has('pagination')
-            ? request()->input('pagination')
-            : ['limit' => 50, 'page' => 1];
-
         return Inertia::render('users/Index')->with([
-            'users' => $query->paginate(
-                $pagination['limit'],
-                ['*'],
-                'page',
-                $pagination['page']
-            )->withQueryString(),
+            'users' => $query->paginate(request()->integer('per_page', 50))->withQueryString(),
             'filters' => request()->only(['search']),
             'roles' => Role::all(),
             'statuses' => UserStatus::asArray(),

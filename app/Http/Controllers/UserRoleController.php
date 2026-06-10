@@ -19,17 +19,8 @@ class UserRoleController extends Controller
             $query->where('name', 'like', '%' . request()->search . '%');
         }
 
-        $pagination = request()->has('pagination')
-            ? request()->input('pagination')
-            : ['limit' => 50, 'page' => 1];
-
         return Inertia::render('roles/Index')->with([
-            'roles' => $query->paginate(
-                $pagination['limit'],
-                ['*'],
-                'page',
-                $pagination['page']
-            )->withQueryString(),
+            'roles' => $query->paginate(request()->integer('per_page', 50))->withQueryString(),
             'filters' => request()->only(['search']),
         ]);
     }

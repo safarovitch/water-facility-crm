@@ -13,8 +13,10 @@ class RawMaterialController extends Controller
         $query = RawMaterial::query();
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('sku', 'like', '%' . $request->search . '%');
+            });
         }
 
         if ($request->filled('status')) {

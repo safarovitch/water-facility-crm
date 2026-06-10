@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\FinancialTransactionCategory;
 use App\Enums\FinancialTransactionType;
 use App\Enums\OrderStatus;
+use App\Http\Controllers\Concerns\SortsQueries;
 use App\Models\FinancialRecord;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use BenSampo\Enum\Rules\EnumValue;
 
 class FinancialRecordController extends Controller
 {
+    use SortsQueries;
+
     public function index(Request $request): Response
     {
         $query = FinancialRecord::with('recorder');
@@ -45,7 +48,16 @@ class FinancialRecordController extends Controller
         $totalRevenue = (float) Order::where('status', OrderStatus::Delivered)
             ->sum('total_amount');
 
-        $records = $query->latest('transaction_date')->latest('id')->paginate(50)->withQueryString();
+        // Whitelisted sorting; default to newest transaction first.
+        if (! $this->applySort($query, [
+            'transaction_date' => 'transaction_date',
+            'amount'           => 'amount',
+            'category'         => 'category',
+        ])) {
+            $query->latest('transaction_date')->latest('id');
+        }
+
+        $records = $query->paginate(50)->withQueryString();
 
         $dbCategories = FinancialRecord::distinct()->pluck('category')->toArray();
         $categories = FinancialTransactionCategory::asSelectArray();

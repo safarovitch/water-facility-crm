@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Http\Controllers\Concerns\SortsQueries;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
@@ -22,6 +23,8 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
+  use SortsQueries;
+
   /**
    * Given the calculated item total and an optional admin-supplied custom
    * total, return [final_total, discount]. If custom is unset or equal to
@@ -144,10 +147,6 @@ class OrderController extends Controller
 
   public function index()
   {
-    $pagination = request()->has('pagination')
-      ? request()->input('pagination')
-      : ['limit' => 50, 'page' => 1];
-
     // Client-facing /orders route MUST be scoped to the signed-in user.
     // Only the admin /admin/orders path may list across users.
     $isAdminPath = request()->is('admin/*');
@@ -160,7 +159,7 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $orders = Order::with(['client.phones', 'creator'])
+    $ordersQuery = Order::with(['client.phones', 'creator'])
       ->when(
         !$isAdminPath && $authUserId,
         fn($q) => $q->where('user_id', $authUserId)
@@ -175,6 +174,19 @@ class OrderController extends Controller
         fn($q, $userId) =>
         $q->where('user_id', $userId)
       )
+      // Free-text search over order number, walk-in contact, and the linked
+      // client's name. Wrapped in a nested where so the OR group doesn't leak
+      // past the user/status scopes above.
+      ->when(
+        request('search'),
+        fn($q, $search) =>
+        $q->where(function ($sub) use ($search) {
+          $sub->where('order_number', 'like', "%{$search}%")
+              ->orWhere('contact_name', 'like', "%{$search}%")
+              ->orWhere('contact_phone', 'like', "%{$search}%")
+              ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%{$search}%"));
+        })
+      )
       ->when(
         request('from'),
         fn($q, $from) =>
@@ -184,9 +196,31 @@ class OrderController extends Controller
         request('to'),
         fn($q, $to) =>
         $q->whereDate('created_at', '<=', $to)
-      )
-      ->latest()
-      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page'])
+      );
+
+    // Whitelisted sorting. Relation/computed columns (client name, balance
+    // due) use subquery / raw ordering; everything else falls back to newest
+    // first.
+    $sorted = $this->applySort($ordersQuery, [
+      'order_number'          => 'order_number',
+      'status'                => 'status',
+      'total_amount'          => 'total_amount',
+      'scheduled_delivery_at' => 'scheduled_delivery_at',
+      'client_id'             => fn($q, $dir) => $q->orderBy(
+        User::select('name')->whereColumn('users.id', 'orders.user_id'),
+        $dir
+      ),
+      'balance_due'           => fn($q, $dir) => $q->orderByRaw(
+        "(total_amount + COALESCE(deposit_charge, 0) - COALESCE(paid_amount, 0)) {$dir}"
+      ),
+    ]);
+
+    if (! $sorted) {
+      $ordersQuery->latest();
+    }
+
+    $orders = $ordersQuery
+      ->paginate(request()->integer('per_page', 50))
       ->withQueryString();
 
     return Inertia::render('orders/Index')->with([

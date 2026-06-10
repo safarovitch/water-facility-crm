@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SortsQueries;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Models\User;
@@ -20,19 +21,22 @@ use Spatie\Activitylog\Models\Activity;
 
 class ClientController extends Controller
 {
+  use SortsQueries;
+
   public function index(): Response
   {
-    $pagination = request()->has('pagination')
-      ? request()->input('pagination')
-      : ['limit' => 50, 'page' => 1];
-
-    $clients = User::role('Client')
+    $query = User::role('Client')
       ->with(['userProfile', 'phones'])
+      // Nested where keeps the name/email/phone OR group from leaking past the
+      // Client-role scope (an ungrouped orWhere would return non-clients).
       ->when(
         request('search'),
         fn($q, $search) =>
-        $q->where('name', 'like', "%{$search}%")
-          ->orWhere('email', 'like', "%{$search}%")
+        $q->where(function ($sub) use ($search) {
+          $sub->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhereHas('phones', fn($p) => $p->where('phone', 'like', "%{$search}%"));
+        })
       )
       ->when(
         request('type'),
@@ -43,8 +47,22 @@ class ClientController extends Controller
         request('status'),
         fn($q, $status) =>
         $q->where('status', $status)
-      )
-      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page'])
+      );
+
+    // Whitelisted sorting. "Type" sorts via a correlated subquery on the
+    // user_profiles table so we avoid a join (and its column-ambiguity with
+    // the Client-role scope).
+    $this->applySort($query, [
+      'name'         => 'name',
+      'status'       => 'status',
+      'user_profile' => fn($q, $dir) => $q->orderBy(
+        UserProfile::select('type')->whereColumn('user_profiles.user_id', 'users.id'),
+        $dir
+      ),
+    ]);
+
+    $clients = $query
+      ->paginate(request()->integer('per_page', 50))
       ->withQueryString();
 
     return Inertia::render('clients/Index')->with([
