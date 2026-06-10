@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
 import { index, store } from '@/routes/admin/orders';
 import { computed, ref } from 'vue';
 
@@ -199,8 +200,8 @@ const toggleNewAddress = () => {
               <InputError :message="form.errors.user_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time <span class="text-gray-400 font-normal text-xs">(past dates allowed)</span></Label>
-              <Input id="scheduled_delivery_at" type="datetime-local" v-model="form.scheduled_delivery_at" step="60" />
+              <Label for="scheduled_delivery_at">Scheduled Delivery Date & Time <span class="text-gray-400 font-normal text-xs">(slots 09:00–20:00)</span></Label>
+              <DeliveryTimePicker id="scheduled_delivery_at" v-model="form.scheduled_delivery_at" auto-default />
               <InputError :message="form.errors.scheduled_delivery_at" />
             </div>
             <div class="grid gap-2 sm:col-span-2">

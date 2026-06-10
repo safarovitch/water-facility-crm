@@ -16,7 +16,8 @@ import {
 } from '@/routes/admin/orders';
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone } from 'lucide-vue-next';
+import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
+import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -338,6 +339,17 @@ const confirmOverpaymentRefund = () => {
   });
 };
 
+const isRepeatModalOpen = ref(false);
+
+const repeatItems = computed(() =>
+  props.order.items.map((item) => ({
+    product_id: item.product.id,
+    name: resolveProductName(item.product.name),
+    quantity: item.quantity,
+    is_gift: item.is_gift,
+  })),
+);
+
 const deleteConfirmExpected = computed(() => props.order.order_number);
 const canConfirmDelete = computed(() => deleteConfirmText.value.trim() === deleteConfirmExpected.value);
 
@@ -462,6 +474,18 @@ const statusButtonClass = (s: string) => {
                 </div>
               </div>
             </div>
+
+            <Button
+              v-if="adminMode"
+              type="button"
+              variant="outline"
+              size="sm"
+              class="rounded-xl h-10 px-4"
+              @click="isRepeatModalOpen = true"
+            >
+              <RotateCcw class="w-4 h-4 mr-2" />
+              Repeat Order
+            </Button>
 
             <!-- Editing a cancelled order would double-restore stock (cancel already
                  +1'd inventory; OrderController::update would +1 again). All other
@@ -1100,6 +1124,15 @@ const statusButtonClass = (s: string) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <!-- Repeat order: pick quantities + delivery time before creating. -->
+      <RepeatOrderModal
+        v-if="adminMode"
+        v-model:open="isRepeatModalOpen"
+        :items="repeatItems"
+        :submit-url="`/admin/orders/${order.id}/repeat`"
+        :order-number="order.order_number"
+      />
     </div>
   </AppLayout>
 </template>

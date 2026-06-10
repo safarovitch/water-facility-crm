@@ -44,7 +44,8 @@ class ClientController extends Controller
         fn($q, $status) =>
         $q->where('status', $status)
       )
-      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page']);
+      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page'])
+      ->withQueryString();
 
     return Inertia::render('clients/Index')->with([
       'clients' => $clients,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -383,23 +384,8 @@ const formatCurrency = (value: number) => {
                 <p>No financial records found for the given filters.</p>
             </div>
 
-            <!-- Pagination (Simple) -->
-            <div v-if="records.last_page > 1" class="px-6 py-4 border-t flex items-center justify-between">
-                <div class="text-sm text-muted-foreground">
-                    Showing {{ records.from }} to {{ records.to }} of {{ records.total }} entries
-                </div>
-                <div class="flex gap-2">
-                    <Button
-                        v-for="link in records.links.filter((l: any) => !isNaN(parseInt(l.label)) || l.label === '&laquo; Previous' || l.label === 'Next &raquo;')"
-                        :key="link.label"
-                        :variant="link.active ? 'default' : 'outline'"
-                        size="sm"
-                        :disabled="!link.url"
-                        @click="router.get(link.url, { type: filterForm.type, category: filterForm.category, from: filterForm.from, to: filterForm.to, ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }) }, { preserveState: true })"
-                        v-html="link.label"
-                    />
-                </div>
-            </div>
+            <!-- Pagination -->
+            <Pagination :paginator="records" />
         </CardContent>
       </Card>
 

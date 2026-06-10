@@ -45,7 +45,7 @@ class FinancialRecordController extends Controller
         $totalRevenue = (float) Order::where('status', OrderStatus::Delivered)
             ->sum('total_amount');
 
-        $records = $query->latest('transaction_date')->latest('id')->paginate(50);
+        $records = $query->latest('transaction_date')->latest('id')->paginate(50)->withQueryString();
 
         $dbCategories = FinancialRecord::distinct()->pluck('category')->toArray();
         $categories = FinancialTransactionCategory::asSelectArray();

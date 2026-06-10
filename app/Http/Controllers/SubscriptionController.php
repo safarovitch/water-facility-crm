@@ -35,7 +35,7 @@ class SubscriptionController extends Controller
         }
 
         return Inertia::render('subscriptions/Index', [
-            'subscriptions' => $query->paginate(20),
+            'subscriptions' => $query->paginate(20)->withQueryString(),
             'statuses' => SubscriptionStatus::getValues(),
             'frequencies' => collect(SubscriptionFrequency::cases())->map(fn($f) => [
                 'value' => $f->value,

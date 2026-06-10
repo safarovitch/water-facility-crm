@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
 import { index, create, edit } from '@/routes/admin/roles';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
@@ -120,12 +121,7 @@ const doSearch = () => {
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="(roles.meta?.last_page || roles.last_page) > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
-                        <template v-for="(link, key) in (roles.meta?.links || roles.links)" :key="key">
-                            <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
-                            <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
-                        </template>
-                    </div>
+                    <Pagination :paginator="roles" />
                 </CardContent>
             </Card>
         </div>

@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import Label from '@/components/ui/label/Label.vue';
 import InputError from '@/components/InputError.vue';
+import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
 import { ArrowLeft, MapPin, Plus, Minus, ShoppingCart, Package } from 'lucide-vue-next';
 
 interface Address {
@@ -278,13 +279,8 @@ const submit = () => {
         <h2 class="text-base font-semibold">When &amp; notes</h2>
 
         <div class="grid gap-2">
-          <Label for="scheduled_delivery_at">Preferred delivery date &amp; time <span class="text-xs text-slate-400 font-normal">(optional, past dates allowed)</span></Label>
-          <Input
-            id="scheduled_delivery_at"
-            type="datetime-local"
-            v-model="form.scheduled_delivery_at"
-            step="60"
-          />
+          <Label for="scheduled_delivery_at">Preferred delivery date &amp; time <span class="text-xs text-slate-400 font-normal">(slots 09:00–20:00)</span></Label>
+          <DeliveryTimePicker id="scheduled_delivery_at" v-model="form.scheduled_delivery_at" auto-default />
           <InputError :message="form.errors.scheduled_delivery_at" />
         </div>
 

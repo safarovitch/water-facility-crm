@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
 import { index as ordersIndex } from '@/routes/orders';
 import { index, create, edit, show, destroy } from '@/routes/admin/clients';
 import { type BreadcrumbItem } from '@/types';
@@ -267,12 +268,7 @@ const initiateCall = (phone: string | null) => {
             </div>
 
             <!-- Pagination -->
-            <div v-if="clients.meta?.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
-                <template v-for="(link, key) in clients.meta.links" :key="key">
-                    <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
-                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, { search: search, status: statusFilter, type: typeFilter, ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }) }, { preserveScroll: true, preserveState: true })" v-html="link.label" />
-                </template>
-            </div>
+            <Pagination :paginator="clients" />
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
 import { index, create, edit } from '@/routes/admin/products';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
@@ -202,12 +203,7 @@ const applyFilters = () => {
             </div>
             
             <!-- Pagination -->
-            <div v-if="products.last_page > 1" class="px-6 py-4 border-t flex flex-wrap gap-1 bg-gray-50/50 dark:bg-gray-800/30">
-                <div v-for="(link, key) in products.links" :key="key">
-                    <Button v-if="link.url === null" disabled variant="outline" size="sm" class="opacity-50 h-8" v-html="link.label" />
-                    <Button v-else :variant="link.active ? 'default' : 'outline'" size="sm" class="h-8" @click="router.get(link.url, filterForm.data(), { preserveScroll: true, preserveState: true })" v-html="link.label" />
-                </div>
-            </div>
+            <Pagination :paginator="products" />
         </CardContent>
       </Card>
     </div>

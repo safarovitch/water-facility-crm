@@ -111,6 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::get('create',             [OrderController::class, 'create'])->name('create');
       Route::post('store',             [OrderController::class, 'store'])->name('store');
       Route::get('{order}',            [OrderController::class, 'show'])->name('show');
+      Route::post('{order}/repeat',    [OrderController::class, 'repeat'])->name('repeat');
       Route::get('edit/{order}',       [OrderController::class, 'edit'])->name('edit');
       Route::post('update/{order}',    [OrderController::class, 'update'])->name('update');
       Route::post('{order}/refund-overpayment', [OrderController::class, 'refundOverpayment'])->name('refundOverpayment');
@@ -172,6 +173,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       // captured by the show wildcard.
       Route::get('create', [OrderController::class, 'clientCreate'])->name('client.create');
       Route::post('store', [OrderController::class, 'clientStore'])->name('client.store');
+      Route::post('repeat-last', [OrderController::class, 'clientRepeatLast'])->name('client.repeat-last');
       Route::get('{order}', [OrderController::class, 'show'])->name('show');
       Route::post('{order}/pay', [OrderController::class, 'payWithWallet'])->name('pay');
   });

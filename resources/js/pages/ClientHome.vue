@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import FannLogo from '@/components/FannLogo.vue';
 import OrderStage from '@/components/OrderStage.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
 import { useEcho } from '@/composables/useEcho';
 import {
   Phone,
@@ -13,6 +14,7 @@ import {
   Calendar,
   LogOut,
   Package,
+  RotateCcw,
 } from 'lucide-vue-next';
 
 interface OrderItem { id: number; quantity: number; is_gift?: boolean; product: { id: number; name: any; image_url?: string | null } }
@@ -86,6 +88,20 @@ const totalBottles = (order: OrderSummary): number =>
 
 const logout = () => router.post('/logout');
 
+// ── Repeat last order ─────────────────────────────────────────────────────────
+// orderHistory is latest-first across all orders, so [0] is the same order the
+// backend repeats via Order::latest()->first().
+const lastOrder = computed(() => props.orderHistory[0] ?? null);
+const isRepeatModalOpen = ref(false);
+const repeatItems = computed(() =>
+  (lastOrder.value?.items ?? []).map((item) => ({
+    product_id: item.product.id,
+    name: resolveProductName(item.product?.name),
+    quantity: item.quantity,
+    is_gift: item.is_gift,
+  })),
+);
+
 // ── Order detail modal ────────────────────────────────────────────────────────
 const detailOrder = ref<OrderSummary | null>(null);
 const isDetailOpen = computed({
@@ -156,13 +172,24 @@ onBeforeUnmount(() => {
           <h1 class="text-2xl font-semibold tracking-tight">Hi, {{ profile.name?.split(' ')[0] ?? 'there' }}</h1>
           <p class="text-sm text-slate-500">Welcome back to fann.</p>
         </div>
-        <Link
-          href="/orders/create"
-          class="inline-flex h-10 items-center gap-2 rounded-full bg-sky-500 px-5 text-sm font-semibold text-white shadow-sm hover:bg-sky-600"
-        >
-          <ShoppingCart class="h-4 w-4" />
-          Order water
-        </Link>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="orderHistory.length"
+            type="button"
+            @click="isRepeatModalOpen = true"
+            class="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <RotateCcw class="h-4 w-4" />
+            Repeat last order
+          </button>
+          <Link
+            href="/orders/create"
+            class="inline-flex h-10 items-center gap-2 rounded-full bg-sky-500 px-5 text-sm font-semibold text-white shadow-sm hover:bg-sky-600"
+          >
+            <ShoppingCart class="h-4 w-4" />
+            Order water
+          </Link>
+        </div>
       </div>
 
       <!-- Active order stage (only when one exists) -->
@@ -330,5 +357,14 @@ onBeforeUnmount(() => {
         </div>
       </DialogContent>
     </Dialog>
+
+    <!-- Repeat last order: pick quantities + delivery time before placing. -->
+    <RepeatOrderModal
+      v-if="lastOrder"
+      v-model:open="isRepeatModalOpen"
+      :items="repeatItems"
+      :submit-url="'/orders/repeat-last'"
+      :order-number="lastOrder.order_number"
+    />
   </div>
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FannLogo from '@/components/FannLogo.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import WhatsAppIcon from '@/components/WhatsAppIcon.vue';
 import { useLandingI18n } from '@/composables/useLandingI18n';
 import type { RoadPath } from '@/lib/maps';
 import { DUSHANBE_BOUNDS, MAP_STYLE, SYNTHETIC_ROUTES, buildRoadPath, createHtmlMarker, lerp, loadMapLibre, motoMarkerHtml, pointAtDistance, snapRouteToRoads } from '@/lib/maps';
@@ -17,6 +18,7 @@ import {
     Send,
     ShieldCheck,
     Truck,
+    User,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
@@ -45,7 +47,7 @@ const email = 'water@fann.tj';
 const mapEl = ref<HTMLDivElement | null>(null);
 const courierCount = ref(0);
 const mapReady = ref(false);
-const trackingMode = ref<'idle' | 'personal' | 'public' | 'noOrder'>('idle');
+const trackingMode = ref<'idle' | 'personal' | 'public' | 'noOrder' | 'pending'>('idle');
 
 let maplibregl: any = null;
 let map: any = null;
@@ -70,20 +72,28 @@ let synthMarkers: SynthMarker[] = [];
 let syntheticPaths: RoadPath[] | null = null;
 let synthStarting = false;
 
-async function fetchPersonalTracking(): Promise<CourierFix | null> {
+// 'none' = no active order; 'pending' = active order but no live courier
+// location yet; 'live' = courier location available.
+type TrackingResult =
+    | { state: 'none' }
+    | { state: 'pending' }
+    | { state: 'live'; courier: CourierFix };
+
+async function fetchPersonalTracking(): Promise<TrackingResult> {
     try {
         const res = await fetch('/me/active-tracking', {
             cache: 'no-store',
             headers: { Accept: 'application/json' },
             credentials: 'same-origin',
         });
-        if (!res.ok) return null;
+        if (!res.ok) return { state: 'none' };
         const data = (await res.json()) as
-            | { tracking: false }
+            | { tracking: false; order?: { id: number; status: string } }
             | { tracking: true; courier: CourierFix };
-        return data.tracking ? data.courier : null;
+        if (data.tracking) return { state: 'live', courier: data.courier };
+        return { state: data.order ? 'pending' : 'none' };
     } catch {
-        return null;
+        return { state: 'none' };
     }
 }
 
@@ -136,15 +146,18 @@ async function startSynthetic() {
     // The map may have been torn down, or a real courier may have taken over,
     // while we awaited the route snapping.
     if (!map || trackingMode.value !== 'public' || synthMarkers.length) return;
-    synthMarkers = paths.map((path, i) => ({
+    // Show a random number of mock couriers (at least 2) so the map feels
+    // different on each visit rather than always a fixed fleet.
+    const count = 2 + Math.floor(Math.random() * (paths.length - 1));
+    synthMarkers = paths.slice(0, count).map((path, i) => ({
         marker: makeMoto(path.points[0]),
         path,
         // Stagger starts so couriers spread along their loops, not bunched up.
         dist: (path.total / paths.length) * i,
         // Constant ground speed tuned to feel like a real motorbike weaving
-        // through city traffic (~3–4 min per loop at 60fps). Vary the loop period
-        // deterministically so they don't move in lockstep.
-        speed: path.total / (120000 + (i % 5) * 2000),
+        // through city traffic. Vary the loop period deterministically so they
+        // don't move in lockstep. Larger divisor = slower.
+        speed: path.total / (300000 + (i % 5) * 4000),
     }));
     courierCount.value = synthMarkers.length;
 }
@@ -174,8 +187,9 @@ async function refreshMap() {
     // users without an active order — gets the lively mock motorbikes so the
     // homepage map is never empty.
     if (isLoggedIn.value) {
-        const own = await fetchPersonalTracking();
-        if (own) {
+        const tracking = await fetchPersonalTracking();
+        if (tracking.state === 'live') {
+            const own = tracking.courier;
             stopSynthetic();
             trackingMode.value = 'personal';
             courierCount.value = 1;
@@ -184,9 +198,11 @@ async function refreshMap() {
             if (map.getZoom() < 13) map.setZoom(13);
             return;
         }
+        // Active order but no live courier location yet, or no active order at
+        // all — either way no markers, just the matching status note.
         stopSynthetic();
         clearLiveMarkers();
-        trackingMode.value = 'noOrder';
+        trackingMode.value = tracking.state === 'pending' ? 'pending' : 'noOrder';
         courierCount.value = 0;
         return;
     }
@@ -331,10 +347,10 @@ const couriersLabel = (count: number) => {
 </script>
 
 <template>
-    <Head title="fann — Mountain Spring Water · 19L Delivery in Tajikistan">
+    <Head title="Fann — Mountain Spring Water · 19L Delivery in Tajikistan">
         <meta
             name="description"
-            content="fann · Pure 19L mountain spring water from the Varzob valley, delivered to homes and offices across Tajikistan year-round."
+            content="Fann · Pure 19L mountain spring water from the Varzob valley, delivered to homes and offices across Tajikistan year-round."
         />
         <link rel="preconnect" href="https://fonts.bunny.net" />
         <link
@@ -363,7 +379,7 @@ const couriersLabel = (count: number) => {
                     <Link
                         v-if="$page.props.auth.user"
                         :href="dashboard()"
-                        class="hidden h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium hover:border-slate-300 sm:inline-flex"
+                        class="h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium hover:border-slate-300 inline-flex"
                     >
                         {{ t('nav.dashboard') }}
                     </Link>
@@ -381,12 +397,6 @@ const couriersLabel = (count: number) => {
                             {{ t('nav.signup') }}
                         </Link>
                     </template>
-                    <a
-                        :href="phoneHref"
-                        class="inline-flex h-10 items-center gap-2 rounded-full bg-sky-500 px-4 text-sm font-medium text-white shadow-sm hover:bg-sky-600"
-                    >
-                        <Phone class="h-4 w-4" />
-                    </a>
                 </div>
             </div>
         </header>
@@ -433,8 +443,9 @@ const couriersLabel = (count: number) => {
                             :href="whatsappHref"
                             target="_blank"
                             rel="noopener"
-                            class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-800 transition hover:border-slate-300"
+                            class="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-[#1ebe5b]"
                         >
+                            <WhatsAppIcon class="h-5 w-5" />
                             {{ t('hero.whatsapp') }}
                         </a>
                     </div>
@@ -461,7 +472,7 @@ const couriersLabel = (count: number) => {
                     <div class="relative flex h-full items-center justify-center">
                         <img
                             src="/images/bottles.webp"
-                            alt="fann 19L mountain spring water bottles"
+                            alt="Fann 19L mountain spring water bottles"
                             class="block h-full w-auto max-w-full object-contain select-none"
                             loading="eager"
                             decoding="async"
@@ -731,12 +742,15 @@ const couriersLabel = (count: number) => {
                         <span
                             :class="[
                                 'inline-block h-2 w-2 rounded-full',
-                                courierCount > 0 ? 'bg-sky-500' : 'bg-slate-300',
+                                courierCount > 0 ? 'bg-sky-500' : trackingMode === 'pending' ? 'bg-amber-400' : 'bg-slate-300',
                             ]"
                         />
                         <template v-if="!mapReady">{{ t('coverage.loading') }}</template>
                         <template v-else-if="trackingMode === 'personal'">
                             {{ t('coverage.personal') }}
+                        </template>
+                        <template v-else-if="trackingMode === 'pending'">
+                            {{ t('coverage.awaitingCourier') }}
                         </template>
                         <template v-else-if="trackingMode === 'noOrder'">
                             {{ t('coverage.noActiveOrder') }}
@@ -784,8 +798,9 @@ const couriersLabel = (count: number) => {
                                 :href="whatsappHref"
                                 target="_blank"
                                 rel="noopener"
-                                class="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:border-white/40"
+                                class="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1ebe5b]"
                             >
+                                <WhatsAppIcon class="h-4 w-4" />
                                 {{ t('contact.whatsapp') }}
                             </a>
                         </div>

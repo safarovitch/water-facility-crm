@@ -40,6 +40,28 @@ class OrderController extends Controller
   }
 
   /**
+   * Default delivery time for a newly created order: 10 hours from now,
+   * snapped into the 09:00–20:00 half-hour delivery window. If +10h lands
+   * after 20:00 it rolls to 09:00 the next day; before 09:00 it bumps to
+   * 09:00 the same day.
+   */
+  private function defaultScheduledDeliveryAt(): \Illuminate\Support\Carbon
+  {
+    $t        = now()->addHours(10)->second(0);
+    $startMin = 9 * 60;
+    $endMin   = 20 * 60;
+    $tod      = (int) (round(($t->hour * 60 + $t->minute) / 30) * 30);
+
+    if ($tod > $endMin) {
+      return $t->addDay()->startOfDay()->addMinutes($startMin);
+    }
+    if ($tod < $startMin) {
+      return $t->startOfDay()->addMinutes($startMin);
+    }
+    return $t->startOfDay()->addMinutes($tod);
+  }
+
+  /**
    * Use the admin-entered unit price when present; otherwise fall back to
    * the product's current catalog price (sale_price if set, else price).
    */
@@ -164,7 +186,8 @@ class OrderController extends Controller
         $q->whereDate('created_at', '<=', $to)
       )
       ->latest()
-      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page']);
+      ->paginate($pagination['limit'], ['*'], 'page', $pagination['page'])
+      ->withQueryString();
 
     return Inertia::render('orders/Index')->with([
       'orders'   => $orders,
@@ -286,13 +309,150 @@ class OrderController extends Controller
 
       $order = Order::create([
         'user_id'               => $userId,
-        'scheduled_delivery_at' => $data['scheduled_delivery_at'] ?? null,
+        'scheduled_delivery_at' => ($data['scheduled_delivery_at'] ?? null) ?: $this->defaultScheduledDeliveryAt(),
         'delivery_address'      => $deliveryAddress,
         'notes'                 => $data['notes'] ?? null,
         'total_amount'          => $total,
         'discount_amount'       => 0,
         'payment_status'        => $total <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
         'created_by'            => $userId,
+      ]);
+
+      $order->items()->createMany($items->toArray());
+      $this->adjustRawMaterialStock($items, -1);
+
+      return $order;
+    });
+
+    return redirect()->route('dashboard')
+      ->with('success', "Order #{$order->order_number} placed. We'll be in touch shortly.");
+  }
+
+  /**
+   * Build createMany-ready item rows that mirror an existing order's lines.
+   * Re-resolves each unit price from the current catalog so a repeated order
+   * reflects today's prices, not the price captured on the original order.
+   *
+   * $quantityOverrides is an optional list of [product_id, quantity] entries
+   * (from the "Repeat order" prompt). When a product matches, its override
+   * quantity is used; otherwise the original quantity is kept.
+   */
+  private function duplicateOrderItems(Order $order, array $quantityOverrides = []): \Illuminate\Support\Collection
+  {
+    $overrides = collect($quantityOverrides)->keyBy('product_id');
+
+    return $order->items->map(function ($item) use ($overrides) {
+      $product   = $item->product ?: Product::findOrFail($item->product_id);
+      $unitPrice = (float) ($product->sale_price > 0 ? $product->sale_price : $product->price);
+      $isGift    = (bool) $item->is_gift;
+      $quantity  = (int) ($overrides[$item->product_id]['quantity'] ?? $item->quantity);
+      $subtotal  = $isGift ? 0 : $unitPrice * $quantity;
+
+      return [
+        'product_id' => $item->product_id,
+        'quantity'   => $quantity,
+        'unit_price' => $unitPrice,
+        'subtotal'   => $subtotal,
+        'is_gift'    => $isGift,
+      ];
+    });
+  }
+
+  /**
+   * Validation rules for the "Repeat order" prompt: an optional delivery time
+   * and optional per-product quantity overrides.
+   */
+  private function repeatRules(): array
+  {
+    return [
+      'scheduled_delivery_at' => ['nullable', 'date'],
+      'items'                 => ['nullable', 'array'],
+      'items.*.product_id'    => ['required_with:items', 'integer'],
+      'items.*.quantity'      => ['required_with:items', 'integer', 'min:1'],
+    ];
+  }
+
+  /**
+   * Admin "Repeat order": create a brand-new order that mirrors an existing
+   * one (same client, contact, address and line items at today's prices),
+   * applying the quantities and delivery time chosen in the prompt. Deducts
+   * inventory like any other new order.
+   */
+  public function repeat(\Illuminate\Http\Request $request, Order $order)
+  {
+    $order->load('items.product');
+
+    if ($order->items->isEmpty()) {
+      return back()->with('error', 'This order has no items to repeat.');
+    }
+
+    $data = $request->validate($this->repeatRules());
+
+    $newOrder = DB::transaction(function () use ($order, $data) {
+      $items = $this->duplicateOrderItems($order, $data['items'] ?? []);
+      $total = (float) $items->sum('subtotal');
+
+      $newOrder = Order::create([
+        'user_id'               => $order->user_id,
+        'contact_name'          => $order->contact_name,
+        'contact_phone'         => $order->contact_phone,
+        'scheduled_delivery_at' => ($data['scheduled_delivery_at'] ?? null) ?: $this->defaultScheduledDeliveryAt(),
+        'delivery_address'      => $order->delivery_address,
+        'notes'                 => $order->notes,
+        'total_amount'          => $total,
+        'discount_amount'       => 0,
+        'payment_status'        => $total <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
+        'created_by'            => auth()->id(),
+      ]);
+
+      $newOrder->items()->createMany($items->toArray());
+      $this->adjustRawMaterialStock($items, -1);
+
+      return $newOrder;
+    });
+
+    return redirect()->route('admin.orders.show', $newOrder)
+      ->with('success', "Order repeated as #{$newOrder->order_number}.");
+  }
+
+  /**
+   * Client "Repeat last order": re-place the signed-in client's most recent
+   * order as a new order, applying the quantities and delivery time chosen in
+   * the prompt. Mirrors clientStore's pricing/inventory rules.
+   */
+  public function clientRepeatLast(\Illuminate\Http\Request $request)
+  {
+    $user = auth()->user();
+
+    // Same phone gate as a regular client order.
+    if ($user->phone_verified_at === null) {
+      return redirect()->route('account.setup-phone')
+        ->with('warning', 'Verify your phone via Telegram before placing an order.');
+    }
+
+    $last = Order::where('user_id', $user->id)
+      ->with('items.product')
+      ->latest()
+      ->first();
+
+    if (!$last || $last->items->isEmpty()) {
+      return back()->with('warning', 'No previous order found to repeat.');
+    }
+
+    $data = $request->validate($this->repeatRules());
+
+    $order = DB::transaction(function () use ($last, $user, $data) {
+      $items = $this->duplicateOrderItems($last, $data['items'] ?? []);
+      $total = (float) $items->sum('subtotal');
+
+      $order = Order::create([
+        'user_id'               => $user->id,
+        'scheduled_delivery_at' => ($data['scheduled_delivery_at'] ?? null) ?: $this->defaultScheduledDeliveryAt(),
+        'delivery_address'      => $last->delivery_address,
+        'total_amount'          => $total,
+        'discount_amount'       => 0,
+        'payment_status'        => $total <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
+        'created_by'            => $user->id,
       ]);
 
       $order->items()->createMany($items->toArray());
@@ -409,7 +569,7 @@ class OrderController extends Controller
         'user_id'               => $request->user_id,
         'contact_name'          => $contactName,
         'contact_phone'         => $contactPhone,
-        'scheduled_delivery_at' => $request->scheduled_delivery_at,
+        'scheduled_delivery_at' => $request->scheduled_delivery_at ?: $this->defaultScheduledDeliveryAt(),
         'delivery_address'      => $deliveryAddress,
         'notes'                 => $request->notes,
         'total_amount'          => $finalTotal,
@@ -982,31 +1142,49 @@ class OrderController extends Controller
   {
     $user = $request->user();
 
+    // Any order the customer would consider "in progress" — everything that
+    // isn't delivered or cancelled. We surface the order even before a courier
+    // is assigned / shares a location, so the homepage can say "your order is
+    // active" rather than wrongly claiming there's no order.
     $order = Order::where('user_id', $user->id)
       ->whereIn('status', [
-        OrderStatus::Accepted,
+        OrderStatus::Pending,
+        OrderStatus::Confirmed,
+        OrderStatus::InProduction,
         OrderStatus::Ready,
+        OrderStatus::Accepted,
         OrderStatus::InTransit,
       ])
-      ->whereNotNull('courier_id')
       ->with(['courier.lastLocation'])
       ->latest()
       ->first();
 
-    if (! $order || ! $order->courier || ! $order->courier->lastLocation) {
+    if (! $order) {
       return response()
         ->json(['tracking' => false])
         ->header('Cache-Control', 'no-store, max-age=0');
     }
 
-    $loc = $order->courier->lastLocation;
+    $orderPayload = [
+      'id' => $order->id,
+      'status' => (string) $order->status,
+    ];
+
+    // Courier location comes from the courier mobile app. It may not exist yet
+    // (no courier assigned, or the app hasn't reported a fix). In that case we
+    // still report the active order, just without a live position.
+    $loc = $order->courier?->lastLocation;
+
+    if (! $loc) {
+      return response()->json([
+        'tracking' => false,
+        'order' => $orderPayload,
+      ])->header('Cache-Control', 'no-store, max-age=0');
+    }
 
     return response()->json([
       'tracking' => true,
-      'order' => [
-        'id' => $order->id,
-        'status' => (string) $order->status,
-      ],
+      'order' => $orderPayload,
       'courier' => [
         'lat' => (float) $loc->lat,
         'lng' => (float) $loc->lng,
