@@ -32,6 +32,7 @@
 
         <title inertia>{{ config('app.name', 'fann') }}</title>
         
+        <link rel="favicon" href="/icons/favicon.svg" type="image/svg+xml">
         <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/>
         <link rel="manifest" href="/site.webmanifest">
