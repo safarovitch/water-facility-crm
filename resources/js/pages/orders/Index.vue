@@ -43,7 +43,7 @@ interface Order {
   created_at_formatted: string;
   client: { id: number; name: string; email: string };
   creator: { name: string } | null;
-  items?: { id: number; quantity: number; product: { id: number; name: string } | null }[];
+  items?: { id: number; quantity: number; product: { id: number; name: Record<string, string> | string } | null }[];
 }
 
 interface Paginated<T> {
@@ -106,6 +106,17 @@ const formatAmount = (value: number): string => value.toFixed(2);
 
 const totalItemCount = (order: Order): number =>
   (order.items ?? []).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0);
+
+const availableLocales = (usePage().props.available_locales as string[]) ?? [];
+
+const productName = (name: Record<string, string> | string | null | undefined): string => {
+  if (!name) return 'Item';
+  if (typeof name === 'string') return name;
+  for (const locale of availableLocales) {
+    if (name[locale]) return name[locale];
+  }
+  return Object.values(name)[0] || 'Item';
+};
 
 const statusLabel: Record<string, string> = {
   pending: 'Pending',
@@ -200,8 +211,8 @@ const statusLabel: Record<string, string> = {
                             </td>
                             <td class="px-6 py-4 max-w-[16rem]">
                                 <div v-if="order.items && order.items.length" class="space-y-0.5">
-                                    <div v-for="item in order.items" :key="item.id" class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="item.product?.name ?? ''">
-                                        {{ item.product?.name || 'Item' }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
+                                    <div v-for="item in order.items" :key="item.id" class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="productName(item.product?.name)">
+                                        {{ productName(item.product?.name) }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
                                     </div>
                                     <div class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ totalItemCount(order) }} total</div>
                                 </div>
@@ -287,7 +298,7 @@ const statusLabel: Record<string, string> = {
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Items ({{ totalItemCount(order) }})</span>
                             <div class="text-xs text-gray-700 dark:text-gray-300 space-y-0.5 mt-0.5">
                                 <div v-for="item in order.items" :key="item.id">
-                                    {{ item.product?.name || 'Item' }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
+                                    {{ productName(item.product?.name) }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
                                 </div>
                             </div>
                         </div>

@@ -10,4 +10,9 @@ class HomeController extends Controller
     {
         return Inertia::render('Welcome');
     }
+
+    public function qr()
+    {
+        return Inertia::render('Qr');
+    }
 }
