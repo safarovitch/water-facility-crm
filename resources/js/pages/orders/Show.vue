@@ -17,7 +17,8 @@ import {
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
-import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw } from 'lucide-vue-next';
+import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw, MapPin } from 'lucide-vue-next';
+import { externalMapsUrl } from '@/lib/maps';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -53,6 +54,8 @@ interface Order {
   actual_delivery_at_human: string | null;
   actual_delivery_at_formatted: string | null;
   delivery_address: string | null;
+  lat: number | null;
+  lng: number | null;
   notes: string | null;
   cancellation_reason: string | null;
   cancelled_at: string | null;
@@ -187,6 +190,12 @@ const cancelForm = ref({ cancellation_reason: '' });
 const cancelError = ref('');
 const isCancelled = computed(() => props.order.status === 'cancelled');
 const isSelfPickup = computed(() => props.order.delivery_address === 'Self Pickup');
+
+const mapsHref = computed(() => externalMapsUrl({
+  lat: props.order.lat,
+  lng: props.order.lng,
+  address: props.order.delivery_address,
+}));
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
@@ -605,6 +614,17 @@ const statusButtonClass = (s: string) => {
             <span v-if="order.delivery_address === 'Self Pickup'" class="ml-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded">
               🏬 Self Pickup
             </span>
+            <a
+              v-else-if="mapsHref"
+              :href="mapsHref"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ml-1 inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+              :title="`Open in maps: ${order.delivery_address ?? ''}`"
+            >
+              <MapPin class="h-4 w-4 shrink-0" />
+              <span>{{ order.delivery_address }}</span>
+            </a>
             <span v-else>{{ order.delivery_address ?? '—' }}</span>
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">

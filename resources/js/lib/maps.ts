@@ -156,3 +156,24 @@ export function pointAtDistance(path: RoadPath, d: number): [number, number] {
     const segLen = cum[i] - cum[i - 1] || 1;
     return lerp(points[i - 1], points[i], (dist - cum[i - 1]) / segLen);
 }
+
+/**
+ * Build a URL that opens the device's native maps app for a delivery location.
+ * Prefers exact coordinates; falls back to a free-text address search. Returns
+ * null when there's nothing to point at (e.g. self-pickup orders).
+ */
+export function externalMapsUrl(opts: {
+    lat?: number | null;
+    lng?: number | null;
+    address?: string | null;
+}): string | null {
+    const { lat, lng, address } = opts;
+    if (lat != null && lng != null) {
+        return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    }
+    const trimmed = address?.trim();
+    if (trimmed && trimmed.toLowerCase() !== 'self pickup') {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmed)}`;
+    }
+    return null;
+}

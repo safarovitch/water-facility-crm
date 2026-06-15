@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown } from 'lucide-vue-next';
+import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, MapPin } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
+import { externalMapsUrl } from '@/lib/maps';
 
 const adminMode = computed(() => !!usePage().props.adminMode);
 
@@ -36,6 +37,10 @@ interface Order {
   paid_amount: string;
   balance_due: number;
   delivery_date: string | null;
+  delivery_address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  scheduled_delivery_at: string | null;
   scheduled_delivery_at_human: string | null;
   scheduled_delivery_at_formatted: string | null;
   created_at: string;
@@ -108,6 +113,21 @@ const totalItemCount = (order: Order): number =>
   (order.items ?? []).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0);
 
 const availableLocales = (usePage().props.available_locales as string[]) ?? [];
+
+// Delivery date + 24h time, derived from the raw ISO timestamp so the table
+// shows an unambiguous "15 Jun 2026" / "14:30" rather than a relative phrase.
+const deliveryDate = (order: Order): string | null =>
+  order.scheduled_delivery_at
+    ? new Date(order.scheduled_delivery_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+
+const deliveryTime = (order: Order): string | null =>
+  order.scheduled_delivery_at
+    ? new Date(order.scheduled_delivery_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+    : null;
+
+const mapsHref = (order: Order): string | null =>
+  externalMapsUrl({ lat: order.lat, lng: order.lng, address: order.delivery_address });
 
 const productName = (name: Record<string, string> | string | null | undefined): string => {
   if (!name) return 'Item';
@@ -205,7 +225,18 @@ const statusLabel: Record<string, string> = {
                                 <div class="text-xs text-muted-foreground mt-0.5">{{ order.contact_phone || order.client?.phone || '—' }}</div>
                             </td>
                             <td class="px-6 py-4 max-w-[18rem]">
-                                <div class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
+                                <a
+                                    v-if="mapsHref(order)"
+                                    :href="mapsHref(order)!"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group/addr inline-flex items-start gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                    :title="`Open in maps: ${order.delivery_address ?? ''}`"
+                                >
+                                    <MapPin class="h-4 w-4 shrink-0 mt-0.5" />
+                                    <span class="truncate">{{ order.delivery_address }}</span>
+                                </a>
+                                <div v-else class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
                                     {{ order.delivery_address || '—' }}
                                 </div>
                             </td>
@@ -240,10 +271,11 @@ const statusLabel: Record<string, string> = {
                                 <span v-if="order.balance_due > 0" class="text-[10px] text-muted-foreground ml-1">{{ $page.props.currency }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <div v-if="order.scheduled_delivery_at_human" class="font-medium text-gray-900 dark:text-white">
-                                    {{ order.scheduled_delivery_at_human }}
-                                </div>
-                                <div class="text-xs text-muted-foreground mt-0.5">{{ order.scheduled_delivery_at_formatted ?? order.delivery_date ?? '—' }}</div>
+                                <template v-if="deliveryDate(order)">
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ deliveryDate(order) }}</div>
+                                    <div class="text-xs text-muted-foreground mt-0.5 tabular-nums">{{ deliveryTime(order) }}</div>
+                                </template>
+                                <div v-else class="text-xs text-muted-foreground">{{ order.delivery_date ?? '—' }}</div>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -304,12 +336,25 @@ const statusLabel: Record<string, string> = {
                         </div>
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Address</span>
-                            <span class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{{ order.delivery_address || '—' }}</span>
+                            <a
+                                v-if="mapsHref(order)"
+                                :href="mapsHref(order)!"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400 line-clamp-2"
+                            >
+                                <MapPin class="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                <span>{{ order.delivery_address }}</span>
+                            </a>
+                            <span v-else class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{{ order.delivery_address || '—' }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
                                 <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Delivery</span>
-                                <span class="text-xs text-gray-700 dark:text-gray-300">{{ order.scheduled_delivery_at_human || 'Not scheduled' }}</span>
+                                <span class="text-xs text-gray-700 dark:text-gray-300">
+                                    <template v-if="deliveryDate(order)">{{ deliveryDate(order) }} · <span class="tabular-nums">{{ deliveryTime(order) }}</span></template>
+                                    <template v-else>Not scheduled</template>
+                                </span>
                             </div>
                             <Link :href="showRoute(order.id).url">
                               <Button variant="secondary" size="sm" class="h-9 px-4 rounded-lg shadow-sm border border-border/50">
