@@ -43,6 +43,7 @@ interface Order {
   created_at_formatted: string;
   client: { id: number; name: string; email: string };
   creator: { name: string } | null;
+  items?: { id: number; quantity: number; product: { id: number; name: string } | null }[];
 }
 
 interface Paginated<T> {
@@ -102,6 +103,9 @@ const orderGrandTotal = (order: Order): number =>
   order.grand_total ?? Number(order.total_amount) + Number(order.deposit_charge ?? 0);
 
 const formatAmount = (value: number): string => value.toFixed(2);
+
+const totalItemCount = (order: Order): number =>
+  (order.items ?? []).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0);
 
 const statusLabel: Record<string, string> = {
   pending: 'Pending',
@@ -164,6 +168,7 @@ const statusLabel: Record<string, string> = {
                                 <div class="flex items-center gap-2">Client <span class="text-xs">{{ isSorted('client_id') ? getSortIcon('client_id') : '⇅' }}</span></div>
                             </th>
                             <th class="px-6 py-4 font-semibold">Address</th>
+                            <th class="px-6 py-4 font-semibold">Items</th>
                             <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('status')">
                                 <div class="flex items-center gap-2">Status <span class="text-xs">{{ isSorted('status') ? getSortIcon('status') : '⇅' }}</span></div>
                             </th>
@@ -192,6 +197,15 @@ const statusLabel: Record<string, string> = {
                                 <div class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
                                     {{ order.delivery_address || '—' }}
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 max-w-[16rem]">
+                                <div v-if="order.items && order.items.length" class="space-y-0.5">
+                                    <div v-for="item in order.items" :key="item.id" class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="item.product?.name ?? ''">
+                                        {{ item.product?.name || 'Item' }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
+                                    </div>
+                                    <div class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ totalItemCount(order) }} total</div>
+                                </div>
+                                <span v-else class="text-sm text-muted-foreground">—</span>
                             </td>
                             <td class="px-6 py-4">
                                 <Badge variant="outline" class="capitalize border-transparent relative font-semibold" :class="statusBadgeClass[order.status]">
@@ -269,6 +283,14 @@ const statusLabel: Record<string, string> = {
                     </div>
 
                     <div class="pt-3 border-t border-dashed border-border/60 space-y-3">
+                        <div v-if="order.items && order.items.length" class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Items ({{ totalItemCount(order) }})</span>
+                            <div class="text-xs text-gray-700 dark:text-gray-300 space-y-0.5 mt-0.5">
+                                <div v-for="item in order.items" :key="item.id">
+                                    {{ item.product?.name || 'Item' }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Address</span>
                             <span class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{{ order.delivery_address || '—' }}</span>

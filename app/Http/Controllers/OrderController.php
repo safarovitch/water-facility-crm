@@ -159,7 +159,7 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $ordersQuery = Order::with(['client.phones', 'creator'])
+    $ordersQuery = Order::with(['client.phones', 'creator', 'items.product:id,name'])
       ->when(
         !$isAdminPath && $authUserId,
         fn($q) => $q->where('user_id', $authUserId)
