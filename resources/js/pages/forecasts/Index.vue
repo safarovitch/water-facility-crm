@@ -155,12 +155,12 @@ const basketSummary = (basket: BasketItem[]): string =>
             </div>
 
             <template v-for="(cell, idx) in cells" :key="idx">
-              <div v-if="cell === null" class="aspect-square" />
+              <div v-if="cell === null" class="min-h-[3rem] md:min-h-[3.5rem]" />
               <button
                 v-else
                 type="button"
                 @click="selectDay(cell)"
-                class="aspect-square rounded-lg border p-1 md:p-2 flex flex-col items-start justify-between text-left transition-colors hover:bg-muted/50"
+                class="min-h-[3rem] md:min-h-[3.5rem] rounded-lg border p-1 md:p-2 flex flex-col items-start justify-between text-left transition-colors hover:bg-muted/50"
                 :class="[
                   selectedDate === dateStr(cell) ? 'ring-2 ring-primary border-primary' : 'border-border/60',
                   dayHasOverdue(cell) ? 'bg-amber-50 dark:bg-amber-900/20' : '',
