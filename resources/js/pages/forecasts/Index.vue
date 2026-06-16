@@ -2,10 +2,11 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, Users2 } from 'lucide-vue-next';
 
 interface BasketItem {
@@ -45,6 +46,19 @@ const productName = (name: Record<string, string> | string | null): string => {
   return Object.values(name)[0] || 'Item';
 };
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+// Derive the displayed month reactively from props so router navigation
+// (preserveState) updates everything without re-creating the component.
+const year = computed(() => Number(props.month.split('-')[0]));
+const monthIndex = computed(() => Number(props.month.split('-')[1])); // 1-based
+const dateStr = (day: number) => `${year.value}-${pad(monthIndex.value)}-${pad(day)}`;
+const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+
+const monthLabel = computed(() =>
+  new Date(year.value, monthIndex.value - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+);
+
 // Predictions bucketed by their YYYY-MM-DD date string.
 const byDate = computed<Record<string, Prediction[]>>(() => {
   const map: Record<string, Prediction[]> = {};
@@ -54,41 +68,46 @@ const byDate = computed<Record<string, Prediction[]>>(() => {
   return map;
 });
 
-const [year, monthIndex] = props.month.split('-').map(Number); // monthIndex is 1-based
-const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
-
-const pad = (n: number) => String(n).padStart(2, '0');
-const dateStr = (day: number) => `${year}-${pad(monthIndex)}-${pad(day)}`;
-
-const monthLabel = computed(() =>
-  new Date(year, monthIndex - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
-);
-
-const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-// Calendar cells: leading blanks (Mon-first) then each day of the month.
-const cells = computed<(number | null)[]>(() => {
-  const firstWeekday = (new Date(year, monthIndex - 1, 1).getDay() + 6) % 7; // 0 = Mon
-  const daysInMonth = new Date(year, monthIndex, 0).getDate();
-  const out: (number | null)[] = Array(firstWeekday).fill(null);
-  for (let d = 1; d <= daysInMonth; d++) out.push(d);
-  while (out.length % 7 !== 0) out.push(null);
-  return out;
+// Month dropdown: a rolling window starting one month before the current
+// month, always including whichever month is currently displayed.
+const monthOptions = computed(() => {
+  const opts: { value: string; label: string }[] = [];
+  const base = new Date();
+  const start = new Date(base.getFullYear(), base.getMonth() - 1, 1);
+  for (let i = 0; i < 15; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    opts.push({
+      value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`,
+      label: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+    });
+  }
+  if (!opts.some((o) => o.value === props.month)) {
+    opts.push({ value: props.month, label: monthLabel.value });
+  }
+  return opts.sort((a, b) => a.value.localeCompare(b.value));
 });
 
-const dayHasOverdue = (day: number) => (byDate.value[dateStr(day)] ?? []).some((p) => p.overdue);
+// Day dropdown: only days that actually have predicted orders this month.
+const dayOptions = computed(() =>
+  Object.keys(byDate.value)
+    .sort()
+    .map((ds) => ({
+      value: ds,
+      label: new Date(ds).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+      count: byDate.value[ds].length,
+      overdue: byDate.value[ds].some((p) => p.overdue),
+    })),
+);
 
 // Default selection: today if it falls in this month and has predictions,
-// otherwise the first day of the month that has any.
-const firstPopulatedDay = (): string | null => {
-  for (const cell of cells.value) {
-    if (cell !== null && byDate.value[dateStr(cell)]?.length) return dateStr(cell);
-  }
-  return null;
+// otherwise the first populated day. Re-evaluated whenever the month changes.
+const defaultDay = (): string | null => {
+  if (byDate.value[todayStr]?.length) return todayStr;
+  return dayOptions.value[0]?.value ?? null;
 };
-const selectedDate = ref<string | null>(
-  byDate.value[todayStr]?.length ? todayStr : firstPopulatedDay(),
-);
+
+const selectedDate = ref<string | null>(null);
+watch(() => props.month, () => { selectedDate.value = defaultDay(); }, { immediate: true });
 
 const selectedPredictions = computed<Prediction[]>(() =>
   selectedDate.value ? (byDate.value[selectedDate.value] ?? []) : [],
@@ -100,14 +119,13 @@ const selectedLabel = computed(() =>
     : null,
 );
 
-const selectDay = (day: number) => {
-  selectedDate.value = dateStr(day);
+const goToMonth = (value: string) => {
+  router.get('/admin/forecasts/index', { month: value }, { preserveState: true, preserveScroll: true });
 };
 
 const shiftMonth = (delta: number) => {
-  const d = new Date(year, monthIndex - 1 + delta, 1);
-  const target = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-  router.get('/admin/forecasts/index', { month: target }, { preserveState: true, preserveScroll: true });
+  const d = new Date(year.value, monthIndex.value - 1 + delta, 1);
+  goToMonth(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
 };
 
 const confidenceClass: Record<string, string> = {
@@ -124,75 +142,57 @@ const basketSummary = (basket: BasketItem[]): string =>
   <Head title="Forecasts" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-4 md:space-y-6 container mx-auto px-4 md:px-0">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Order Forecasts</h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            Probable next orders for repeat clients. Pick a day to see who's likely to order and what.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <Button variant="outline" size="icon" class="h-10 w-10" @click="shiftMonth(-1)" title="Previous month">
-            <ChevronLeft class="h-4 w-4" />
-          </Button>
-          <span class="min-w-[10rem] text-center font-bold text-lg">{{ monthLabel }}</span>
-          <Button variant="outline" size="icon" class="h-10 w-10" @click="shiftMonth(1)" title="Next month">
-            <ChevronRight class="h-4 w-4" />
-          </Button>
-        </div>
+      <div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Order Forecasts</h1>
+        <p class="text-sm text-muted-foreground mt-1">
+          Probable next orders for repeat clients. Pick a month and day to see who's likely to order and what.
+        </p>
       </div>
 
-      <!-- Calendar grid -->
+      <!-- Toolbar: month + day selectors with prev/next -->
       <Card class="shadow-sm">
-        <CardContent class="p-3 md:p-4">
-          <div class="grid grid-cols-7 gap-1 md:gap-2">
-            <div
-              v-for="label in weekdayLabels"
-              :key="label"
-              class="text-center text-[10px] md:text-xs uppercase tracking-wider text-muted-foreground font-bold py-1"
-            >
-              {{ label }}
-            </div>
-
-            <template v-for="(cell, idx) in cells" :key="idx">
-              <div v-if="cell === null" class="min-h-[3rem] md:min-h-[3.5rem]" />
-              <button
-                v-else
-                type="button"
-                @click="selectDay(cell)"
-                class="min-h-[3rem] md:min-h-[3.5rem] rounded-lg border p-1 md:p-2 flex flex-col items-start justify-between text-left transition-colors hover:bg-muted/50"
-                :class="[
-                  selectedDate === dateStr(cell) ? 'ring-2 ring-primary border-primary' : 'border-border/60',
-                  dayHasOverdue(cell) ? 'bg-amber-50 dark:bg-amber-900/20' : '',
-                  dateStr(cell) === todayStr ? 'font-extrabold' : '',
-                ]"
+        <CardContent class="p-4 grid grid-cols-1 md:flex md:flex-wrap md:items-end gap-3">
+          <div class="space-y-1 w-full md:w-56">
+            <Label class="text-xs uppercase tracking-wider text-muted-foreground">Month</Label>
+            <div class="flex items-center gap-2">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(-1)" title="Previous month">
+                <ChevronLeft class="h-4 w-4" />
+              </Button>
+              <select
+                :value="props.month"
+                @change="goToMonth(($event.target as HTMLSelectElement).value)"
+                class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <span
-                  class="text-xs md:text-sm"
-                  :class="dateStr(cell) === todayStr ? 'text-primary' : 'text-foreground'"
-                >{{ cell }}</span>
-                <Badge
-                  v-if="byDate[dateStr(cell)]?.length"
-                  variant="outline"
-                  class="border-transparent text-[10px] px-1.5 h-5 self-end font-semibold"
-                  :class="dayHasOverdue(cell)
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'"
-                >
-                  {{ byDate[dateStr(cell)].length }}
-                </Badge>
-              </button>
-            </template>
+                <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
+              </select>
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(1)" title="Next month">
+                <ChevronRight class="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div class="space-y-1 w-full md:w-64">
+            <Label class="text-xs uppercase tracking-wider text-muted-foreground">Day</Label>
+            <select
+              v-model="selectedDate"
+              :disabled="!dayOptions.length"
+              class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+            >
+              <option v-if="!dayOptions.length" :value="null">No predicted days this month</option>
+              <option v-for="d in dayOptions" :key="d.value" :value="d.value">
+                {{ d.label }} — {{ d.count }} client{{ d.count === 1 ? '' : 's' }}{{ d.overdue ? ' • overdue' : '' }}
+              </option>
+            </select>
           </div>
         </CardContent>
       </Card>
 
-      <!-- Selected day -->
+      <!-- Forecast table -->
       <Card class="shadow-sm">
         <CardContent class="p-0">
           <div class="p-4 border-b bg-gray-50/50 dark:bg-gray-800/30 flex items-center gap-2">
             <CalendarClock class="h-4 w-4 text-muted-foreground" />
-            <span class="font-bold text-foreground">{{ selectedLabel ?? 'Select a day' }}</span>
+            <span class="font-bold text-foreground">{{ selectedLabel ?? 'No day selected' }}</span>
             <span v-if="selectedPredictions.length" class="text-sm text-muted-foreground">
               · {{ selectedPredictions.length }} client{{ selectedPredictions.length === 1 ? '' : 's' }}
             </span>
@@ -273,7 +273,9 @@ const basketSummary = (basket: BasketItem[]): string =>
           <div v-if="!selectedPredictions.length" class="px-6 py-12 text-center text-muted-foreground">
             <div class="flex flex-col items-center justify-center opacity-60">
               <Users2 class="h-10 w-10 mb-3 text-gray-400" />
-              <p class="font-medium text-sm">No clients predicted to order on this day.</p>
+              <p class="font-medium text-sm">
+                {{ dayOptions.length ? 'No clients predicted to order on this day.' : 'No clients predicted to order this month.' }}
+              </p>
             </div>
           </div>
         </CardContent>
