@@ -234,7 +234,7 @@ const statusLabel: Record<string, string> = {
                                     :title="`Open in maps: ${order.delivery_address ?? ''}`"
                                 >
                                     <MapPin class="h-4 w-4 shrink-0 mt-0.5" />
-                                    <span class="truncate">{{ order.delivery_address }}</span>
+                                    <span class="whitespace-normal">{{ order.delivery_address }}</span>
                                 </a>
                                 <div v-else class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
                                     {{ order.delivery_address || '—' }}
