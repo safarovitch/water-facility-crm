@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw } from 'lucide-vue-next';
+import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw, CalendarClock } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Use route() helper where possible or update hardcoded paths
@@ -18,11 +18,12 @@ const routeProductsIndex = () => '/admin/products/index';
 const routeClientsIndex = () => '/admin/clients/index';
 const routeOrdersIndexAdmin = () => '/admin/orders/index';
 const routeOrdersAssignments = () => '/admin/orders/assignments';
+const routeForecastsIndex = () => '/admin/forecasts/index';
 const routeCurriersActivities = () => '/admin/curriers/activities';
 const routeFinancialIndex = () => '/admin/financial-records';
 const routeInventoryIndex = () => '/admin/inventory-items';
 const routeRawMaterialsIndex = () => '/admin/raw-materials';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useOrderNotifications } from '@/composables/useOrderNotifications';
 
 const { pendingCount } = useOrderNotifications() || { pendingCount: ref(0) };
@@ -81,6 +82,11 @@ const mainNavItems = computed((): NavItem[] => {
             href: routeOrdersIndexAdmin(),
             icon: ShoppingCart,
             badge: pendingCount.value > 0 ? pendingCount.value : undefined,
+          },
+          {
+            title: 'Forecasts',
+            href: routeForecastsIndex(),
+            icon: CalendarClock,
           },
         ],
       },

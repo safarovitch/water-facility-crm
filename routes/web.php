@@ -123,6 +123,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::delete('{order}',         [OrderController::class, 'destroy'])->name('destroy');
     });
 
+    Route::name('forecasts.')->prefix('forecasts')->group(function () {
+      Route::get('index', [\App\Http\Controllers\ForecastController::class, 'index'])->name('index');
+    });
+
     Route::name('curriers.')->prefix('curriers')->group(function () {
       Route::get('activities', [\App\Http\Controllers\CurrierActivityController::class, 'index'])->name('activities');
     });
