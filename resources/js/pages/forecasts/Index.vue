@@ -119,6 +119,13 @@ const selectedLabel = computed(() =>
     : null,
 );
 
+const shiftDay = (delta: number) => {
+  const idx = dayOptions.value.findIndex((d) => d.value === selectedDate.value);
+  if (idx === -1) return;
+  const next = dayOptions.value[idx + delta];
+  if (next) selectedDate.value = next.value;
+};
+
 const goToMonth = (value: string) => {
   router.get('/admin/forecasts/index', { month: value }, { preserveState: true, preserveScroll: true });
 };
