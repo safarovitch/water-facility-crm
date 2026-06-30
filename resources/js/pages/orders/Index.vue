@@ -49,6 +49,7 @@ interface Order {
   client: { id: number; name: string; email: string };
   creator: { name: string } | null;
   items?: { id: number; quantity: number; product: { id: number; name: Record<string, string> | string } | null }[];
+  returned_materials?: { id: number; pivot: { quantity: number; deferred_quantity?: number } }[];
 }
 
 interface Paginated<T> {
@@ -63,12 +64,14 @@ const props = defineProps<{
 }>();
 
 const statusFilter = ref('');
+const paymentFilter = ref('');
 const search = ref('');
 const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
 
 const applyFilter = () => {
   router.get(indexRoute.value().url, {
     status: statusFilter.value || undefined,
+    payment: paymentFilter.value || undefined,
     search: search.value || undefined,
     ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }),
   }, { preserveState: true, preserveScroll: true });
@@ -79,6 +82,7 @@ const handleSort = (column: string) => {
   const newSort = isSorted(column) ? sort.value : null;
   router.get(indexRoute.value().url, {
     status: statusFilter.value || undefined,
+    payment: paymentFilter.value || undefined,
     search: search.value || undefined,
     ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
   }, { preserveState: true, preserveScroll: true });
@@ -111,6 +115,9 @@ const formatAmount = (value: number): string => value.toFixed(2);
 
 const totalItemCount = (order: Order): number =>
   (order.items ?? []).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0);
+
+const totalDeferredCount = (order: Order): number =>
+  (order.returned_materials ?? []).reduce((sum, rm) => sum + Number(rm.pivot?.deferred_quantity ?? 0), 0);
 
 const availableLocales = (usePage().props.available_locales as string[]) ?? [];
 
@@ -182,6 +189,13 @@ const statusLabel: Record<string, string> = {
                         <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ s.replace('_', ' ') }}</option>
                     </select>
                 </div>
+                <div class="space-y-1 w-full md:w-48">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Payment</Label>
+                    <select v-model="paymentFilter" @change="applyFilter" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">All Orders</option>
+                        <option value="unpaid">Unpaid</option>
+                    </select>
+                </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Apply Filters</Button>
                 </div>
@@ -246,6 +260,7 @@ const statusLabel: Record<string, string> = {
                                         {{ productName(item.product?.name) }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
                                     </div>
                                     <div class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ totalItemCount(order) }} total</div>
+                                    <div v-if="totalDeferredCount(order) > 0" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">⏳ {{ totalDeferredCount(order) }} to pickup</div>
                                 </div>
                                 <span v-else class="text-sm text-muted-foreground">—</span>
                             </td>
@@ -333,6 +348,7 @@ const statusLabel: Record<string, string> = {
                                     {{ productName(item.product?.name) }} <span class="text-muted-foreground">×{{ item.quantity }}</span>
                                 </div>
                             </div>
+                            <div v-if="totalDeferredCount(order) > 0" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1">⏳ {{ totalDeferredCount(order) }} to pickup</div>
                         </div>
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Address</span>

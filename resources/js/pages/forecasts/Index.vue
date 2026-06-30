@@ -7,11 +7,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, Users2 } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, Users2, TrendingUp, TrendingDown, ShoppingCart } from 'lucide-vue-next';
 
 interface BasketItem {
+  product_id: number;
   name: Record<string, string> | string | null;
   qty: number;
+  unit_price: number;
 }
 
 interface Prediction {
@@ -19,16 +21,20 @@ interface Prediction {
   client_name: string;
   date: string; // YYYY-MM-DD
   overdue: boolean;
+  churned?: boolean;
   confidence: 'high' | 'medium' | 'low';
+  trend: 'up' | 'stable' | 'down';
   last_order: string;
   cadence_days: number;
   order_count: number;
   basket: BasketItem[];
+  expected_value: number;
 }
 
 const props = defineProps<{
   month: string; // YYYY-MM
   predictions: Prediction[];
+  summary: { total_clients: number; total_value: number; overdue_count: number; churned_count: number };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -143,6 +149,13 @@ const confidenceClass: Record<string, string> = {
 
 const basketSummary = (basket: BasketItem[]): string =>
   basket.length ? basket.map((b) => `${productName(b.name)} ×${b.qty}`).join(', ') : '—';
+
+const createOrderFromForecast = (prediction: Prediction) => {
+  router.post('/admin/forecasts/order', {
+    client_id: prediction.client_id,
+    items: prediction.basket.map((b) => ({ product_id: b.product_id, quantity: b.qty })),
+  });
+};
 </script>
 
 <template>
@@ -155,6 +168,28 @@ const basketSummary = (basket: BasketItem[]): string =>
           Probable next orders for repeat clients. Pick a month and day to see who's likely to order and what.
         </p>
       </div>
+
+      <!-- Summary stats bar -->
+      <Card class="shadow-sm">
+        <CardContent class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="space-y-1">
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Predicted clients</div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.summary.total_clients }}</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Est. revenue</div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.summary.total_value.toFixed(0) }} <span class="text-sm font-normal text-muted-foreground">{{ $page.props.currency }}</span></div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Overdue</div>
+            <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ props.summary.overdue_count }}</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Churned</div>
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ props.summary.churned_count }}</div>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Toolbar: month + day selectors with prev/next -->
       <Card class="shadow-sm">
@@ -180,16 +215,24 @@ const basketSummary = (basket: BasketItem[]): string =>
 
           <div class="space-y-1 w-full md:w-64">
             <Label class="text-xs uppercase tracking-wider text-muted-foreground">Day</Label>
-            <select
-              v-model="selectedDate"
-              :disabled="!dayOptions.length"
-              class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
-            >
-              <option v-if="!dayOptions.length" :value="null">No predicted days this month</option>
-              <option v-for="d in dayOptions" :key="d.value" :value="d.value">
-                {{ d.label }} — {{ d.count }} client{{ d.count === 1 ? '' : 's' }}{{ d.overdue ? ' • overdue' : '' }}
-              </option>
-            </select>
+            <div class="flex items-center gap-2">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(-1)" title="Previous day">
+                <ChevronLeft class="h-4 w-4" />
+              </Button>
+              <select
+                v-model="selectedDate"
+                :disabled="!dayOptions.length"
+                class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+              >
+                <option v-if="!dayOptions.length" :value="null">No predicted days this month</option>
+                <option v-for="d in dayOptions" :key="d.value" :value="d.value">
+                  {{ d.label }} — {{ d.count }} client{{ d.count === 1 ? '' : 's' }}{{ d.overdue ? ' • overdue' : '' }}
+                </option>
+              </select>
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(1)" title="Next day">
+                <ChevronRight class="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -214,15 +257,29 @@ const basketSummary = (basket: BasketItem[]): string =>
                   <th class="px-6 py-3 font-semibold">Probable items</th>
                   <th class="px-6 py-3 font-semibold">Confidence</th>
                   <th class="px-6 py-3 font-semibold">History</th>
+                  <th class="px-6 py-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
                 <tr v-for="p in selectedPredictions" :key="p.client_id" class="hover:bg-muted/40 transition-colors">
                   <td class="px-6 py-4">
-                    <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
                       {{ p.client_name }}
+                      <div v-if="p.trend === 'up'" class="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-semibold">
+                        <TrendingUp class="h-3 w-3" /> Up
+                      </div>
+                      <div v-else-if="p.trend === 'down'" class="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-semibold">
+                        <TrendingDown class="h-3 w-3" /> Down
+                      </div>
                       <Badge
-                        v-if="p.overdue"
+                        v-if="p.churned"
+                        variant="outline"
+                        class="border-transparent bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
+                      >
+                        Churned
+                      </Badge>
+                      <Badge
+                        v-if="p.overdue && !p.churned"
                         variant="outline"
                         class="border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
                       >
@@ -235,6 +292,7 @@ const basketSummary = (basket: BasketItem[]): string =>
                       <div v-for="(b, i) in p.basket" :key="i">
                         {{ productName(b.name) }} <span class="text-muted-foreground">×{{ b.qty }}</span>
                       </div>
+                      <div class="text-[10px] text-muted-foreground mt-1">est. {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
                     </div>
                     <span v-else class="text-muted-foreground">—</span>
                   </td>
@@ -246,6 +304,14 @@ const basketSummary = (basket: BasketItem[]): string =>
                   <td class="px-6 py-4 text-xs text-muted-foreground">
                     {{ p.order_count }} orders · ~every {{ p.cadence_days }}d<br />
                     last {{ new Date(p.last_order).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}
+                    <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold mt-1">↑ accelerating</span>
+                    <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold mt-1">↓ slowing</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" class="gap-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" @click="createOrderFromForecast(p)" title="Create order">
+                      <ShoppingCart class="h-4 w-4" />
+                      <span class="hidden md:inline">Create</span>
+                    </Button>
                   </td>
                 </tr>
               </tbody>
@@ -261,18 +327,39 @@ const basketSummary = (basket: BasketItem[]): string =>
                   {{ p.confidence }}
                 </Badge>
               </div>
-              <Badge
-                v-if="p.overdue"
-                variant="outline"
-                class="border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] px-1.5 h-5 font-semibold gap-1 mb-2"
-              >
-                <AlertTriangle class="h-3 w-3" /> Overdue
-              </Badge>
+              <div class="flex gap-1 mb-2 flex-wrap">
+                <div v-if="p.trend === 'up'" class="flex items-center gap-1 text-green-600 dark:text-green-400 text-[10px] font-semibold">
+                  <TrendingUp class="h-3 w-3" /> Up
+                </div>
+                <div v-else-if="p.trend === 'down'" class="flex items-center gap-1 text-red-600 dark:text-red-400 text-[10px] font-semibold">
+                  <TrendingDown class="h-3 w-3" /> Down
+                </div>
+                <Badge
+                  v-if="p.churned"
+                  variant="outline"
+                  class="border-transparent bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 text-[10px] px-1.5 h-5 font-semibold"
+                >
+                  Churned
+                </Badge>
+                <Badge
+                  v-if="p.overdue && !p.churned"
+                  variant="outline"
+                  class="border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
+                >
+                  <AlertTriangle class="h-3 w-3" /> Overdue
+                </Badge>
+              </div>
               <div class="text-sm text-gray-700 dark:text-gray-300">{{ basketSummary(p.basket) }}</div>
               <div class="text-[10px] text-muted-foreground mt-1">
                 {{ p.order_count }} orders · ~every {{ p.cadence_days }}d · last
                 {{ new Date(p.last_order).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) }}
+                <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold">↑ accelerating</span>
+                <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold">↓ slowing</span>
               </div>
+              <div class="text-[10px] text-muted-foreground font-semibold mt-1">est. {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
+              <Button variant="secondary" size="sm" class="w-full mt-2 gap-1" @click="createOrderFromForecast(p)">
+                <ShoppingCart class="h-4 w-4" /> Create Order
+              </Button>
             </div>
           </div>
 

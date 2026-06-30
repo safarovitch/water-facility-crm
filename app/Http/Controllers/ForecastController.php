@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +22,47 @@ class ForecastController extends Controller
    * (created_at), then project probable future orders onto the requested
    * month so staff can see, per day, who is likely to order and roughly what.
    */
+  /**
+   * Create an order from a forecast prediction.
+   */
+  public function createOrder(Request $request): \Illuminate\Http\RedirectResponse
+  {
+    $data = $request->validate([
+      'client_id'          => ['required', 'exists:users,id'],
+      'items'              => ['required', 'array', 'min:1'],
+      'items.*.product_id' => ['required', 'exists:products,id'],
+      'items.*.quantity'   => ['required', 'integer', 'min:1'],
+    ]);
+
+    $order = DB::transaction(function () use ($data) {
+      $items = collect($data['items'])->map(function ($item) {
+        $product   = Product::findOrFail($item['product_id']);
+        $unitPrice = (float) ($product->sale_price > 0 ? $product->sale_price : $product->price);
+        return [
+          'product_id' => $item['product_id'],
+          'quantity'   => $item['quantity'],
+          'unit_price' => $unitPrice,
+          'subtotal'   => $unitPrice * $item['quantity'],
+          'is_gift'    => false,
+        ];
+      });
+
+      $order = Order::create([
+        'user_id'        => $data['client_id'],
+        'status'         => OrderStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+        'total_amount'   => $items->sum('subtotal'),
+        'created_by'     => auth()->id(),
+      ]);
+
+      $order->items()->createMany($items->toArray());
+
+      return $order;
+    });
+
+    return redirect()->route('admin.orders.show', $order);
+  }
+
   public function index(): Response
   {
     $month = $this->resolveMonth(request('month'));
@@ -39,7 +84,7 @@ class ForecastController extends Controller
       ->with(['orders' => fn ($q) => $q
         ->where('status', '!=', OrderStatus::Cancelled)
         ->orderBy('created_at')
-        ->with(['items:id,order_id,product_id,quantity,is_gift', 'items.product:id,name'])])
+        ->with(['items:id,order_id,product_id,quantity,is_gift', 'items.product:id,name,price,sale_price'])])
       ->get(['id', 'name']);
 
     $predictions = [];
@@ -77,6 +122,13 @@ class ForecastController extends Controller
 
       $basket = $this->typicalBasket($orders);
       $confidence = $this->confidence($intervals, $cadence, $orders->count());
+      $trend = $this->trend($intervals);
+
+      // Churn detection: if overdue by more than 2x the cadence, mark as churned
+      $daysOverdue = $today->diffInDays($next->copy()->subDays($cadence));
+      $churned = $daysOverdue > $cadence * 2;
+
+      $expectedValue = $this->expectedValue($basket);
 
       $guard = 0;
       while ($occurrence->lte($monthEnd) && $guard++ < 60) {
@@ -86,20 +138,31 @@ class ForecastController extends Controller
             'client_name'  => $client->name,
             'date'         => $occurrence->toDateString(),
             'overdue'      => $overdue,
+            'churned'      => $churned,
             'confidence'   => $confidence,
+            'trend'        => $trend,
             'last_order'   => $lastOrder->toDateString(),
             'cadence_days' => $cadence,
             'order_count'  => $orders->count(),
             'basket'       => $basket,
+            'expected_value' => $expectedValue,
           ];
         }
         $occurrence->addDays($cadence);
       }
     }
 
+    $summary = [
+      'total_clients'   => count(array_unique(array_column($predictions, 'client_id'))),
+      'total_value'     => array_sum(array_column($predictions, 'expected_value')),
+      'overdue_count'   => count(array_filter($predictions, fn($p) => $p['overdue'])),
+      'churned_count'   => count(array_filter($predictions, fn($p) => $p['churned'] ?? false)),
+    ];
+
     return Inertia::render('forecasts/Index')->with([
       'month'       => $month->format('Y-m'),
       'predictions' => $predictions,
+      'summary'     => $summary,
     ]);
   }
 
@@ -158,7 +221,9 @@ class ForecastController extends Controller
         if ($item->is_gift || ! $item->product) {
           continue;
         }
+        $byProduct[$item->product_id]['product_id'] ??= $item->product_id;
         $byProduct[$item->product_id]['name'] ??= $item->product->name;
+        $byProduct[$item->product_id]['price'] ??= (float) ($item->product->sale_price > 0 ? $item->product->sale_price : $item->product->price);
         $byProduct[$item->product_id]['qtys'][] = (int) $item->quantity;
       }
     }
@@ -168,8 +233,10 @@ class ForecastController extends Controller
     foreach ($byProduct as $data) {
       if (count($data['qtys']) >= $threshold) {
         $basket[] = [
-          'name' => $data['name'],
-          'qty'  => max(1, (int) round($this->median($data['qtys']))),
+          'product_id' => $data['product_id'],
+          'name'       => $data['name'],
+          'qty'        => max(1, (int) round($this->median($data['qtys']))),
+          'unit_price' => $data['price'],
         ];
       }
     }
@@ -179,7 +246,13 @@ class ForecastController extends Controller
         if ($item->is_gift || ! $item->product) {
           continue;
         }
-        $basket[] = ['name' => $item->product->name, 'qty' => (int) $item->quantity];
+        $price = (float) ($item->product->sale_price > 0 ? $item->product->sale_price : $item->product->price);
+        $basket[] = [
+          'product_id' => $item->product_id,
+          'name'       => $item->product->name,
+          'qty'        => (int) $item->quantity,
+          'unit_price' => $price,
+        ];
       }
     }
 
@@ -212,6 +285,36 @@ class ForecastController extends Controller
   }
 
   /**
+   * Detect trend in ordering frequency. Compare first-half and second-half
+   * mean intervals. If insufficient history (< 4 intervals), return 'stable'.
+   */
+  private function trend(array $intervals): string
+  {
+    if (count($intervals) < 4) {
+      return 'stable';
+    }
+
+    $mid = (int) ceil(count($intervals) / 2);
+    $firstHalf  = array_slice($intervals, 0, $mid);
+    $secondHalf = array_slice($intervals, $mid);
+
+    $firstMean  = array_sum($firstHalf) / count($firstHalf);
+    $secondMean = array_sum($secondHalf) / count($secondHalf);
+
+    if ($firstMean > 0) {
+      $ratio = $secondMean / $firstMean;
+      if ($ratio < 0.85) {
+        return 'up'; // ordering more frequently
+      }
+      if ($ratio > 1.15) {
+        return 'down'; // ordering less frequently
+      }
+    }
+
+    return 'stable';
+  }
+
+  /**
    * Median of a numeric array. Returns 0 for an empty array.
    */
   private function median(array $values): float
@@ -224,5 +327,17 @@ class ForecastController extends Controller
     $mid = intdiv($n, 2);
 
     return $n % 2 ? (float) $values[$mid] : ($values[$mid - 1] + $values[$mid]) / 2;
+  }
+
+  /**
+   * Sum of basket item quantities × unit prices.
+   */
+  private function expectedValue(array $basket): float
+  {
+    $total = 0.0;
+    foreach ($basket as $item) {
+      $total += $item['qty'] * (float) $item['unit_price'];
+    }
+    return round($total, 2);
   }
 }

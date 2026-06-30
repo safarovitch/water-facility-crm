@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::name('forecasts.')->prefix('forecasts')->group(function () {
       Route::get('index', [\App\Http\Controllers\ForecastController::class, 'index'])->name('index');
+      Route::post('order', [\App\Http\Controllers\ForecastController::class, 'createOrder'])->name('order');
     });
 
     Route::name('curriers.')->prefix('curriers')->group(function () {

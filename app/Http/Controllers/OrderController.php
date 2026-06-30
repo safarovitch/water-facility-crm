@@ -159,7 +159,7 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $ordersQuery = Order::with(['client.phones', 'creator', 'items.product:id,name'])
+    $ordersQuery = Order::with(['client.phones', 'creator', 'items.product:id,name', 'returnedMaterials'])
       ->when(
         !$isAdminPath && $authUserId,
         fn($q) => $q->where('user_id', $authUserId)
@@ -168,6 +168,11 @@ class OrderController extends Controller
         request('status'),
         fn($q, $status) =>
         $q->where('status', $status)
+      )
+      ->when(
+        request('payment') === 'unpaid',
+        fn($q) =>
+        $q->whereRaw('(total_amount + COALESCE(deposit_charge, 0) - COALESCE(paid_amount, 0)) > 0')
       )
       ->when(
         $isAdminPath && request('user_id'),
