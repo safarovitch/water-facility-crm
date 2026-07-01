@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, MapPin } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
-import { externalMapsUrl } from '@/lib/maps';
 
 const adminMode = computed(() => !!usePage().props.adminMode);
 
@@ -133,8 +132,12 @@ const deliveryTime = (order: Order): string | null =>
     ? new Date(order.scheduled_delivery_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
     : null;
 
-const mapsHref = (order: Order): string | null =>
-  externalMapsUrl({ lat: order.lat, lng: order.lng, address: order.delivery_address });
+const mapsHref = (order: Order): string | null => {
+  if (order.lat && order.lng) {
+    return `geo:${order.lat},${order.lng}?z=15`;
+  }
+  return null;
+};
 
 const productName = (name: Record<string, string> | string | null | undefined): string => {
   if (!name) return 'Item';
