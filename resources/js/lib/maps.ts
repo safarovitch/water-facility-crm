@@ -169,11 +169,11 @@ export function externalMapsUrl(opts: {
 }): string | null {
     const { lat, lng, address } = opts;
     if (lat != null && lng != null) {
-        return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        return `geo:${lat},${lng}`;
     }
     const trimmed = address?.trim();
     if (trimmed && trimmed.toLowerCase() !== 'self pickup') {
-        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmed)}`;
+        return `geo:${encodeURIComponent(trimmed)}`;
     }
     return null;
 }

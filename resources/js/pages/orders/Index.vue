@@ -136,6 +136,10 @@ const mapsHref = (order: Order): string | null => {
   if (order.lat && order.lng) {
     return `geo:${order.lat},${order.lng}?z=15`;
   }
+  if( order.delivery_address) {
+    const encodedAddress = encodeURIComponent(order.delivery_address);
+    return `geo:${encodedAddress}`;
+  }
   return null;
 };
 
