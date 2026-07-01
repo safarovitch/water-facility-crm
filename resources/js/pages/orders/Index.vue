@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, MapPin } from 'lucide-vue-next';
+import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
-import { externalMapsUrl } from '@/lib/maps';
+import MapChooser from '@/components/MapChooser.vue';
 
 const adminMode = computed(() => !!usePage().props.adminMode);
 
@@ -133,8 +133,6 @@ const deliveryTime = (order: Order): string | null =>
     ? new Date(order.scheduled_delivery_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
     : null;
 
-const mapsHref = (order: Order): string | null =>
-  externalMapsUrl({ lat: order.lat, lng: order.lng, address: order.delivery_address });
 
 const productName = (name: Record<string, string> | string | null | undefined): string => {
   if (!name) return 'Item';
@@ -238,21 +236,8 @@ const statusLabel: Record<string, string> = {
                                 <div class="font-bold text-gray-900 dark:text-white">{{ order.contact_name || order.client?.name }}</div>
                                 <div class="text-xs text-muted-foreground mt-0.5">{{ order.contact_phone || order.client?.phone || '—' }}</div>
                             </td>
-                            <td class="px-6 py-4 max-w-[18rem]">
-                                <a
-                                    v-if="mapsHref(order)"
-                                    :href="mapsHref(order)!"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="group/addr inline-flex items-start gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                                    :title="`Open in maps: ${order.delivery_address ?? ''}`"
-                                >
-                                    <MapPin class="h-4 w-4 shrink-0 mt-0.5" />
-                                    <span class="whitespace-normal">{{ order.delivery_address }}</span>
-                                </a>
-                                <div v-else class="text-sm text-gray-700 dark:text-gray-300 truncate" :title="order.delivery_address ?? ''">
-                                    {{ order.delivery_address || '—' }}
-                                </div>
+                            <td class="px-6 py-4 max-w-[18rem] text-sm">
+                                <MapChooser :lat="order.lat" :lng="order.lng" :address="order.delivery_address" />
                             </td>
                             <td class="px-6 py-4 max-w-[16rem]">
                                 <div v-if="order.items && order.items.length" class="space-y-0.5">
@@ -352,17 +337,7 @@ const statusLabel: Record<string, string> = {
                         </div>
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Address</span>
-                            <a
-                                v-if="mapsHref(order)"
-                                :href="mapsHref(order)!"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400 line-clamp-2"
-                            >
-                                <MapPin class="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                                <span>{{ order.delivery_address }}</span>
-                            </a>
-                            <span v-else class="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{{ order.delivery_address || '—' }}</span>
+                            <MapChooser :lat="order.lat" :lng="order.lng" :address="order.delivery_address" class="text-xs" />
                         </div>
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">

@@ -17,8 +17,8 @@ import {
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
-import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw, MapPin } from 'lucide-vue-next';
-import { externalMapsUrl } from '@/lib/maps';
+import MapChooser from '@/components/MapChooser.vue';
+import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw } from 'lucide-vue-next';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -191,8 +191,6 @@ const cancelError = ref('');
 const isCancelled = computed(() => props.order.status === 'cancelled');
 const isSelfPickup = computed(() => props.order.delivery_address === 'Self Pickup');
 
-const mapsHref = computed(() =>
-  externalMapsUrl({ lat: props.order.lat, lng: props.order.lng, address: props.order.delivery_address }));
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
@@ -611,18 +609,7 @@ const statusButtonClass = (s: string) => {
             <span v-if="order.delivery_address === 'Self Pickup'" class="ml-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded">
               🏬 Self Pickup
             </span>
-            <a
-              v-else-if="mapsHref"
-              :href="mapsHref"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="ml-1 inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
-              :title="`Open in maps: ${order.delivery_address ?? ''}`"
-            >
-              <MapPin class="h-4 w-4 shrink-0" />
-              <span>{{ order.delivery_address }}</span>
-            </a>
-            <span v-else>{{ order.delivery_address ?? '—' }}</span>
+            <MapChooser v-else :lat="order.lat" :lng="order.lng" :address="order.delivery_address" class="ml-1" />
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">
             <span class="font-medium">Notes:</span> {{ order.notes }}
