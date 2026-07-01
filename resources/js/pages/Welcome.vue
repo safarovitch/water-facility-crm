@@ -386,7 +386,7 @@ const couriersLabel = (count: number) => {
                     <template v-else>
                         <Link
                             :href="login()"
-                            class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline-block"
+                            class="inline-flex h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium hover:border-slate-300"
                         >
                             {{ t('nav.login') }}
                         </Link>
