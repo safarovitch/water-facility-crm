@@ -18,7 +18,6 @@ import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
 import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw, MapPin } from 'lucide-vue-next';
-import { externalMapsUrl } from '@/lib/maps';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -191,11 +190,12 @@ const cancelError = ref('');
 const isCancelled = computed(() => props.order.status === 'cancelled');
 const isSelfPickup = computed(() => props.order.delivery_address === 'Self Pickup');
 
-const mapsHref = computed(() => externalMapsUrl({
-  lat: props.order.lat,
-  lng: props.order.lng,
-  address: props.order.delivery_address,
-}));
+const mapsHref = computed(() => {
+  if (props.order.lat && props.order.lng) {
+    return `geo:${props.order.lat},${props.order.lng}?z=15`;
+  }
+  return null;
+});
 const pendingStatus = ref<string | null>(null);
 const isDropdownOpen = ref(false);
 const dropdownContainer = ref<HTMLElement | null>(null);
