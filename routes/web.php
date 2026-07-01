@@ -16,7 +16,7 @@ use App\Http\Controllers\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/qr', [HomeController::class, 'qr'])->name('qr');
+Route::get('/qr', [HomeController::class, 'index'])->name('qr');
 
 // Stash a same-origin return URL as the intended-URL, then redirect to /login.
 // Used by landing-page CTAs that need the user back on a specific page after login.
