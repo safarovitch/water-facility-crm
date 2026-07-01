@@ -168,12 +168,13 @@ export function externalMapsUrl(opts: {
     address?: string | null;
 }): string | null {
     const { lat, lng, address } = opts;
-    if (lat != null && lng != null) {
-        return `geo:${lat},${lng}`;
-    }
     const trimmed = address?.trim();
+    if (lat != null && lng != null) {
+        const label = trimmed ? encodeURIComponent(trimmed) : '';
+        return label ? `geo:${lat},${lng}?q=${lat},${lng}(${label})` : `geo:${lat},${lng}`;
+    }
     if (trimmed && trimmed.toLowerCase() !== 'self pickup') {
-        return `geo:${encodeURIComponent(trimmed)}`;
+        return `geo:0,0?q=${encodeURIComponent(trimmed)}`;
     }
     return null;
 }
