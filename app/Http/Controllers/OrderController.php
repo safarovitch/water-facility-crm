@@ -1231,4 +1231,39 @@ class OrderController extends Controller
       ],
     ])->header('Cache-Control', 'no-store, max-age=0');
   }
+
+  /**
+   * Mark deferred (collect-later) bottles on an order as now collected.
+   * Moves deferred_quantity into quantity and restores stock for those empties.
+   */
+  public function collectDeferred(Order $order)
+  {
+    $data = request()->validate([
+      'raw_material_ids' => ['required', 'array', 'min:1'],
+      'raw_material_ids.*' => ['required', 'exists:raw_materials,id'],
+    ]);
+
+    DB::transaction(function () use ($order, $data) {
+      foreach ($data['raw_material_ids'] as $rawMaterialId) {
+        $pivot = $order->returnedMaterials()
+          ->wherePivot('raw_material_id', $rawMaterialId)
+          ->first()?->pivot;
+
+        if (!$pivot || (int) $pivot->deferred_quantity <= 0) {
+          continue;
+        }
+
+        $qty = (int) $pivot->deferred_quantity;
+
+        $order->returnedMaterials()->updateExistingPivot($rawMaterialId, [
+          'quantity'          => $pivot->quantity + $qty,
+          'deferred_quantity' => 0,
+        ]);
+
+        RawMaterial::where('id', $rawMaterialId)->increment('current_stock', $qty);
+      }
+    });
+
+    return back()->with('success', 'Bottles marked as collected.');
+  }
 }

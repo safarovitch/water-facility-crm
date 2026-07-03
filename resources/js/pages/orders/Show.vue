@@ -367,6 +367,22 @@ const confirmDelete = () => {
   });
 };
 
+const collectingDeferred = ref<number[]>([]);
+
+const collectDeferred = (rawMaterialId: number) => {
+  collectingDeferred.value.push(rawMaterialId);
+  router.patch(
+    `/admin/orders/${props.order.id}/collect-deferred`,
+    { raw_material_ids: [rawMaterialId] },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        collectingDeferred.value = collectingDeferred.value.filter(id => id !== rawMaterialId);
+      },
+    },
+  );
+};
+
 const isAssignModalOpen = ref(false);
 
 const isCurrierOnline = (courier: CourierOption) => {
@@ -786,7 +802,20 @@ const statusButtonClass = (s: string) => {
                 +{{ item.pivot.quantity }} <span class="text-[10px] uppercase font-bold text-gray-400 ml-0.5">{{ item.unit }}</span>
               </td>
               <td class="px-6 py-3.5 text-right">
-                <span v-if="(item.pivot.deferred_quantity || 0) > 0" class="font-bold text-amber-600 dark:text-amber-400 text-base">⏳ {{ item.pivot.deferred_quantity }}</span>
+                <div v-if="(item.pivot.deferred_quantity || 0) > 0" class="inline-flex items-center gap-2">
+                  <span class="font-bold text-amber-600 dark:text-amber-400 text-base">⏳ {{ item.pivot.deferred_quantity }}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    class="h-7 text-xs border-green-500 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950"
+                    :disabled="collectingDeferred.includes(item.id)"
+                    @click="collectDeferred(item.id)"
+                  >
+                    <Loader2 v-if="collectingDeferred.includes(item.id)" class="h-3 w-3 animate-spin" />
+                    <Check v-else class="h-3 w-3" />
+                    Collected
+                  </Button>
+                </div>
                 <span v-else class="text-gray-300 dark:text-gray-600">—</span>
               </td>
             </tr>
