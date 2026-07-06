@@ -32,6 +32,7 @@ Route::prefix('v1/currier')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/{id}/reject', [OrderController::class, 'reject']);
+    Route::patch('/orders/{id}/collect-deferred', [OrderController::class, 'collectDeferred']);
     // Inventory
     Route::get('/reusable-materials', function () {
         return response()->json(
