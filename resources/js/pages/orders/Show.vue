@@ -5,14 +5,15 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
-import { index as guestIndex, show as guestShow, pay as guestPay } from '@/routes/orders';
+import { index as guestIndex, show as guestShow, pay as guestPay, payFromBalance as guestPayFromBalance } from '@/routes/orders';
 import {
   index as adminIndex,
   show as adminShow,
   edit as adminEdit,
   cancel as adminCancel,
   updateStatus as adminUpdateStatus,
-  assign as adminAssignRoute
+  assign as adminAssignRoute,
+  payFromBalance as adminPayFromBalance
 } from '@/routes/admin/orders';
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,7 +68,7 @@ interface Order {
   created_at_formatted: string;
   courier_id: number | null;
   courier: { id: number; name: string } | null;
-  client: { id: number; name: string; email: string; phone: string | null; user_profile: UserProfile | null };
+  client: { id: number; name: string; email: string; phone: string | null; user_profile: UserProfile | null; wallet: { balance: string; currency: string } | null };
   creator: { name: string } | null;
   items: OrderItem[];
   returned_materials: ReturnedMaterial[];
@@ -163,8 +164,12 @@ const isDeliveryModalOpen = ref(false);
 const isCancelModalOpen = ref(false);
 const isWalletPayModalOpen = ref(false);
 const walletPayProcessing = ref(false);
+const payFromBalanceProcessing = ref(false);
 const isOverpaymentRefundModalOpen = ref(false);
 const overpaymentRefundProcessing = ref(false);
+
+const walletBalance = computed(() => Number(props.order.client.wallet?.balance ?? 0));
+const payFromBalanceRoute = computed(() => adminMode.value ? adminPayFromBalance : guestPayFromBalance);
 
 const page = usePage();
 const overpaymentOnOrder = computed(() => {
@@ -327,6 +332,17 @@ const confirmWalletPay = () => {
     preserveScroll: true,
     onFinish: () => {
       walletPayProcessing.value = false;
+      isWalletPayModalOpen.value = false;
+    },
+  });
+};
+
+const confirmPayFromBalance = () => {
+  payFromBalanceProcessing.value = true;
+  router.post(payFromBalanceRoute.value(props.order.id).url, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      payFromBalanceProcessing.value = false;
       isWalletPayModalOpen.value = false;
     },
   });
@@ -699,9 +715,9 @@ const statusButtonClass = (s: string) => {
           <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="!isCancelled && order.balance_due > 0 && order.payment_status !== 'paid'">
             <button @click="openWalletPayModal" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
               <Wallet class="size-5" />
-              Pay with Wallet
+              Pay
             </button>
-            <p class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest">Instant payment from your balance</p>
+            <p class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest">Use wallet balance or record another payment</p>
           </div>
         </div>
       </div>
@@ -923,31 +939,59 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isWalletPayModalOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Add funds and pay</DialogTitle>
+            <DialogTitle class="text-xl font-bold">Pay this order</DialogTitle>
             <DialogDescription>
-              The order's balance will be added to the client's wallet and immediately applied to this order.
-              Two ledger entries (deposit + payment) are recorded so the receipt of funds and the order payment can be audited separately.
+              Balance due: <span class="font-semibold">{{ Number(order.balance_due).toFixed(2) }} {{ ($page.props.currency as string) || '' }}</span>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="py-3 space-y-3">
-            <div class="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-900/15 px-4 py-3 flex items-center justify-between">
-              <span class="text-xs uppercase tracking-wider font-bold text-green-700 dark:text-green-300">Amount</span>
-              <span class="font-mono text-lg font-bold text-green-900 dark:text-green-100">
-                {{ Number(order.balance_due).toFixed(2) }}
-                <span class="text-xs font-normal text-green-700/80 dark:text-green-300/80 ml-1">{{ ($page.props.currency as string) || '' }}</span>
-              </span>
-            </div>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              Add <span class="font-semibold">{{ Number(order.balance_due).toFixed(2) }} {{ ($page.props.currency as string) || '' }}</span> funds and pay for this order?
-            </p>
-            <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
-              <Button type="button" variant="outline" :disabled="walletPayProcessing" @click="isWalletPayModalOpen = false">Cancel</Button>
-              <Button type="button" class="bg-green-600 hover:bg-green-700 text-white" :disabled="walletPayProcessing" @click="confirmWalletPay">
-                <Loader2 v-if="walletPayProcessing" class="w-4 h-4 mr-2 animate-spin" />
+          <div class="py-3 space-y-4">
+            <!-- Option 1: use the client's existing wallet balance -->
+            <div class="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-900/15 p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs uppercase tracking-wider font-bold text-blue-700 dark:text-blue-300">Existing wallet balance</span>
+                <span class="font-mono text-lg font-bold text-blue-900 dark:text-blue-100">
+                  {{ walletBalance.toFixed(2) }}
+                  <span class="text-xs font-normal text-blue-700/80 dark:text-blue-300/80 ml-1">{{ ($page.props.currency as string) || '' }}</span>
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Applies real funds already in {{ order.client.name }}'s wallet — up to
+                {{ Math.min(walletBalance, Number(order.balance_due)).toFixed(2) }} now.
+                <span v-if="walletBalance < Number(order.balance_due)">Not enough to cover the full balance; the remainder stays due.</span>
+              </p>
+              <Button
+                type="button"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                :disabled="payFromBalanceProcessing || walletBalance <= 0"
+                @click="confirmPayFromBalance"
+              >
+                <Loader2 v-if="payFromBalanceProcessing" class="w-4 h-4 mr-2 animate-spin" />
                 <Wallet v-else class="w-4 h-4 mr-2" />
-                {{ walletPayProcessing ? 'Processing…' : 'Add funds & pay' }}
+                {{ payFromBalanceProcessing ? 'Processing…' : (walletBalance <= 0 ? 'No wallet balance available' : 'Use wallet balance') }}
               </Button>
+            </div>
+
+            <!-- Option 2: staff received payment out-of-band (cash, etc.) — record it via the wallet ledger -->
+            <div class="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-900/15 p-4 space-y-2">
+              <span class="text-xs uppercase tracking-wider font-bold text-green-700 dark:text-green-300">Received payment another way</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Tops the wallet up for the full balance and immediately applies it — use this when the client already paid you directly (cash, transfer) and you just need to record it.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                class="w-full border-green-300 dark:border-green-900/50 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+                :disabled="walletPayProcessing"
+                @click="confirmWalletPay"
+              >
+                <Loader2 v-if="walletPayProcessing" class="w-4 h-4 mr-2 animate-spin" />
+                {{ walletPayProcessing ? 'Processing…' : 'Top up & pay in full' }}
+              </Button>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t dark:border-gray-700">
+              <Button type="button" variant="outline" :disabled="walletPayProcessing || payFromBalanceProcessing" @click="isWalletPayModalOpen = false">Cancel</Button>
             </div>
           </div>
         </DialogContent>

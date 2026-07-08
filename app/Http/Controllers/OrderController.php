@@ -648,6 +648,7 @@ class OrderController extends Controller
 
     $order->load([
       'client.userProfile',
+      'client.wallet',
       'creator',
       'canceller',
       'items.product.rawMaterials',
@@ -1139,6 +1140,56 @@ class OrderController extends Controller
       });
 
       return back()->with('success', 'Funds added and order paid.');
+    } catch (\Exception $e) {
+      return back()->with('error', $e->getMessage());
+    }
+  }
+
+  /**
+   * Apply the client's existing wallet balance toward this order — unlike
+   * payWithWallet() this never manufactures funds. It pays whatever is
+   * available, up to the balance due, and leaves any remainder unpaid for
+   * the client to settle another way.
+   */
+  public function payFromWalletBalance(Order $order, \App\Services\WalletService $walletService, OrderAccountingService $orderAccounting)
+  {
+    $order = $order->fresh(['items.product.rawMaterials', 'returnedMaterials', 'client.wallet']);
+
+    if ($order->status->value === OrderStatus::Cancelled) {
+      return back()->with('error', 'Cancelled orders cannot be paid.');
+    }
+
+    if ($order->isFullyPaid()) {
+      $order->reconcilePaymentStatus();
+
+      return back()->with('error', 'Order is already paid.');
+    }
+
+    $balanceDue = (float) $order->balance_due;
+    $walletBalance = (float) ($order->client->wallet->balance ?? 0);
+    $amountToPay = round(min($balanceDue, $walletBalance), 2);
+
+    if ($amountToPay <= 0) {
+      return back()->with('error', 'Client has no wallet balance to apply.');
+    }
+
+    try {
+      DB::transaction(function () use ($order, $walletService, $amountToPay, $orderAccounting) {
+        $walletService->pay($order->client, $amountToPay, Order::class, $order->id, [
+          'order_number' => $order->order_number,
+        ]);
+
+        $order->increment('paid_amount', $amountToPay);
+        $order->refresh()->reconcilePaymentStatus();
+
+        $orderAccounting->syncPaymentRecord($order);
+      });
+
+      $message = $amountToPay >= $balanceDue
+        ? 'Order paid in full from wallet balance.'
+        : number_format($amountToPay, 2) . ' applied from wallet balance. Remaining balance is still due.';
+
+      return back()->with('success', $message);
     } catch (\Exception $e) {
       return back()->with('error', $e->getMessage());
     }

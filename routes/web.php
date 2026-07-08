@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::patch('{order}/cancel',   [OrderController::class, 'cancel'])->name('cancel');
       Route::patch('{order}/status',   [OrderController::class, 'updateStatus'])->name('updateStatus');
       Route::post('{order}/pay',       [OrderController::class, 'payWithWallet'])->name('pay');
+      Route::post('{order}/pay-from-balance', [OrderController::class, 'payFromWalletBalance'])->name('payFromBalance');
       Route::patch('{order}/assign',   [OrderController::class, 'assignCurrier'])->name('assign');
       Route::delete('{order}',         [OrderController::class, 'destroy'])->name('destroy');
     });
@@ -183,6 +184,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
       Route::post('repeat-last', [OrderController::class, 'clientRepeatLast'])->name('client.repeat-last');
       Route::get('{order}', [OrderController::class, 'show'])->name('show');
       Route::post('{order}/pay', [OrderController::class, 'payWithWallet'])->name('pay');
+      Route::post('{order}/pay-from-balance', [OrderController::class, 'payFromWalletBalance'])->name('payFromBalance');
   });
 
   // Live courier tracking for the signed-in client's active order
