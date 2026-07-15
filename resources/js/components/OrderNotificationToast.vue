@@ -2,8 +2,10 @@
 import { useOrderNotifications } from '@/composables/useOrderNotifications';
 import { ShoppingCart, X } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from '@/composables/useI18n';
 
 const { incomingOrders } = useOrderNotifications();
+const { t } = useI18n();
 
 const removeOrder = (id: number) => {
   const index = incomingOrders.value.findIndex(o => o.id === id);
@@ -36,20 +38,20 @@ const removeOrder = (id: number) => {
           
           <div class="flex-1">
             <h3 class="font-bold text-zinc-900 dark:text-zinc-100 flex justify-between items-center">
-              Новый заказ!
+              {{ t('New order!') }}
               <button @click="removeOrder(order.id)" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
                 <X class="w-4 h-4" />
               </button>
             </h3>
             
             <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Заказ <span class="font-semibold text-primary-600">#{{ order.order_number }}</span>
+              {{ t('Order') }} <span class="font-semibold text-primary-600">#{{ order.order_number }}</span>
             </p>
             
             <div class="mt-2 text-xs text-zinc-500 flex justify-between items-end">
               <div>
-                <p>Клиент: {{ order.client_name }}</p>
-                <p class="font-medium text-zinc-900 dark:text-zinc-100 mt-0.5">Сумма: {{ order.total_amount }} TJS</p>
+                <p>{{ t('Client') }}: {{ order.client_name }}</p>
+                <p class="font-medium text-zinc-900 dark:text-zinc-100 mt-0.5">{{ t('Amount') }}: {{ order.total_amount }} TJS</p>
               </div>
               
               <Link 
@@ -57,7 +59,7 @@ const removeOrder = (id: number) => {
                 @click="removeOrder(order.id)"
                 class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity"
               >
-                Открыть
+                {{ t('Open') }}
               </Link>
             </div>
           </div>

@@ -8,6 +8,7 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import Label from '@/components/ui/label/Label.vue';
 import Input from '@/components/ui/input/Input.vue';
+import { useI18n } from '@/composables/useI18n';
 export interface AddressData {
   address_line: string;
   city: string;
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: AddressData): void;
 }>();
 
+const { t } = useI18n();
 const mapEl = ref<HTMLElement | null>(null);
 const searchQuery = ref(props.modelValue.address_line ?? '');
 const searchResults = ref<any[]>([]);
@@ -86,7 +88,7 @@ async function initMap() {
   });
 
   markerInstance = L.marker([defaultLat, defaultLng], { draggable: true, icon }).addTo(mapInstance);
-  markerInstance.bindPopup('Drag to set location').openPopup();
+  markerInstance.bindPopup(t('Drag to set location')).openPopup();
 
   markerInstance.on('dragend', () => {
     const { lat, lng } = markerInstance.getLatLng();
@@ -189,8 +191,8 @@ watch(() => props.modelValue.address_line, (newVal) => {
   <div class="space-y-4">
     <!-- Search box -->
     <div class="relative grid gap-2">
-      <Label>Street Address</Label>
-      <Input v-model="searchQuery" @input="onSearchInput" placeholder="Enter street address..." class="w-full pr-8" />
+      <Label>{{ t('Street Address') }}</Label>
+      <Input v-model="searchQuery" @input="onSearchInput" :placeholder="t('Enter street address...')" class="w-full pr-8" />
       <span v-if="isSearching" class="absolute right-2 top-9 text-gray-400 text-xs">…</span>
 
       <!-- Dropdown results -->

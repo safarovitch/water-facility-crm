@@ -18,8 +18,10 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useLocale } from '@/composables/useLocale';
+import { useI18n } from '@/composables/useI18n';
 
-const { t } = useLocale();
+const { t: tl } = useLocale();
+const { t } = useI18n();
 
 const props = defineProps<{
     auth: { user: User };
@@ -28,11 +30,11 @@ const props = defineProps<{
 }>();
 
 const orderStatusSteps = [
-    { id: 'pending', label: 'Accepted', icon: Clock },
-    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
-    { id: 'in_production', label: 'Preparing', icon: Package },
-    { id: 'ready', label: 'Ready', icon: Truck },
-    { id: 'delivered', label: 'Delivered', icon: CheckCircle2 },
+    { id: 'pending', label: t('Accepted'), icon: Clock },
+    { id: 'confirmed', label: t('Confirmed'), icon: CheckCircle2 },
+    { id: 'in_production', label: t('Preparing'), icon: Package },
+    { id: 'ready', label: t('Ready'), icon: Truck },
+    { id: 'delivered', label: t('Delivered'), icon: CheckCircle2 },
 ];
 
 const currentStepIndex = computed(() => {
@@ -61,20 +63,20 @@ const facilityPhone = '+992884238383';
         <!-- Header Section -->
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Welcome back, {{ auth.user.name }}!</h1>
-                <p class="text-muted-foreground mt-1">Manage your water deliveries and account settings.</p>
+                <h1 class="text-3xl font-bold tracking-tight">{{ t('Welcome back, {name}!', { name: auth.user.name }) }}</h1>
+                <p class="text-muted-foreground mt-1">{{ t('Manage your water deliveries and account settings.') }}</p>
             </div>
             <div class="flex items-center gap-3">
                 <Button variant="outline" as-child>
                     <a :href="`tel:${facilityPhone}`" class="flex items-center gap-2">
                         <Phone class="h-4 w-4" />
-                        Call Facility
+                        {{ t('Call Facility') }}
                     </a>
                 </Button>
                 <Button as-child size="lg" class="bg-blue-600 hover:bg-blue-700">
                     <Link href="/orders/create" class="flex items-center gap-2">
                         <ShoppingCart class="h-5 w-5" />
-                        Order Water
+                        {{ t('Order Water') }}
                     </Link>
                 </Button>
             </div>
@@ -87,14 +89,14 @@ const facilityPhone = '+992884238383';
                     <div class="flex items-center justify-between">
                         <CardTitle class="flex items-center gap-2">
                             <Truck class="h-5 w-5 text-blue-600" />
-                            Active Delivery
+                            {{ t('Active Delivery') }}
                         </CardTitle>
                         <Badge v-if="activeOrder" :class="getStatusColor(activeOrder.status)">
                             {{ activeOrder.statusLabel || activeOrder.status }}
                         </Badge>
                     </div>
                     <CardDescription v-if="activeOrder">
-                        Order #{{ activeOrder.order_number }} • Scheduled for {{ activeOrder.scheduled_delivery_at }}
+                        {{ t('Order') }} #{{ activeOrder.order_number }} • {{ t('Scheduled for') }} {{ activeOrder.scheduled_delivery_at }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent class="pt-8 pb-8">
@@ -128,13 +130,13 @@ const facilityPhone = '+992884238383';
                                 <UserIcon class="h-6 w-6 text-blue-600" />
                             </div>
                             <div class="flex-1">
-                                <p class="text-sm font-semibold">{{ activeOrder.courier?.name || 'Assigned Courier' }}</p>
-                                <p class="text-xs text-muted-foreground">On their way to your location</p>
+                                <p class="text-sm font-semibold">{{ activeOrder.courier?.name || t('Assigned Courier') }}</p>
+                                <p class="text-xs text-muted-foreground">{{ t('On their way to your location') }}</p>
                             </div>
                             <Button size="sm" variant="ghost" as-child>
                                 <a :href="`tel:${activeOrder.courier?.phone || facilityPhone}`" class="flex items-center gap-1">
                                     <Phone class="h-3 w-3" />
-                                    Contact
+                                    {{ t('Contact') }}
                                 </a>
                             </Button>
                         </div>
@@ -143,10 +145,10 @@ const facilityPhone = '+992884238383';
                         <div class="mb-4 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
                             <Package class="h-8 w-8 text-gray-400" />
                         </div>
-                        <h3 class="text-lg font-semibold">No active orders</h3>
-                        <p class="text-muted-foreground mb-6">You don't have any ongoing deliveries right now.</p>
+                        <h3 class="text-lg font-semibold">{{ t('No active orders') }}</h3>
+                        <p class="text-muted-foreground mb-6">{{ t("You don't have any ongoing deliveries right now.") }}</p>
                         <Button as-child variant="outline">
-                            <Link href="/orders/create">Place a new order</Link>
+                            <Link href="/orders/create">{{ t('Place a new order') }}</Link>
                         </Button>
                     </div>
                 </CardContent>
@@ -159,7 +161,7 @@ const facilityPhone = '+992884238383';
                     <CardHeader>
                         <CardTitle class="text-lg flex items-center gap-2">
                             <UserIcon class="h-5 w-5 text-gray-500" />
-                            Profile Info
+                            {{ t('Profile Info') }}
                         </CardTitle>
                     </CardHeader>
                     <CardContent class="space-y-4">
@@ -175,16 +177,16 @@ const facilityPhone = '+992884238383';
                         <div class="space-y-3 pt-4 border-t">
                             <div class="flex items-center gap-2 text-sm">
                                 <Phone class="h-4 w-4 text-muted-foreground" />
-                                <span>{{ auth.user.phone || 'No phone added' }}</span>
+                                <span>{{ auth.user.phone || t('No phone added') }}</span>
                             </div>
                             <div class="flex items-center gap-2 text-sm">
                                 <MapPin class="h-4 w-4 text-muted-foreground" />
-                                <span class="truncate">Default delivery address</span>
+                                <span class="truncate">{{ t('Default delivery address') }}</span>
                             </div>
                         </div>
                         <Button variant="ghost" class="w-full mt-4 justify-between" as-child>
                             <Link href="/settings/profile">
-                                Edit Profile
+                                {{ t('Edit Profile') }}
                                 <ArrowRight class="h-4 w-4" />
                             </Link>
                         </Button>
@@ -196,10 +198,10 @@ const facilityPhone = '+992884238383';
                     <CardContent class="pt-6">
                         <div class="flex flex-col items-center text-center">
                             <Phone class="h-8 w-8 mb-4 text-blue-400" />
-                            <h3 class="font-bold mb-1">Need Help?</h3>
-                            <p class="text-sm text-gray-400 mb-6">Contact our facility directly for immediate assistance.</p>
+                            <h3 class="font-bold mb-1">{{ t('Need Help?') }}</h3>
+                            <p class="text-sm text-gray-400 mb-6">{{ t('Contact our facility directly for immediate assistance.') }}</p>
                             <Button class="w-full bg-blue-500 hover:bg-blue-600 border-none" as-child>
-                                <a :href="`tel:${facilityPhone}`">Call Support</a>
+                                <a :href="`tel:${facilityPhone}`">{{ t('Call Support') }}</a>
                             </Button>
                         </div>
                     </CardContent>
@@ -211,11 +213,11 @@ const facilityPhone = '+992884238383';
         <Card>
             <CardHeader class="flex flex-row items-center justify-between pb-2">
                 <div>
-                    <CardTitle>Recent Orders</CardTitle>
-                    <CardDescription>Your last 5 completed or cancelled orders.</CardDescription>
+                    <CardTitle>{{ t('Recent Orders') }}</CardTitle>
+                    <CardDescription>{{ t('Your last 5 completed or cancelled orders.') }}</CardDescription>
                 </div>
                 <Button variant="link" as-child>
-                    <Link href="/orders">View all orders</Link>
+                    <Link href="/orders">{{ t('View all orders') }}</Link>
                 </Button>
             </CardHeader>
             <CardContent class="p-0 md:p-6">
@@ -224,11 +226,11 @@ const facilityPhone = '+992884238383';
                     <table class="w-full caption-bottom text-sm">
                         <thead>
                             <tr class="border-b transition-colors">
-                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Order</th>
-                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Date</th>
-                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Items</th>
-                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Total</th>
-                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Status</th>
+                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">{{ t('Order') }}</th>
+                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">{{ t('Date') }}</th>
+                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">{{ t('Items') }}</th>
+                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">{{ t('Total') }}</th>
+                                <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground">{{ t('Status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -242,9 +244,9 @@ const facilityPhone = '+992884238383';
                                 </td>
                                 <td class="p-2 align-middle">
                                     <template v-if="order.items && order.items.length > 0">
-                                        {{ t(order.items[0].product.name) }}
+                                        {{ tl(order.items[0].product.name) }}
                                         <span v-if="order.items.length > 1" class="text-xs text-muted-foreground">
-                                            +{{ order.items.length - 1 }} more
+                                            +{{ order.items.length - 1 }} {{ t('more') }}
                                         </span>
                                     </template>
                                 </td>
@@ -257,7 +259,7 @@ const facilityPhone = '+992884238383';
                             </tr>
                             <tr v-if="orderHistory.length === 0">
                                 <td colspan="5" class="p-8 text-center text-muted-foreground italic">
-                                    No order history found.
+                                    {{ t('No order history found.') }}
                                 </td>
                             </tr>
                         </tbody>
@@ -279,7 +281,7 @@ const facilityPhone = '+992884238383';
                         <div class="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-border/60">
                             <div class="text-xs text-muted-foreground">
                                 <template v-if="order.items && order.items.length > 0">
-                                    {{ t(order.items[0].product.name) }}
+                                    {{ tl(order.items[0].product.name) }}
                                     <span v-if="order.items.length > 1"> +{{ order.items.length - 1 }}</span>
                                 </template>
                             </div>
@@ -287,7 +289,7 @@ const facilityPhone = '+992884238383';
                         </div>
                     </div>
                     <div v-if="orderHistory.length === 0" class="p-8 text-center text-muted-foreground italic">
-                        No order history found.
+                        {{ t('No order history found.') }}
                     </div>
                 </div>
             </CardContent>

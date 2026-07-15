@@ -25,14 +25,15 @@ const routeInventoryIndex = () => '/admin/inventory-items';
 const routeRawMaterialsIndex = () => '/admin/raw-materials';
 import { computed, ref } from 'vue';
 import { useOrderNotifications } from '@/composables/useOrderNotifications';
+import { useI18n } from '@/composables/useI18n';
 
+const { t } = useI18n();
 const { pendingCount } = useOrderNotifications() || { pendingCount: ref(0) };
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
-const userRoles = computed(() => user.value?.roles?.map(r => r.toLowerCase()) || []);
-const isStaff = computed(() => userRoles.value.some(role => role !== 'client'));
-const isOnlyClient = computed(() => userRoles.value.length === 1 && userRoles.value.includes('client'));
+const can = computed(() => page.props.auth.can ?? {});
+const isStaff = computed(() => !!can.value.accessAdmin);
+const isOnlyClient = computed(() => !isStaff.value);
 
 // adminMode is shared via HandleInertiaRequests — true only when staff has toggled admin mode on
 const adminMode = computed(() => (page.props as any).adminMode as boolean);
@@ -43,112 +44,105 @@ const mainNavItems = computed((): NavItem[] => {
   // Show My Profile only in user mode (not in admin mode)
   if (!adminMode.value) {
     items.push({
-      title: 'My Profile',
+      title: t('My Profile'),
       href: dashboard(),
       icon: LayoutGrid,
     });
   }
 
-  // Admin/staff nav items — shown ONLY when admin mode is active
+  // Admin/staff nav items — shown ONLY when admin mode is active. Every
+  // entry is gated by an ability flag that mirrors a server-side route
+  // restriction, so couriers only see their scoped subset (dashboard,
+  // orders, clients, forecasts, expenses).
   if (isStaff.value && adminMode.value) {
-    items.push(
-      {
-        title: 'Admin Dashboard',
-        href: adminDashboard(),
-        icon: LayoutGrid,
-      },
-      {
-        title: 'Sales',
-        href: '#',
-        icon: ClipboardList,
-        children: [
-          {
-            title: 'Products',
-            href: routeProductsIndex(),
-            icon: Package,
-          },
-          {
-            title: 'Raw Materials',
-            href: routeRawMaterialsIndex(),
-            icon: Box,
-          },
-          {
-            title: 'Clients',
-            href: routeClientsIndex(),
-            icon: Users2,
-          },
-          {
-            title: 'Orders',
-            href: routeOrdersIndexAdmin(),
-            icon: ShoppingCart,
-            badge: pendingCount.value > 0 ? pendingCount.value : undefined,
-          },
-          {
-            title: 'Forecasts',
-            href: routeForecastsIndex(),
-            icon: CalendarClock,
-          },
-        ],
-      },
-      {
-        title: 'Delivery',
+    items.push({
+      title: can.value.viewAdminStats ? t('Admin Dashboard') : t('My Dashboard'),
+      href: adminDashboard(),
+      icon: LayoutGrid,
+    });
+
+    const salesChildren: NavItem[] = [];
+    if (can.value.manageProducts) {
+      salesChildren.push({ title: t('Products'), href: routeProductsIndex(), icon: Package });
+    }
+    if (can.value.manageRawMaterials) {
+      salesChildren.push({ title: t('Raw Materials'), href: routeRawMaterialsIndex(), icon: Box });
+    }
+    if (can.value.manageClients) {
+      salesChildren.push({ title: t('Clients'), href: routeClientsIndex(), icon: Users2 });
+    }
+    salesChildren.push({
+      title: t('Orders'),
+      href: routeOrdersIndexAdmin(),
+      icon: ShoppingCart,
+      badge: pendingCount.value > 0 ? pendingCount.value : undefined,
+    });
+    if (can.value.viewForecasts) {
+      salesChildren.push({ title: t('Forecasts'), href: routeForecastsIndex(), icon: CalendarClock });
+    }
+    items.push({
+      title: t('Sales'),
+      href: '#',
+      icon: ClipboardList,
+      children: salesChildren,
+    });
+
+    if (can.value.assignCurriers || can.value.viewCurrierActivities) {
+      const deliveryChildren: NavItem[] = [];
+      if (can.value.assignCurriers) {
+        deliveryChildren.push({ title: t('Currier Assignments'), href: routeOrdersAssignments(), icon: ClipboardList });
+      }
+      if (can.value.viewCurrierActivities) {
+        deliveryChildren.push({ title: t('Currier Activities'), href: routeCurriersActivities(), icon: Activity });
+      }
+      items.push({
+        title: t('Delivery'),
         href: '#',
         icon: Truck,
-        children: [
-          {
-            title: 'Currier Assignments',
-            href: routeOrdersAssignments(),
-            icon: ClipboardList,
-          },
-          {
-            title: 'Currier Activities',
-            href: routeCurriersActivities(),
-            icon: Activity,
-          },
-        ],
-      },
-      {
-        title: 'User management',
+        children: deliveryChildren,
+      });
+    }
+
+    if (can.value.manageUsers) {
+      items.push({
+        title: t('User management'),
         href: '#',
         icon: UsersIcon,
         children: [
-          {
-            title: 'All users',
-            href: routeUsersIndex(),
-            icon: UsersIcon,
-          },
-          {
-            title: 'Roles',
-            href: routeRolesIndex(),
-            icon: UserX,
-          },
-          {
-            title: 'Permissions',
-            href: routePermissionsIndex(),
-            icon: UserCheck2,
-          },
-        ]
-      },
-      {
-        title: 'Subscriptions',
+          { title: t('All users'), href: routeUsersIndex(), icon: UsersIcon },
+          { title: t('Roles'), href: routeRolesIndex(), icon: UserX },
+          { title: t('Permissions'), href: routePermissionsIndex(), icon: UserCheck2 },
+        ],
+      });
+    }
+
+    if (can.value.manageSubscriptions) {
+      items.push({
+        title: t('Subscriptions'),
         href: '/admin/subscriptions',
         icon: RotateCcw,
-      },
-      {
-        title: 'Accounting',
+      });
+    }
+
+    if (can.value.accessAccounting) {
+      items.push({
+        title: can.value.manageAccounting ? t('Accounting') : t('My Expenses'),
         href: routeFinancialIndex(),
         icon: Wallet,
-      },
-      {
-        title: 'Inventory',
+      });
+    }
+
+    if (can.value.manageInventory) {
+      items.push({
+        title: t('Inventory'),
         href: routeInventoryIndex(),
         icon: Wrench,
-      }
-    );
+      });
+    }
   } else if (isOnlyClient.value || (isStaff.value && !adminMode.value)) {
     // In user mode (including admins in user mode): show My Orders
     items.push({
-      title: 'My Orders',
+      title: t('My Orders'),
       href: '/orders/index',
       icon: ShoppingCart,
       badge: pendingCount.value > 0 ? pendingCount.value : undefined,
@@ -162,7 +156,7 @@ const footerNavItems = computed((): NavItem[] => {
   if (isOnlyClient.value && !isStaff.value) {
     return [
       {
-        title: 'Call Facility',
+        title: t('Call Facility'),
         href: 'tel:+992884238383',
         icon: Phone,
       },

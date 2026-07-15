@@ -22,15 +22,18 @@ import {
 } from 'lucide-vue-next';
 import { MAP_STYLE, createHtmlMarker, loadMapLibre } from '@/lib/maps';
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 const props = defineProps<{
   curriers: any[];
 }>();
 
-const breadcrumbs = [
-  { title: 'Curriers', href: '#' },
-  { title: 'Activities', href: '/curriers/activities' },
-];
+const { t } = useI18n();
+
+const breadcrumbs = computed(() => [
+  { title: t('Curriers'), href: '#' },
+  { title: t('Activities'), href: '/curriers/activities' },
+]);
 
 const viewMode = ref<'table' | 'map'>('table');
 const searchQuery = ref('');
@@ -160,13 +163,13 @@ const focusOnMap = async (currier: any) => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Currier Activities" />
+    <Head :title="t('Currier Activities')" />
 
     <div class="space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Currier Activities</h1>
-          <p class="text-muted-foreground mt-1 text-sm font-medium">Real-time fleet monitoring and activity tracking.</p>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">{{ t('Currier Activities') }}</h1>
+          <p class="text-muted-foreground mt-1 text-sm font-medium">{{ t('Real-time fleet monitoring and activity tracking.') }}</p>
         </div>
         
         <div class="flex items-center bg-white dark:bg-sidebar p-1 rounded-xl shadow-sm border border-sidebar-border/60">
@@ -175,14 +178,14 @@ const focusOnMap = async (currier: any) => {
                 :class="['flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-black transition-all', viewMode === 'table' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:bg-muted']"
             >
                 <List class="h-4 w-4" />
-                Table View
+                {{ t('Table View') }}
             </button>
             <button 
                 @click="viewMode = 'map'"
                 :class="['flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-black transition-all', viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:bg-muted']"
             >
                 <MapIcon class="h-4 w-4" />
-                Map View
+                {{ t('Map View') }}
             </button>
         </div>
       </div>
@@ -192,7 +195,7 @@ const focusOnMap = async (currier: any) => {
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input 
                 v-model="searchQuery"
-                placeholder="Search curriers..."
+                :placeholder="t('Search curriers...')"
                 class="w-full h-10 pl-9 pr-4 rounded-xl border border-sidebar-border/60 bg-white dark:bg-sidebar text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
             />
         </div>
@@ -203,12 +206,12 @@ const focusOnMap = async (currier: any) => {
                     <table class="w-full text-left">
                         <thead class="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b bg-muted/30">
                             <tr>
-                                <th class="px-6 py-4">Currier</th>
-                                <th class="px-6 py-4">Current Status</th>
-                                <th class="px-6 py-4">Active Tasks</th>
-                                <th class="px-6 py-4">Current Route</th>
-                                <th class="px-6 py-4">Last Activity</th>
-                                <th class="px-6 py-4 text-right">Actions</th>
+                                <th class="px-6 py-4">{{ t('Currier') }}</th>
+                                <th class="px-6 py-4">{{ t('Current Status') }}</th>
+                                <th class="px-6 py-4">{{ t('Active Tasks') }}</th>
+                                <th class="px-6 py-4">{{ t('Current Route') }}</th>
+                                <th class="px-6 py-4">{{ t('Last Activity') }}</th>
+                                <th class="px-6 py-4 text-right">{{ t('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-sidebar-border/40">
@@ -228,12 +231,12 @@ const focusOnMap = async (currier: any) => {
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <div :class="['h-2 w-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]', isCurrierOnline(currier) ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400']"></div>
-                                        <span class="text-xs font-bold">{{ isCurrierOnline(currier) ? 'Online' : 'Offline' }}</span>
+                                        <span class="text-xs font-bold">{{ isCurrierOnline(currier) ? t('Online') : t('Offline') }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <Badge variant="outline" class="font-black text-[10px] uppercase bg-primary/5 text-primary border-primary/20">
-                                        {{ currier.orders?.length || 0 }} Orders
+                                        {{ currier.orders?.length || 0 }} {{ t('Orders') }}
                                     </Badge>
                                 </td>
                                 <td class="px-6 py-4 max-w-xs">
@@ -241,7 +244,7 @@ const focusOnMap = async (currier: any) => {
                                         <MapPin class="h-3 w-3 text-primary shrink-0" />
                                         <span class="text-xs font-bold truncate">{{ currier.orders[0].delivery_address }}</span>
                                     </div>
-                                    <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">Idle</span>
+                                    <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">{{ t('Idle') }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div v-if="currier.last_active_at || currier.last_location" class="flex flex-col">
@@ -252,10 +255,10 @@ const focusOnMap = async (currier: any) => {
                                             {{ currier.last_active_at_formatted }}
                                         </span>
                                     </div>
-                                     <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">No Data</span>
+                                     <span v-else class="text-[10px] font-black uppercase text-muted-foreground/30 italic">{{ t('No Data') }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <Button v-if="currier.last_location" @click="focusOnMap(currier)" size="icon" variant="ghost" class="h-8 w-8 text-primary hover:bg-primary/10 transition-colors" title="Show on Map">
+                                    <Button v-if="currier.last_location" @click="focusOnMap(currier)" size="icon" variant="ghost" class="h-8 w-8 text-primary hover:bg-primary/10 transition-colors" :title="t('Show on Map')">
                                         <MapPin class="h-4 w-4" />
                                     </Button>
                                 </td>
@@ -282,21 +285,21 @@ const focusOnMap = async (currier: any) => {
                     <div>
                         <p class="text-sm font-black leading-tight">{{ selectedCourier.name }}</p>
                         <p class="text-[10px] font-bold uppercase tracking-widest" :class="isCurrierOnline(selectedCourier) ? 'text-emerald-500' : 'text-muted-foreground'">
-                            {{ isCurrierOnline(selectedCourier) ? 'Online' : 'Offline' }}
+                            {{ isCurrierOnline(selectedCourier) ? t('Online') : t('Offline') }}
                         </p>
                     </div>
                 </div>
                 <div class="space-y-2 text-[11px] font-bold">
                     <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground uppercase tracking-wider">Active tasks</span>
+                        <span class="text-muted-foreground uppercase tracking-wider">{{ t('Active tasks') }}</span>
                         <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded">{{ selectedCourier.orders?.length || 0 }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground uppercase tracking-wider">Recorded</span>
-                        <span class="text-orange-500">{{ selectedCourier.last_location?.created_at_human || 'Unknown' }}</span>
+                        <span class="text-muted-foreground uppercase tracking-wider">{{ t('Recorded') }}</span>
+                        <span class="text-orange-500">{{ selectedCourier.last_location?.created_at_human || t('Unknown') }}</span>
                     </div>
                     <div v-if="selectedCourier.orders?.length" class="p-2 rounded-lg bg-muted/50 border border-sidebar-border/40 mt-1">
-                        <p class="text-[10px] font-black uppercase tracking-wider mb-1">Current route</p>
+                        <p class="text-[10px] font-black uppercase tracking-wider mb-1">{{ t('Current route') }}</p>
                         <div class="flex items-start gap-1.5 min-w-0">
                             <Navigation class="h-3 w-3 text-primary mt-0.5 shrink-0" />
                             <p class="text-[10px] font-bold truncate">{{ selectedCourier.orders[0].delivery_address }}</p>
@@ -307,15 +310,15 @@ const focusOnMap = async (currier: any) => {
 
             <!-- Map Legend -->
             <div class="absolute bottom-6 right-6 z-10 bg-white/90 dark:bg-sidebar/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-sidebar-border/60">
-                <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">Live Status</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">{{ t('Live Status') }}</p>
                 <div class="space-y-2">
                     <div class="flex items-center gap-2">
                         <div class="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                        <span class="text-xs font-bold">Active & Online</span>
+                        <span class="text-xs font-bold">{{ t('Active & Online') }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="h-3 w-3 rounded-full bg-gray-400"></div>
-                        <span class="text-xs font-bold">Offline / Idle</span>
+                        <span class="text-xs font-bold">{{ t('Offline / Idle') }}</span>
                     </div>
                 </div>
             </div>

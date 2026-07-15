@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RotateCcw, Pause, Play, XCircle, Package, Calendar, MapPin, Clock } from 'lucide-vue-next';
 import { useLocale } from '@/composables/useLocale';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 
-const { t } = useLocale();
+const { t: tl } = useLocale();
+const { t } = useI18n();
 
 interface SubscriptionItem {
   id: number;
@@ -50,10 +53,10 @@ const props = defineProps<{
   recentOrders: Order[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Subscriptions', href: '/admin/subscriptions' },
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Subscriptions'), href: '/admin/subscriptions' },
   { title: `#${props.subscription.id}`, href: '#' },
-];
+]);
 
 const statusBadgeClass: Record<string, string> = {
   active: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400',
@@ -61,14 +64,14 @@ const statusBadgeClass: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400',
 };
 
-const frequencyLabels: Record<string, string> = {
-  weekly: 'Every week',
-  biweekly: 'Every 2 weeks',
-  monthly: 'Every month',
-  custom: 'Custom interval',
-};
+const frequencyLabels = computed((): Record<string, string> => ({
+  weekly: t('Every week'),
+  biweekly: t('Every 2 weeks'),
+  monthly: t('Every month'),
+  custom: t('Custom interval'),
+}));
 
-const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const daysOfWeek = computed(() => [t('Sunday'), t('Monday'), t('Tuesday'), t('Wednesday'), t('Thursday'), t('Friday'), t('Saturday')]);
 
 const orderStatusClass: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400',
@@ -79,31 +82,31 @@ const orderStatusClass: Record<string, string> = {
 </script>
 
 <template>
-  <Head :title="`Subscription #${subscription.id}`" />
+  <Head :title="t('Subscription #{id}', { id: subscription.id })" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-6 container mx-auto px-4 md:px-0">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-3">
-            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Subscription #{{ subscription.id }}</h1>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">{{ t('Subscription #{id}', { id: subscription.id }) }}</h1>
             <Badge variant="outline" class="capitalize border-transparent font-semibold" :class="statusBadgeClass[subscription.status]">
-              {{ subscription.status }}
+              {{ t(subscription.status) }}
             </Badge>
           </div>
           <p class="text-sm text-muted-foreground mt-1">
-            {{ subscription.client.name }} &middot; Created {{ subscription.created_at_human }}
+            {{ subscription.client.name }} &middot; {{ t('Created') }} {{ subscription.created_at_human }}
           </p>
         </div>
         <div class="flex items-center gap-2">
           <Button v-if="subscription.status === 'active'" variant="outline" class="gap-2 text-yellow-600 border-yellow-300 hover:bg-yellow-50" @click="router.patch(`/admin/subscriptions/${subscription.id}/pause`)">
-            <Pause class="h-4 w-4" /> Pause
+            <Pause class="h-4 w-4" /> {{ t('Pause') }}
           </Button>
           <Button v-if="subscription.status === 'paused'" variant="outline" class="gap-2 text-green-600 border-green-300 hover:bg-green-50" @click="router.patch(`/admin/subscriptions/${subscription.id}/resume`)">
-            <Play class="h-4 w-4" /> Resume
+            <Play class="h-4 w-4" /> {{ t('Resume') }}
           </Button>
           <Button v-if="subscription.status !== 'cancelled'" variant="outline" class="gap-2 text-red-600 border-red-300 hover:bg-red-50" @click="router.patch(`/admin/subscriptions/${subscription.id}/cancel`)">
-            <XCircle class="h-4 w-4" /> Cancel
+            <XCircle class="h-4 w-4" /> {{ t('Cancel') }}
           </Button>
         </div>
       </div>
@@ -114,31 +117,31 @@ const orderStatusClass: Record<string, string> = {
           <Card>
             <CardHeader>
               <CardTitle class="text-base flex items-center gap-2">
-                <RotateCcw class="h-4 w-4 text-muted-foreground" /> Schedule
+                <RotateCcw class="h-4 w-4 text-muted-foreground" /> {{ t('Schedule') }}
               </CardTitle>
             </CardHeader>
             <CardContent class="space-y-4">
               <div>
-                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">Frequency</p>
+                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">{{ t('Frequency') }}</p>
                 <p class="text-sm font-medium mt-0.5">{{ frequencyLabels[subscription.frequency] ?? subscription.frequency }}</p>
-                <p v-if="subscription.frequency === 'custom'" class="text-xs text-muted-foreground">Every {{ subscription.interval_days }} days</p>
+                <p v-if="subscription.frequency === 'custom'" class="text-xs text-muted-foreground">{{ t('Every {n} days', { n: subscription.interval_days ?? 0 }) }}</p>
               </div>
               <div v-if="subscription.day_of_week !== null">
-                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">Preferred Day</p>
+                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">{{ t('Preferred Day') }}</p>
                 <p class="text-sm font-medium mt-0.5">{{ daysOfWeek[subscription.day_of_week] }}</p>
               </div>
               <div v-if="subscription.day_of_month !== null">
-                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">Day of Month</p>
+                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">{{ t('Day of Month') }}</p>
                 <p class="text-sm font-medium mt-0.5">{{ subscription.day_of_month }}</p>
               </div>
               <div v-if="subscription.time_slot">
-                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">Time Slot</p>
+                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">{{ t('Time Slot') }}</p>
                 <p class="text-sm font-medium mt-0.5 capitalize">{{ subscription.time_slot }}</p>
               </div>
               <div>
-                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">Next Delivery</p>
+                <p class="text-xs text-muted-foreground uppercase font-bold tracking-wider">{{ t('Next Delivery') }}</p>
                 <p class="text-sm font-bold mt-0.5" :class="subscription.next_delivery_at ? 'text-primary' : 'text-muted-foreground'">
-                  {{ subscription.next_delivery_at ?? 'Not scheduled' }}
+                  {{ subscription.next_delivery_at ?? t('Not scheduled') }}
                 </p>
               </div>
             </CardContent>
@@ -147,7 +150,7 @@ const orderStatusClass: Record<string, string> = {
           <Card>
             <CardHeader>
               <CardTitle class="text-base flex items-center gap-2">
-                <MapPin class="h-4 w-4 text-muted-foreground" /> Delivery
+                <MapPin class="h-4 w-4 text-muted-foreground" /> {{ t('Delivery') }}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -161,13 +164,13 @@ const orderStatusClass: Record<string, string> = {
           <Card>
             <CardHeader>
               <CardTitle class="text-base flex items-center gap-2">
-                <Package class="h-4 w-4 text-muted-foreground" /> Products
+                <Package class="h-4 w-4 text-muted-foreground" /> {{ t('Products') }}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-3">
                 <div v-for="item in subscription.items" :key="item.id" class="flex items-center justify-between">
-                  <span class="text-sm font-medium">{{ t(item.product.name) }}</span>
+                  <span class="text-sm font-medium">{{ tl(item.product.name) }}</span>
                   <span class="text-sm font-bold text-muted-foreground">x{{ item.quantity }}</span>
                 </div>
               </div>
@@ -180,7 +183,7 @@ const orderStatusClass: Record<string, string> = {
           <Card>
             <CardHeader>
               <CardTitle class="text-base flex items-center gap-2">
-                <Calendar class="h-4 w-4 text-muted-foreground" /> Generated Orders
+                <Calendar class="h-4 w-4 text-muted-foreground" /> {{ t('Generated Orders') }}
               </CardTitle>
             </CardHeader>
             <CardContent class="p-0">
@@ -189,10 +192,10 @@ const orderStatusClass: Record<string, string> = {
                 <table class="w-full text-sm text-left">
                   <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                     <tr>
-                      <th class="px-6 py-3 font-semibold">Order #</th>
-                      <th class="px-6 py-3 font-semibold">Status</th>
-                      <th class="px-6 py-3 font-semibold text-right">Total</th>
-                      <th class="px-6 py-3 font-semibold text-right">Created</th>
+                      <th class="px-6 py-3 font-semibold">{{ t('Order #') }}</th>
+                      <th class="px-6 py-3 font-semibold">{{ t('Status') }}</th>
+                      <th class="px-6 py-3 font-semibold text-right">{{ t('Total') }}</th>
+                      <th class="px-6 py-3 font-semibold text-right">{{ t('Created') }}</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-border/60">
@@ -201,7 +204,7 @@ const orderStatusClass: Record<string, string> = {
                         <Link :href="`/admin/orders/${order.id}`" class="font-mono font-bold text-primary hover:underline">{{ order.order_number }}</Link>
                       </td>
                       <td class="px-6 py-3">
-                        <Badge variant="outline" class="capitalize border-transparent text-[10px] font-semibold" :class="orderStatusClass[order.status] ?? ''">{{ order.status }}</Badge>
+                        <Badge variant="outline" class="capitalize border-transparent text-[10px] font-semibold" :class="orderStatusClass[order.status] ?? ''">{{ t(order.status) }}</Badge>
                       </td>
                       <td class="px-6 py-3 text-right font-bold">{{ order.total_amount }}</td>
                       <td class="px-6 py-3 text-right text-xs text-muted-foreground">{{ order.created_at_human }}</td>
@@ -215,7 +218,7 @@ const orderStatusClass: Record<string, string> = {
                 <Link v-for="order in recentOrders" :key="order.id" :href="`/admin/orders/${order.id}`" class="block p-4 active:bg-muted/30 transition-colors">
                   <div class="flex items-center justify-between">
                     <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
-                    <Badge variant="outline" class="capitalize border-transparent text-[10px] font-semibold" :class="orderStatusClass[order.status] ?? ''">{{ order.status }}</Badge>
+                    <Badge variant="outline" class="capitalize border-transparent text-[10px] font-semibold" :class="orderStatusClass[order.status] ?? ''">{{ t(order.status) }}</Badge>
                   </div>
                   <div class="flex items-center justify-between mt-2 text-sm">
                     <span class="text-muted-foreground">{{ order.created_at_human }}</span>
@@ -226,7 +229,7 @@ const orderStatusClass: Record<string, string> = {
 
               <div v-if="recentOrders.length === 0" class="p-8 text-center text-muted-foreground">
                 <Clock class="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p class="text-sm">No orders generated yet.</p>
+                <p class="text-sm">{{ t('No orders generated yet.') }}</p>
               </div>
             </CardContent>
           </Card>

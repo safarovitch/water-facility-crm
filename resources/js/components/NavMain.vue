@@ -11,6 +11,7 @@ import { type NavItem } from '@/types'
 import { Link, usePage } from '@inertiajs/vue3'
 import { ChevronDown } from 'lucide-vue-next'
 import { ref, watchEffect } from 'vue'
+import { useI18n } from '@/composables/useI18n'
 
 // Props
 const props = defineProps<{
@@ -21,11 +22,12 @@ const props = defineProps<{
 const items = props.items
 
 const page = usePage()
+const { t } = useI18n()
 </script>
 
 <template>
   <SidebarGroup class="px-2 py-0">
-    <SidebarGroupLabel>Platform</SidebarGroupLabel>
+    <SidebarGroupLabel>{{ t('Platform') }}</SidebarGroupLabel>
     <SidebarMenu>
       <SidebarMenuItem v-for="item in items" :key="item.title">
         <SidebarMenuButton as-child :is-active="urlIsActive(item.href, page.url) || (item.children && item.children.some(child => urlIsActive(child.href, page.url)))" :tooltip="item.title">

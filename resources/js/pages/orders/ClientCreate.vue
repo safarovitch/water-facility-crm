@@ -8,6 +8,7 @@ import Label from '@/components/ui/label/Label.vue';
 import InputError from '@/components/InputError.vue';
 import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
 import { ArrowLeft, MapPin, Plus, Minus, ShoppingCart, Package } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface Address {
   id: number;
@@ -30,6 +31,8 @@ const props = defineProps<{
   addresses: Address[];
   products: Product[];
 }>();
+
+const { t } = useI18n();
 
 const SELF_PICKUP_LABEL = 'Self Pickup';
 
@@ -133,14 +136,14 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Order water" />
+  <Head :title="t('Order water')" />
 
   <div class="min-h-screen bg-[#f6f7fb] dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/85 dark:bg-slate-900/85 dark:border-slate-800 backdrop-blur">
       <div class="mx-auto max-w-4xl flex items-center justify-between px-4 sm:px-6 py-3">
         <Link href="/profile" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
           <ArrowLeft class="h-4 w-4" />
-          Back
+          {{ t('Back') }}
         </Link>
         <FannLogo variant="inline" class="h-7 w-auto" />
         <span class="w-12" />
@@ -149,19 +152,19 @@ const submit = () => {
 
     <main class="mx-auto max-w-4xl px-4 sm:px-6 py-6 space-y-6 pb-32">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">Order water</h1>
-        <p class="text-sm text-slate-500 mt-1">Pick your bottles and where you want them delivered.</p>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ t('Order water') }}</h1>
+        <p class="text-sm text-slate-500 mt-1">{{ t('Pick your bottles and where you want them delivered.') }}</p>
       </div>
 
       <!-- Product picker -->
       <section class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6">
         <h2 class="text-base font-semibold flex items-center gap-2 mb-4">
           <Package class="h-4 w-4 text-slate-500" />
-          Choose products
+          {{ t('Choose products') }}
         </h2>
 
         <p v-if="products.length === 0" class="text-sm text-slate-500 italic">
-          No products are available right now.
+          {{ t('No products are available right now.') }}
         </p>
 
         <ul v-else class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -203,7 +206,7 @@ const submit = () => {
       <section class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6">
         <h2 class="text-base font-semibold flex items-center gap-2 mb-4">
           <MapPin class="h-4 w-4 text-slate-500" />
-          Delivery
+          {{ t('Delivery') }}
         </h2>
 
         <div v-if="!isAddingNew" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -219,8 +222,8 @@ const submit = () => {
           >
             <span class="text-lg leading-none">🏬</span>
             <div>
-              <div class="font-medium">Self pickup</div>
-              <div class="text-xs text-slate-500 mt-1">I'll collect the order — no delivery needed.</div>
+              <div class="font-medium">{{ t('Self pickup') }}</div>
+              <div class="text-xs text-slate-500 mt-1">{{ t("I'll collect the order — no delivery needed.") }}</div>
             </div>
           </button>
 
@@ -236,35 +239,35 @@ const submit = () => {
                 : 'border-slate-200 dark:border-slate-700 hover:border-sky-300',
             ]"
           >
-            <div class="font-medium">{{ addr.label ?? 'Address' }}</div>
+            <div class="font-medium">{{ addr.label ?? t('Address') }}</div>
             <div class="text-xs text-slate-500 mt-1 line-clamp-2">{{ addr.address_line }}<span v-if="addr.city"> · {{ addr.city }}</span></div>
           </button>
         </div>
 
         <div v-if="!isAddingNew" class="mt-3">
           <Button type="button" variant="link" size="sm" @click="toggleNewAddress" class="px-0 h-auto">
-            + Use a different address
+            {{ t('+ Use a different address') }}
           </Button>
         </div>
 
         <div v-if="isAddingNew" class="space-y-3 rounded-xl border border-sky-100 dark:border-sky-900/40 bg-sky-50/40 dark:bg-sky-900/10 p-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-medium text-sky-900 dark:text-sky-100">New delivery address</h3>
-            <Button type="button" variant="ghost" size="sm" @click="toggleNewAddress">Cancel</Button>
+            <h3 class="text-sm font-medium text-sky-900 dark:text-sky-100">{{ t('New delivery address') }}</h3>
+            <Button type="button" variant="ghost" size="sm" @click="toggleNewAddress">{{ t('Cancel') }}</Button>
           </div>
           <div class="grid gap-3">
             <div class="grid gap-1.5">
-              <Label for="new_address_label" class="text-xs">Label (e.g. Home, Office)</Label>
-              <Input id="new_address_label" v-model="form.new_address_label" placeholder="Home" />
+              <Label for="new_address_label" class="text-xs">{{ t('Label (e.g. Home, Office)') }}</Label>
+              <Input id="new_address_label" v-model="form.new_address_label" :placeholder="t('Home')" />
             </div>
             <div class="grid gap-1.5">
-              <Label for="new_address" class="text-xs">Address *</Label>
+              <Label for="new_address" class="text-xs">{{ t('Address') }} *</Label>
               <textarea
                 id="new_address"
                 v-model="form.new_address"
                 rows="2"
                 class="block w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                placeholder="Street, building, apartment…"
+                :placeholder="t('Street, building, apartment…')"
               ></textarea>
             </div>
           </div>
@@ -276,22 +279,22 @@ const submit = () => {
 
       <!-- Schedule & notes -->
       <section class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 space-y-4">
-        <h2 class="text-base font-semibold">When &amp; notes</h2>
+        <h2 class="text-base font-semibold">{{ t('When & notes') }}</h2>
 
         <div class="grid gap-2">
-          <Label for="scheduled_delivery_at">Preferred delivery date &amp; time <span class="text-xs text-slate-400 font-normal">(slots 09:00–20:00)</span></Label>
+          <Label for="scheduled_delivery_at">{{ t('Preferred delivery date & time') }} <span class="text-xs text-slate-400 font-normal">({{ t('slots 09:00–20:00') }})</span></Label>
           <DeliveryTimePicker id="scheduled_delivery_at" v-model="form.scheduled_delivery_at" auto-default />
           <InputError :message="form.errors.scheduled_delivery_at" />
         </div>
 
         <div class="grid gap-2">
-          <Label for="notes">Notes <span class="text-xs text-slate-400 font-normal">(optional)</span></Label>
+          <Label for="notes">{{ t('Notes') }} <span class="text-xs text-slate-400 font-normal">({{ t('optional') }})</span></Label>
           <textarea
             id="notes"
             v-model="form.notes"
             rows="2"
             class="block w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-            placeholder="Anything we should know? (gate code, floor, etc.)"
+            :placeholder="t('Anything we should know? (gate code, floor, etc.)')"
           ></textarea>
           <InputError :message="form.errors.notes" />
         </div>
@@ -305,7 +308,7 @@ const submit = () => {
       <div class="mx-auto max-w-4xl px-4 sm:px-6 py-3 flex items-center gap-3">
         <div class="flex-1 min-w-0">
           <p class="text-xs text-slate-500">
-            {{ totalBottles }} item<span v-if="totalBottles !== 1">s</span>
+            {{ totalBottles }} {{ t('item(s)') }}
           </p>
           <p class="text-lg font-semibold tabular-nums">{{ formatCurrency(total) }}</p>
         </div>
@@ -316,8 +319,8 @@ const submit = () => {
           class="inline-flex h-11 items-center gap-2 rounded-full bg-sky-500 px-6 text-sm font-semibold text-white shadow-sm hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed"
         >
           <ShoppingCart class="h-4 w-4" />
-          <span v-if="form.processing">Placing…</span>
-          <span v-else>Place order</span>
+          <span v-if="form.processing">{{ t('Placing…') }}</span>
+          <span v-else>{{ t('Place order') }}</span>
         </button>
       </div>
     </div>

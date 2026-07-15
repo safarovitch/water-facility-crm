@@ -5,7 +5,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/password';
 import { Form, Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
@@ -13,12 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
 
-const breadcrumbItems: BreadcrumbItem[] = [
+const { t } = useI18n();
+
+const breadcrumbItems = computed((): BreadcrumbItem[] => [
     {
-        title: 'Password settings',
+        title: t('Password settings'),
         href: edit().url,
     },
-];
+]);
 
 const passwordInput = ref<HTMLInputElement | null>(null);
 const currentPasswordInput = ref<HTMLInputElement | null>(null);
@@ -26,11 +29,11 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Password settings" />
+        <Head :title="t('Password settings')" />
 
         <SettingsLayout>
             <div class="space-y-6">
-                <HeadingSmall title="Update password" description="Ensure your account is using a long, random password to stay secure" />
+                <HeadingSmall :title="t('Update password')" :description="t('Ensure your account is using a long, random password to stay secure')" />
 
                 <Form
                     v-bind="PasswordController.update.form()"
@@ -43,7 +46,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
                     <div class="grid gap-2">
-                        <Label for="current_password">Current password</Label>
+                        <Label for="current_password">{{ t('Current password') }}</Label>
                         <Input
                             id="current_password"
                             ref="currentPasswordInput"
@@ -51,13 +54,13 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                             type="password"
                             class="mt-1 block w-full"
                             autocomplete="current-password"
-                            placeholder="Current password"
+                            :placeholder="t('Current password')"
                         />
                         <InputError :message="errors.current_password" />
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="password">New password</Label>
+                        <Label for="password">{{ t('New password') }}</Label>
                         <Input
                             id="password"
                             ref="passwordInput"
@@ -65,26 +68,26 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                             type="password"
                             class="mt-1 block w-full"
                             autocomplete="new-password"
-                            placeholder="New password"
+                            :placeholder="t('New password')"
                         />
                         <InputError :message="errors.password" />
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="password_confirmation">Confirm password</Label>
+                        <Label for="password_confirmation">{{ t('Confirm password') }}</Label>
                         <Input
                             id="password_confirmation"
                             name="password_confirmation"
                             type="password"
                             class="mt-1 block w-full"
                             autocomplete="new-password"
-                            placeholder="Confirm password"
+                            :placeholder="t('Confirm password')"
                         />
                         <InputError :message="errors.password_confirmation" />
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <Button :disabled="processing" data-test="update-password-button">Save password</Button>
+                        <Button :disabled="processing" data-test="update-password-button">{{ t('Save password') }}</Button>
 
                         <Transition
                             enter-active-class="transition ease-in-out"
@@ -92,7 +95,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                             leave-active-class="transition ease-in-out"
                             leave-to-class="opacity-0"
                         >
-                            <p v-show="recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
+                            <p v-show="recentlySuccessful" class="text-sm text-neutral-600">{{ t('Saved.') }}</p>
                         </Transition>
                     </div>
                 </Form>

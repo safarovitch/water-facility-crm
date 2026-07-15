@@ -16,6 +16,7 @@ import {
   Package,
   RotateCcw,
 } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface OrderItem { id: number; quantity: number; is_gift?: boolean; product: { id: number; name: any; image_url?: string | null } }
 interface OrderSummary {
@@ -48,6 +49,8 @@ const props = defineProps<{
   orderHistory: OrderSummary[];
 }>();
 
+const { t } = useI18n();
+
 const statusBadge: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-blue-100 text-blue-800',
@@ -59,16 +62,16 @@ const statusBadge: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const statusLabel: Record<string, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  in_production: 'Preparing',
-  ready: 'Ready',
-  accepted: 'Picked up',
-  in_transit: 'On the way',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-};
+const statusLabel = computed((): Record<string, string> => ({
+  pending: t('Pending'),
+  confirmed: t('Confirmed'),
+  in_production: t('Preparing'),
+  ready: t('Ready'),
+  accepted: t('Picked up'),
+  in_transit: t('On the way'),
+  delivered: t('Delivered'),
+  cancelled: t('Cancelled'),
+}));
 
 const resolveProductName = (name: any): string => {
   if (typeof name === 'string') return name;
@@ -80,7 +83,7 @@ const itemSummary = (order: OrderSummary): string => {
   if (!order.items?.length) return '—';
   const first = resolveProductName(order.items[0].product?.name);
   const more = order.items.length - 1;
-  return more > 0 ? `${first} +${more} more` : first;
+  return more > 0 ? `${first} +${more} ${t('more')}` : first;
 };
 
 const totalBottles = (order: OrderSummary): number =>
@@ -143,7 +146,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Head title="My account" />
+  <Head :title="t('My account')" />
 
   <div class="min-h-screen bg-[#f6f7fb] dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <!-- Slim top bar (replaces the sidebar) -->
@@ -159,7 +162,7 @@ onBeforeUnmount(() => {
             class="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <LogOut class="h-4 w-4" />
-            <span class="hidden sm:inline">Sign out</span>
+            <span class="hidden sm:inline">{{ t('Sign out') }}</span>
           </button>
         </div>
       </div>
@@ -169,8 +172,8 @@ onBeforeUnmount(() => {
       <!-- Greeting -->
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">Hi, {{ profile.name?.split(' ')[0] ?? 'there' }}</h1>
-          <p class="text-sm text-slate-500">Welcome back to fann.</p>
+          <h1 class="text-2xl font-semibold tracking-tight">{{ t('Hi, {name}', { name: profile.name?.split(' ')[0] ?? '' }) }}</h1>
+          <p class="text-sm text-slate-500">{{ t('Welcome back to fann.') }}</p>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -180,14 +183,14 @@ onBeforeUnmount(() => {
             class="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <RotateCcw class="h-4 w-4" />
-            Repeat last order
+            {{ t('Repeat last order') }}
           </button>
           <Link
             href="/orders/create"
             class="inline-flex h-10 items-center gap-2 rounded-full bg-sky-500 px-5 text-sm font-semibold text-white shadow-sm hover:bg-sky-600"
           >
             <ShoppingCart class="h-4 w-4" />
-            Order water
+            {{ t('Order water') }}
           </Link>
         </div>
       </div>
@@ -200,23 +203,23 @@ onBeforeUnmount(() => {
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-semibold flex items-center gap-2">
             <UserIcon class="h-4 w-4 text-slate-500" />
-            Profile
+            {{ t('Profile') }}
           </h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div class="space-y-1">
-            <p class="text-[11px] uppercase tracking-wider text-slate-400">Name</p>
+            <p class="text-[11px] uppercase tracking-wider text-slate-400">{{ t('Name') }}</p>
             <p class="font-medium text-slate-900 dark:text-slate-100">{{ profile.name }}</p>
           </div>
           <div v-if="profile.email" class="space-y-1">
-            <p class="text-[11px] uppercase tracking-wider text-slate-400">Email</p>
+            <p class="text-[11px] uppercase tracking-wider text-slate-400">{{ t('Email') }}</p>
             <p class="font-medium text-slate-900 dark:text-slate-100">{{ profile.email }}</p>
           </div>
           <div class="space-y-1">
             <p class="text-[11px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
               <Phone class="h-3 w-3" />
-              Phone
+              {{ t('Phone') }}
             </p>
             <p class="font-medium text-slate-900 dark:text-slate-100">
               {{ profile.phone ?? '—' }}
@@ -225,11 +228,11 @@ onBeforeUnmount(() => {
           <div class="space-y-1">
             <p class="text-[11px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
               <MapPin class="h-3 w-3" />
-              Default address
+              {{ t('Default address') }}
             </p>
             <p class="font-medium text-slate-900 dark:text-slate-100">
               <template v-if="profile.address">{{ profile.address.address_line }}<span v-if="profile.address.city"> · {{ profile.address.city }}</span></template>
-              <template v-else>— no address —</template>
+              <template v-else>— {{ t('no address') }} —</template>
             </p>
           </div>
         </div>
@@ -240,13 +243,13 @@ onBeforeUnmount(() => {
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-semibold flex items-center gap-2">
             <Package class="h-4 w-4 text-slate-500" />
-            Order history
+            {{ t('Order history') }}
           </h2>
-          <span class="text-xs text-slate-400">{{ orderHistory.length }} order(s)</span>
+          <span class="text-xs text-slate-400">{{ orderHistory.length }} {{ t('order(s)') }}</span>
         </div>
 
         <p v-if="orderHistory.length === 0" class="text-sm text-slate-500 italic">
-          You haven't placed any orders yet.
+          {{ t("You haven't placed any orders yet.") }}
         </p>
 
         <ul v-else class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -298,36 +301,36 @@ onBeforeUnmount(() => {
         <div v-if="detailOrder" class="space-y-4 text-sm">
           <!-- Cancellation reason -->
           <div v-if="detailOrder.status === 'cancelled' && detailOrder.cancellation_reason" class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/40 p-3">
-            <p class="text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">Cancellation reason</p>
+            <p class="text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">{{ t('Cancellation reason') }}</p>
             <p class="mt-1 text-sm text-red-900 dark:text-red-100">{{ detailOrder.cancellation_reason }}</p>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <p class="text-[10px] uppercase tracking-wider text-slate-400">Created</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Created') }}</p>
               <p class="font-medium">{{ detailOrder.created_at_formatted ?? detailOrder.created_at_human ?? '—' }}</p>
             </div>
             <div>
-              <p class="text-[10px] uppercase tracking-wider text-slate-400">Scheduled</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Scheduled') }}</p>
               <p class="font-medium">{{ detailOrder.scheduled_delivery_at_formatted ?? detailOrder.scheduled_delivery_at_human ?? '—' }}</p>
             </div>
             <div v-if="detailOrder.status === 'delivered' && detailOrder.actual_delivery_at_human" class="col-span-2">
-              <p class="text-[10px] uppercase tracking-wider text-slate-400">Delivered</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Delivered') }}</p>
               <p class="font-medium">{{ detailOrder.actual_delivery_at_human }}</p>
             </div>
             <div class="col-span-2">
-              <p class="text-[10px] uppercase tracking-wider text-slate-400">Delivery address</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Delivery address') }}</p>
               <p class="font-medium">{{ detailOrder.delivery_address ?? '—' }}</p>
             </div>
             <div v-if="detailOrder.notes" class="col-span-2">
-              <p class="text-[10px] uppercase tracking-wider text-slate-400">Notes</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Notes') }}</p>
               <p class="font-medium whitespace-pre-line">{{ detailOrder.notes }}</p>
             </div>
           </div>
 
           <!-- Items (no prices, no totals) -->
           <div>
-            <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-2">Items</p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-2">{{ t('Items') }}</p>
             <ul class="rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
               <li v-for="item in detailOrder.items" :key="item.id" class="flex items-center gap-3 px-3 py-2">
                 <div class="h-8 w-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600">
@@ -336,22 +339,22 @@ onBeforeUnmount(() => {
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium truncate">{{ resolveProductName(item.product?.name) }}</p>
                 </div>
-                <span v-if="item.is_gift" class="text-[10px] uppercase tracking-wide bg-pink-100 text-pink-700 px-2 py-0.5 rounded font-bold">Gift</span>
+                <span v-if="item.is_gift" class="text-[10px] uppercase tracking-wide bg-pink-100 text-pink-700 px-2 py-0.5 rounded font-bold">{{ t('Gift') }}</span>
               </li>
-              <li v-if="!detailOrder.items?.length" class="px-3 py-3 text-xs italic text-slate-500">No items recorded.</li>
+              <li v-if="!detailOrder.items?.length" class="px-3 py-3 text-xs italic text-slate-500">{{ t('No items recorded.') }}</li>
             </ul>
-            <p class="mt-2 text-xs text-slate-500">Total bottles: <span class="font-semibold text-slate-700 dark:text-slate-200">{{ totalBottles(detailOrder) }}</span></p>
+            <p class="mt-2 text-xs text-slate-500">{{ t('Total bottles') }}: <span class="font-semibold text-slate-700 dark:text-slate-200">{{ totalBottles(detailOrder) }}</span></p>
           </div>
 
           <div v-if="detailOrder.courier" class="rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs">
-            <p class="text-[10px] uppercase tracking-wider text-slate-400">Courier</p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-400">{{ t('Courier') }}</p>
             <div class="flex items-center justify-between mt-1">
               <p class="font-medium text-sm">{{ detailOrder.courier.name }}</p>
               <a
                 v-if="detailOrder.courier.phone"
                 :href="`tel:${detailOrder.courier.phone}`"
                 class="text-xs font-semibold text-sky-600 hover:text-sky-700"
-              >Call</a>
+              >{{ t('Call') }}</a>
             </div>
           </div>
         </div>

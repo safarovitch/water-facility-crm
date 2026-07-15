@@ -11,12 +11,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, RotateCcw, Pause, Play, Eye } from 'lucide-vue-next';
 import { useLocale } from '@/composables/useLocale';
+import { useI18n } from '@/composables/useI18n';
 
-const { t } = useLocale();
+const { t: tl } = useLocale();
+const { t } = useI18n();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Subscriptions', href: '/admin/subscriptions' },
-];
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Subscriptions'), href: '/admin/subscriptions' },
+]);
 
 interface SubscriptionItem {
   id: number;
@@ -67,29 +69,29 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const frequencyLabel = (freq: string) => {
-  return props.frequencies.find(f => f.value === freq)?.label ?? freq;
+  return t(props.frequencies.find(f => f.value === freq)?.label ?? freq);
 };
 
 const itemsSummary = (items: SubscriptionItem[]) => {
   if (items.length === 0) return '—';
-  const first = t(items[0].product.name);
+  const first = tl(items[0].product.name);
   if (items.length === 1) return `${items[0].quantity}x ${first}`;
-  return `${items[0].quantity}x ${first} +${items.length - 1} more`;
+  return `${items[0].quantity}x ${first} +${items.length - 1} ${t('more')}`;
 };
 </script>
 
 <template>
-  <Head title="Subscriptions" />
+  <Head :title="t('Subscriptions')" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-4 md:space-y-6 container mx-auto px-4 md:px-0">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Subscriptions</h1>
-          <p class="text-sm text-muted-foreground mt-1">Manage recurring water delivery schedules.</p>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{{ t('Subscriptions') }}</h1>
+          <p class="text-sm text-muted-foreground mt-1">{{ t('Manage recurring water delivery schedules.') }}</p>
         </div>
         <Link href="/admin/subscriptions/create" class="w-full md:w-auto">
           <Button class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
-            <PlusCircle class="h-4 w-4" /> New Subscription
+            <PlusCircle class="h-4 w-4" /> {{ t('New Subscription') }}
           </Button>
         </Link>
       </div>
@@ -99,19 +101,19 @@ const itemsSummary = (items: SubscriptionItem[]) => {
           <!-- Filters -->
           <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 grid grid-cols-1 md:flex md:flex-wrap gap-3 items-end border-b">
             <div class="space-y-1 relative w-full md:w-64 max-w-sm">
-              <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+              <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Search') }}</Label>
               <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-              <Input v-model="search" placeholder="Client name or email..." class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilter" />
+              <Input v-model="search" :placeholder="t('Client name or email...')" class="h-10 md:h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilter" />
             </div>
             <div class="space-y-1 w-full md:w-48">
-              <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
+              <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Status') }}</Label>
               <select v-model="statusFilter" @change="applyFilter" class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                <option value="">All</option>
-                <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ s }}</option>
+                <option value="">{{ t('All') }}</option>
+                <option v-for="s in props.statuses" :key="s" :value="s" class="capitalize">{{ t(s) }}</option>
               </select>
             </div>
             <div class="flex gap-2 w-full md:w-auto">
-              <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">Apply</Button>
+              <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">{{ t('Apply') }}</Button>
             </div>
           </div>
 
@@ -120,12 +122,12 @@ const itemsSummary = (items: SubscriptionItem[]) => {
             <table class="w-full text-sm text-left">
               <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th class="px-6 py-4 font-semibold">Client</th>
-                  <th class="px-6 py-4 font-semibold">Items</th>
-                  <th class="px-6 py-4 font-semibold">Frequency</th>
-                  <th class="px-6 py-4 font-semibold">Status</th>
-                  <th class="px-6 py-4 font-semibold">Next Delivery</th>
-                  <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                  <th class="px-6 py-4 font-semibold">{{ t('Client') }}</th>
+                  <th class="px-6 py-4 font-semibold">{{ t('Items') }}</th>
+                  <th class="px-6 py-4 font-semibold">{{ t('Frequency') }}</th>
+                  <th class="px-6 py-4 font-semibold">{{ t('Status') }}</th>
+                  <th class="px-6 py-4 font-semibold">{{ t('Next Delivery') }}</th>
+                  <th class="px-6 py-4 font-semibold text-right">{{ t('Actions') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
@@ -143,7 +145,7 @@ const itemsSummary = (items: SubscriptionItem[]) => {
                   </td>
                   <td class="px-6 py-4">
                     <Badge variant="outline" class="capitalize border-transparent font-semibold" :class="statusBadgeClass[sub.status]">
-                      {{ sub.status }}
+                      {{ t(sub.status) }}
                     </Badge>
                   </td>
                   <td class="px-6 py-4">
@@ -153,14 +155,14 @@ const itemsSummary = (items: SubscriptionItem[]) => {
                   <td class="px-6 py-4 text-right">
                     <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link :href="`/admin/subscriptions/${sub.id}`">
-                        <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400" title="View">
+                        <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400" :title="t('View')">
                           <Eye class="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button v-if="sub.status === 'active'" variant="ghost" size="icon" class="h-8 w-8 text-yellow-600 hover:bg-yellow-50" title="Pause" @click="router.patch(`/admin/subscriptions/${sub.id}/pause`)">
+                      <Button v-if="sub.status === 'active'" variant="ghost" size="icon" class="h-8 w-8 text-yellow-600 hover:bg-yellow-50" :title="t('Pause')" @click="router.patch(`/admin/subscriptions/${sub.id}/pause`)">
                         <Pause class="h-4 w-4" />
                       </Button>
-                      <Button v-if="sub.status === 'paused'" variant="ghost" size="icon" class="h-8 w-8 text-green-600 hover:bg-green-50" title="Resume" @click="router.patch(`/admin/subscriptions/${sub.id}/resume`)">
+                      <Button v-if="sub.status === 'paused'" variant="ghost" size="icon" class="h-8 w-8 text-green-600 hover:bg-green-50" :title="t('Resume')" @click="router.patch(`/admin/subscriptions/${sub.id}/resume`)">
                         <Play class="h-4 w-4" />
                       </Button>
                     </div>
@@ -179,30 +181,30 @@ const itemsSummary = (items: SubscriptionItem[]) => {
                   <span class="text-xs text-muted-foreground mt-0.5">{{ sub.client?.email }}</span>
                 </div>
                 <Badge variant="outline" class="capitalize border-transparent font-semibold text-[10px] h-5 px-1.5 shrink-0" :class="statusBadgeClass[sub.status]">
-                  {{ sub.status }}
+                  {{ t(sub.status) }}
                 </Badge>
               </div>
 
               <div class="grid grid-cols-2 gap-3 mb-3">
                 <div class="flex flex-col">
-                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Items</span>
+                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ t('Items') }}</span>
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ itemsSummary(sub.items) }}</span>
                 </div>
                 <div class="flex flex-col text-right">
-                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Frequency</span>
+                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ t('Frequency') }}</span>
                   <span class="text-sm font-medium">{{ frequencyLabel(sub.frequency) }}</span>
                 </div>
               </div>
 
               <div class="flex items-center justify-between pt-3 border-t border-dashed border-border/60">
                 <div class="flex flex-col">
-                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Next Delivery</span>
-                  <span class="text-xs text-gray-700 dark:text-gray-300">{{ sub.next_delivery_at ?? 'Not scheduled' }}</span>
+                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ t('Next Delivery') }}</span>
+                  <span class="text-xs text-gray-700 dark:text-gray-300">{{ sub.next_delivery_at ?? t('Not scheduled') }}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <Link :href="`/admin/subscriptions/${sub.id}`">
                     <Button variant="secondary" size="sm" class="h-9 px-3 rounded-lg shadow-sm border border-border/50">
-                      <Eye class="h-4 w-4 mr-1" /> View
+                      <Eye class="h-4 w-4 mr-1" /> {{ t('View') }}
                     </Button>
                   </Link>
                   <Button v-if="sub.status === 'active'" variant="ghost" size="icon" class="h-9 w-9 text-yellow-600" @click="router.patch(`/admin/subscriptions/${sub.id}/pause`)">
@@ -220,7 +222,7 @@ const itemsSummary = (items: SubscriptionItem[]) => {
           <div v-if="subscriptions.data.length === 0" class="px-6 py-12 text-center text-muted-foreground">
             <div class="flex flex-col items-center justify-center opacity-60">
               <RotateCcw class="h-10 w-10 mb-3 text-gray-400" />
-              <p class="font-medium text-sm">No subscriptions found.</p>
+              <p class="font-medium text-sm">{{ t('No subscriptions found.') }}</p>
             </div>
           </div>
 

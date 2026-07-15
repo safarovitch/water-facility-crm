@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, Users2, TrendingUp, TrendingDown, ShoppingCart } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface BasketItem {
   product_id: number;
@@ -37,19 +38,25 @@ const props = defineProps<{
   summary: { total_clients: number; total_value: number; overdue_count: number; churned_count: number };
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Forecasts', href: '/admin/forecasts/index' },
-];
+// Creating an order from a forecast is a manager/admin action; couriers can
+// only view the forecast.
+const canCreateOrders = computed(() => !!usePage().props.auth.can?.manageOrders);
+
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Forecasts'), href: '/admin/forecasts/index' },
+]);
 
 const availableLocales = (usePage().props.available_locales as string[]) ?? [];
 
 const productName = (name: Record<string, string> | string | null): string => {
-  if (!name) return 'Item';
+  if (!name) return t('Item');
   if (typeof name === 'string') return name;
   for (const locale of availableLocales) {
     if (name[locale]) return name[locale];
   }
-  return Object.values(name)[0] || 'Item';
+  return Object.values(name)[0] || t('Item');
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -159,13 +166,13 @@ const createOrderFromForecast = (prediction: Prediction) => {
 </script>
 
 <template>
-  <Head title="Forecasts" />
+  <Head :title="t('Forecasts')" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-4 md:space-y-6 container mx-auto px-4 md:px-0">
       <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Order Forecasts</h1>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{{ t('Order Forecasts') }}</h1>
         <p class="text-sm text-muted-foreground mt-1">
-          Probable next orders for repeat clients. Pick a month and day to see who's likely to order and what.
+          {{ t("Probable next orders for repeat clients. Pick a month and day to see who's likely to order and what.") }}
         </p>
       </div>
 
@@ -173,19 +180,19 @@ const createOrderFromForecast = (prediction: Prediction) => {
       <Card class="shadow-sm">
         <CardContent class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="space-y-1">
-            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Predicted clients</div>
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{{ t('Predicted clients') }}</div>
             <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.summary.total_clients }}</div>
           </div>
           <div class="space-y-1">
-            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Est. revenue</div>
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{{ t('Est. revenue') }}</div>
             <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.summary.total_value.toFixed(0) }} <span class="text-sm font-normal text-muted-foreground">{{ $page.props.currency }}</span></div>
           </div>
           <div class="space-y-1">
-            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Overdue</div>
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{{ t('Overdue') }}</div>
             <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ props.summary.overdue_count }}</div>
           </div>
           <div class="space-y-1">
-            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Churned</div>
+            <div class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{{ t('Churned') }}</div>
             <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ props.summary.churned_count }}</div>
           </div>
         </CardContent>
@@ -195,9 +202,9 @@ const createOrderFromForecast = (prediction: Prediction) => {
       <Card class="shadow-sm">
         <CardContent class="p-4 grid grid-cols-1 md:flex md:flex-wrap md:items-end gap-3">
           <div class="space-y-1 w-full md:w-56">
-            <Label class="text-xs uppercase tracking-wider text-muted-foreground">Month</Label>
+            <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Month') }}</Label>
             <div class="flex items-center gap-2">
-              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(-1)" title="Previous month">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(-1)" :title="t('Previous month')">
                 <ChevronLeft class="h-4 w-4" />
               </Button>
               <select
@@ -207,16 +214,16 @@ const createOrderFromForecast = (prediction: Prediction) => {
               >
                 <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
               </select>
-              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(1)" title="Next month">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" @click="shiftMonth(1)" :title="t('Next month')">
                 <ChevronRight class="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           <div class="space-y-1 w-full md:w-64">
-            <Label class="text-xs uppercase tracking-wider text-muted-foreground">Day</Label>
+            <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Day') }}</Label>
             <div class="flex items-center gap-2">
-              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(-1)" title="Previous day">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(-1)" :title="t('Previous day')">
                 <ChevronLeft class="h-4 w-4" />
               </Button>
               <select
@@ -224,12 +231,12 @@ const createOrderFromForecast = (prediction: Prediction) => {
                 :disabled="!dayOptions.length"
                 class="flex h-10 md:h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
               >
-                <option v-if="!dayOptions.length" :value="null">No predicted days this month</option>
+                <option v-if="!dayOptions.length" :value="null">{{ t('No predicted days this month') }}</option>
                 <option v-for="d in dayOptions" :key="d.value" :value="d.value">
-                  {{ d.label }} — {{ d.count }} client{{ d.count === 1 ? '' : 's' }}{{ d.overdue ? ' • overdue' : '' }}
+                  {{ d.label }} — {{ d.count }} {{ t('client(s)') }}{{ d.overdue ? ' • ' + t('overdue') : '' }}
                 </option>
               </select>
-              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(1)" title="Next day">
+              <Button variant="outline" size="icon" class="h-10 md:h-9 w-10 md:w-9 shrink-0" :disabled="!dayOptions.length" @click="shiftDay(1)" :title="t('Next day')">
                 <ChevronRight class="h-4 w-4" />
               </Button>
             </div>
@@ -242,9 +249,9 @@ const createOrderFromForecast = (prediction: Prediction) => {
         <CardContent class="p-0">
           <div class="p-4 border-b bg-gray-50/50 dark:bg-gray-800/30 flex items-center gap-2">
             <CalendarClock class="h-4 w-4 text-muted-foreground" />
-            <span class="font-bold text-foreground">{{ selectedLabel ?? 'No day selected' }}</span>
+            <span class="font-bold text-foreground">{{ selectedLabel ?? t('No day selected') }}</span>
             <span v-if="selectedPredictions.length" class="text-sm text-muted-foreground">
-              · {{ selectedPredictions.length }} client{{ selectedPredictions.length === 1 ? '' : 's' }}
+              · {{ selectedPredictions.length }} {{ t('client(s)') }}
             </span>
           </div>
 
@@ -253,11 +260,11 @@ const createOrderFromForecast = (prediction: Prediction) => {
             <table class="w-full text-sm text-left">
               <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th class="px-6 py-3 font-semibold">Client</th>
-                  <th class="px-6 py-3 font-semibold">Probable items</th>
-                  <th class="px-6 py-3 font-semibold">Confidence</th>
-                  <th class="px-6 py-3 font-semibold">History</th>
-                  <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                  <th class="px-6 py-3 font-semibold">{{ t('Client') }}</th>
+                  <th class="px-6 py-3 font-semibold">{{ t('Probable items') }}</th>
+                  <th class="px-6 py-3 font-semibold">{{ t('Confidence') }}</th>
+                  <th class="px-6 py-3 font-semibold">{{ t('History') }}</th>
+                  <th class="px-6 py-3 font-semibold text-right">{{ t('Actions') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
@@ -266,24 +273,24 @@ const createOrderFromForecast = (prediction: Prediction) => {
                     <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
                       {{ p.client_name }}
                       <div v-if="p.trend === 'up'" class="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-semibold">
-                        <TrendingUp class="h-3 w-3" /> Up
+                        <TrendingUp class="h-3 w-3" /> {{ t('Up') }}
                       </div>
                       <div v-else-if="p.trend === 'down'" class="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-semibold">
-                        <TrendingDown class="h-3 w-3" /> Down
+                        <TrendingDown class="h-3 w-3" /> {{ t('Down') }}
                       </div>
                       <Badge
                         v-if="p.churned"
                         variant="outline"
                         class="border-transparent bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
                       >
-                        Churned
+                        {{ t('Churned') }}
                       </Badge>
                       <Badge
                         v-if="p.overdue && !p.churned"
                         variant="outline"
                         class="border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
                       >
-                        <AlertTriangle class="h-3 w-3" /> Overdue
+                        <AlertTriangle class="h-3 w-3" /> {{ t('Overdue') }}
                       </Badge>
                     </div>
                   </td>
@@ -292,25 +299,25 @@ const createOrderFromForecast = (prediction: Prediction) => {
                       <div v-for="(b, i) in p.basket" :key="i">
                         {{ productName(b.name) }} <span class="text-muted-foreground">×{{ b.qty }}</span>
                       </div>
-                      <div class="text-[10px] text-muted-foreground mt-1">est. {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
+                      <div class="text-[10px] text-muted-foreground mt-1">{{ t('est.') }} {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
                     </div>
                     <span v-else class="text-muted-foreground">—</span>
                   </td>
                   <td class="px-6 py-4">
                     <Badge variant="outline" class="border-transparent capitalize font-semibold" :class="confidenceClass[p.confidence]">
-                      {{ p.confidence }}
+                      {{ t(p.confidence) }}
                     </Badge>
                   </td>
                   <td class="px-6 py-4 text-xs text-muted-foreground">
-                    {{ p.order_count }} orders · ~every {{ p.cadence_days }}d<br />
-                    last {{ new Date(p.last_order).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}
-                    <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold mt-1">↑ accelerating</span>
-                    <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold mt-1">↓ slowing</span>
+                    {{ p.order_count }} {{ t('orders') }} · ~{{ t('every') }} {{ p.cadence_days }}{{ t('d') }}<br />
+                    {{ t('last') }} {{ new Date(p.last_order).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}
+                    <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold mt-1">↑ {{ t('accelerating') }}</span>
+                    <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold mt-1">↓ {{ t('slowing') }}</span>
                   </td>
                   <td class="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" class="gap-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" @click="createOrderFromForecast(p)" title="Create order">
+                    <Button v-if="canCreateOrders" variant="ghost" size="sm" class="gap-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" @click="createOrderFromForecast(p)" :title="t('Create order')">
                       <ShoppingCart class="h-4 w-4" />
-                      <span class="hidden md:inline">Create</span>
+                      <span class="hidden md:inline">{{ t('Create') }}</span>
                     </Button>
                   </td>
                 </tr>
@@ -324,41 +331,41 @@ const createOrderFromForecast = (prediction: Prediction) => {
               <div class="flex items-start justify-between mb-2">
                 <span class="font-bold text-gray-900 dark:text-white">{{ p.client_name }}</span>
                 <Badge variant="outline" class="border-transparent capitalize font-semibold text-[10px] h-5 px-1.5" :class="confidenceClass[p.confidence]">
-                  {{ p.confidence }}
+                  {{ t(p.confidence) }}
                 </Badge>
               </div>
               <div class="flex gap-1 mb-2 flex-wrap">
                 <div v-if="p.trend === 'up'" class="flex items-center gap-1 text-green-600 dark:text-green-400 text-[10px] font-semibold">
-                  <TrendingUp class="h-3 w-3" /> Up
+                  <TrendingUp class="h-3 w-3" /> {{ t('Up') }}
                 </div>
                 <div v-else-if="p.trend === 'down'" class="flex items-center gap-1 text-red-600 dark:text-red-400 text-[10px] font-semibold">
-                  <TrendingDown class="h-3 w-3" /> Down
+                  <TrendingDown class="h-3 w-3" /> {{ t('Down') }}
                 </div>
                 <Badge
                   v-if="p.churned"
                   variant="outline"
                   class="border-transparent bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 text-[10px] px-1.5 h-5 font-semibold"
                 >
-                  Churned
+                  {{ t('Churned') }}
                 </Badge>
                 <Badge
                   v-if="p.overdue && !p.churned"
                   variant="outline"
                   class="border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] px-1.5 h-5 font-semibold gap-1"
                 >
-                  <AlertTriangle class="h-3 w-3" /> Overdue
+                  <AlertTriangle class="h-3 w-3" /> {{ t('Overdue') }}
                 </Badge>
               </div>
               <div class="text-sm text-gray-700 dark:text-gray-300">{{ basketSummary(p.basket) }}</div>
               <div class="text-[10px] text-muted-foreground mt-1">
-                {{ p.order_count }} orders · ~every {{ p.cadence_days }}d · last
+                {{ p.order_count }} {{ t('orders') }} · ~{{ t('every') }} {{ p.cadence_days }}{{ t('d') }} · {{ t('last') }}
                 {{ new Date(p.last_order).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) }}
-                <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold">↑ accelerating</span>
-                <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold">↓ slowing</span>
+                <span v-if="p.trend === 'up'" class="block text-green-600 dark:text-green-400 font-semibold">↑ {{ t('accelerating') }}</span>
+                <span v-else-if="p.trend === 'down'" class="block text-red-600 dark:text-red-400 font-semibold">↓ {{ t('slowing') }}</span>
               </div>
-              <div class="text-[10px] text-muted-foreground font-semibold mt-1">est. {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
-              <Button variant="secondary" size="sm" class="w-full mt-2 gap-1" @click="createOrderFromForecast(p)">
-                <ShoppingCart class="h-4 w-4" /> Create Order
+              <div class="text-[10px] text-muted-foreground font-semibold mt-1">{{ t('est.') }} {{ p.expected_value.toFixed(2) }} {{ $page.props.currency }}</div>
+              <Button v-if="canCreateOrders" variant="secondary" size="sm" class="w-full mt-2 gap-1" @click="createOrderFromForecast(p)">
+                <ShoppingCart class="h-4 w-4" /> {{ t('Create Order') }}
               </Button>
             </div>
           </div>
@@ -368,7 +375,7 @@ const createOrderFromForecast = (prediction: Prediction) => {
             <div class="flex flex-col items-center justify-center opacity-60">
               <Users2 class="h-10 w-10 mb-3 text-gray-400" />
               <p class="font-medium text-sm">
-                {{ dayOptions.length ? 'No clients predicted to order on this day.' : 'No clients predicted to order this month.' }}
+                {{ dayOptions.length ? t('No clients predicted to order on this day.') : t('No clients predicted to order this month.') }}
               </p>
             </div>
           </div>

@@ -4,24 +4,27 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import ClientDashboard from '../components/ClientDashboard.vue';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 
 const page = usePage();
+const { t } = useI18n();
 
 const props = defineProps<{
     activeOrder?: any;
     orderHistory?: any[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
+const breadcrumbs = computed((): BreadcrumbItem[] => [
     {
-        title: 'Dashboard',
+        title: t('Dashboard'),
         href: dashboard().url,
     },
-];
+]);
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('Dashboard')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6">

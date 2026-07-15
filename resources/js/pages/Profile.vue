@@ -5,8 +5,10 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import ClientDashboard from '../components/ClientDashboard.vue';
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 const page = usePage();
+const { t } = useI18n();
 const user = computed(() => page.props.auth.user);
 const isClient = computed(() => user.value.roles.includes('Client'));
 
@@ -15,16 +17,16 @@ const props = defineProps<{
     orderHistory?: any[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
+const breadcrumbs = computed((): BreadcrumbItem[] => [
     {
-        title: 'My Profile',
+        title: t('My Profile'),
         href: dashboard().url,
     },
-];
+]);
 </script>
 
 <template>
-    <Head title="My Profile" />
+    <Head :title="t('My Profile')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div v-if="isClient" class="p-6">
@@ -56,8 +58,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <div class="rounded-xl border border-sidebar-border/70 bg-card p-6 dark:border-sidebar-border">
                 <p class="text-sm text-muted-foreground">
-                    To update your profile information, name or password, visit
-                    <a href="/settings/profile" class="font-medium text-primary underline-offset-4 hover:underline">Settings → Profile</a>.
+                    {{ t('To update your profile information, name or password, visit') }}
+                    <a href="/settings/profile" class="font-medium text-primary underline-offset-4 hover:underline">{{ t('Settings → Profile') }}</a>.
                 </p>
             </div>
         </div>

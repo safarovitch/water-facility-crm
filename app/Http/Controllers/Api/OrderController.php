@@ -75,7 +75,7 @@ class OrderController extends Controller
                 'actual_delivery_at' => $request->status === 'delivered' ? now() : $order->actual_delivery_at,
             ]);
 
-            if ($request->has('returned_materials') && $request->status === OrderStatus::Delivered->value) {
+            if ($request->has('returned_materials') && $request->status === OrderStatus::Delivered) {
                 $syncData = [];
                 foreach ($request->input('returned_materials') as $rm) {
                     $collected = (int) ($rm['quantity'] ?? 0);
@@ -100,7 +100,7 @@ class OrderController extends Controller
             // (e.g. 19L bottles). See OrderController::applyDepositCharge
             // for the web counterpart; the logic is duplicated here so the
             // courier mobile app stays in sync without an extra round-trip.
-            if ($request->status === OrderStatus::Delivered->value) {
+            if ($request->status === OrderStatus::Delivered) {
                 $this->applyDepositCharge($order->fresh(['items.product.rawMaterials', 'returnedMaterials']));
             }
         });
@@ -108,7 +108,7 @@ class OrderController extends Controller
         $order->refresh()->load('courier');
         event(new \App\Events\OrderStatusUpdated($order));
 
-        if (!$wasAlreadyDelivered && $request->status === OrderStatus::Delivered->value) {
+        if (!$wasAlreadyDelivered && $request->status === OrderStatus::Delivered) {
             event(new \App\Events\OrderDelivered($order->fresh(['client', 'courier'])));
         }
 

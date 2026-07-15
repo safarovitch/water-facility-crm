@@ -9,6 +9,7 @@ import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
 import { cn } from '@/lib/utils';
 import { index, update } from '@/routes/admin/roles';
+import { useI18n } from '@/composables/useI18n';
 
 const props = defineProps<{
     role: roleObject,
@@ -16,16 +17,18 @@ const props = defineProps<{
     guards: Array<string>
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
     {
-        title: 'Roles',
+        title: t('Roles'),
         href: index().url,
     },
     {
         title: props.role.name,
         href: '#',
     },
-];
+]);
 
 interface roleObject {
     id: number;
@@ -54,15 +57,15 @@ const isFormValid = computed(() => {
 
 <template>
 
-    <Head :title="'Edit role: ' + props.role.name" />
+    <Head :title="t('Edit role: {name}', { name: props.role.name })" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="relative overflow-x-auto sm:rounded-lg">
             <!-- Header -->
             <div class="p-4 flex items-center justify-between flex-column flex-wrap md:flex-row space-y-4 md:space-y-0 pb-6 bg-white dark:bg-gray-900">
                 <div>
-                    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit role</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Edit the role in the organization</p>
+                    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('Edit role') }}</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ t('Edit the role in the organization') }}</p>
                 </div>
             </div>
 
@@ -73,20 +76,20 @@ const isFormValid = computed(() => {
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <!-- Name -->
                             <div class="grid gap-2">
-                                <Label for="name">Name</Label>
-                                <Input id="name" class="mt-1 block w-full" name="name" v-model="form.name" required autocomplete="name" placeholder="Role name" />
+                                <Label for="name">{{ t('Name') }}</Label>
+                                <Input id="name" class="mt-1 block w-full" name="name" v-model="form.name" required autocomplete="name" :placeholder="t('Role name')" />
                                 <InputError class="mt-2" :message="errors.name" />
                             </div>
 
                             <!-- Permissions -->
                             <div class="grid gap-2">
-                                <Label for="guard_name">Choose guard</Label>
+                                <Label for="guard_name">{{ t('Choose guard') }}</Label>
                                 <select id="guard_name" name="guard_name" v-model="form.guard_name" required :class="cn(
                                     'mt-1 cursor-pointer file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
                                     'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                                     'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
                                 )">
-                                    <option value="">Select guard</option>
+                                    <option value="">{{ t('Select guard') }}</option>
                                     <option v-for="name in guards" :key="name" :value="name">{{ name }}</option>
                                 </select>
                                 <InputError class="mt-2" :message="errors.guard_name" />
@@ -94,7 +97,7 @@ const isFormValid = computed(() => {
 
                             <!-- Permissions -->
                             <div class="grid gap-2">
-                                <Label for="permissions">Assign permissions</Label>
+                                <Label for="permissions">{{ t('Assign permissions') }}</Label>
                                 <select id="permissions" name="permissions[]" v-model="form.permissions" multiple :class="cn(
                                     'mt-1 cursor-pointer file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-auto w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
                                     'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
@@ -111,7 +114,7 @@ const isFormValid = computed(() => {
                 <!-- Form Actions -->
                 <div class="flex items-center justify-end space-x-3 pt-4">
                     <Button type="button" @click="$inertia.visit(index().url)" class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                        Cancel
+                        {{ t('Cancel') }}
                     </Button>
                     <Button type="submit" :disabled="processing || !isFormValid" class="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" :class="{ 'opacity-50 cursor-not-allowed': processing || !isFormValid }">
                         <span v-if="processing" class="mr-2">
@@ -120,7 +123,7 @@ const isFormValid = computed(() => {
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </span>
-                        {{ processing ? 'Saving...' : 'Save' }}
+                        {{ processing ? t('Saving...') : t('Save') }}
                     </Button>
                 </div>
             </Form>

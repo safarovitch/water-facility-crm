@@ -167,11 +167,14 @@ class ClientController extends Controller
     // Most useful: recently registered users who don't yet have a Client role
     // and don't already own this client's data. We let the admin search by
     // name/email/phone from the UI, so we just send a small recent slice here.
-    $transferCandidates = User::where('id', '!=', $client->id)
-      ->with('phones:id,user_id,phone,is_default')
-      ->latest('id')
-      ->limit(50)
-      ->get(['id', 'name', 'email']);
+    // Transfer itself is admin-only, so courier staff get no candidate list.
+    $transferCandidates = auth()->user()->isCourierStaff()
+      ? collect()
+      : User::where('id', '!=', $client->id)
+          ->with('phones:id,user_id,phone,is_default')
+          ->latest('id')
+          ->limit(50)
+          ->get(['id', 'name', 'email']);
 
     return Inertia::render('clients/Edit')->with([
       'client' => $client,

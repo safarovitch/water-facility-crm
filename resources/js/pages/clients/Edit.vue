@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Phone } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
@@ -11,6 +11,7 @@ import AddressMapPicker from '@/components/AddressMapPicker.vue';
 import type { AddressData } from '@/components/AddressMapPicker.vue';
 import { index, update, transferProfile } from '@/routes/admin/clients';
 import { computed, ref } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface UserAddress {
   id?: number;
@@ -47,10 +48,16 @@ interface TransferCandidate {
 
 const props = defineProps<{ client: Client; transferCandidates: TransferCandidate[] }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Clients', href: index().url },
+// Profile transfer is an admin-only route (it moves orders/wallet and
+// strips roles), so couriers don't get the section at all.
+const canTransferProfile = computed(() => !!usePage().props.auth.can?.deleteClients);
+
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Clients'), href: index().url },
   { title: props.client.name, href: '#' },
-];
+]);
 
 const form = useForm({
   name: props.client.name,
@@ -157,10 +164,10 @@ const filteredCandidates = computed(() => {
 function submitTransfer() {
   if (!transferForm.target_user_id) return;
   const target = props.transferCandidates.find(c => c.id === transferForm.target_user_id);
-  const targetLabel = target ? `${target.name} (${target.email ?? 'no email'})` : 'this user';
+  const targetLabel = target ? `${target.name} (${target.email ?? t('no email')})` : t('this user');
   const ok = window.confirm(
-    `Transfer this client's profile, addresses, phones, orders, and wallet to ${targetLabel}?\n\n` +
-    `The current account will lose the Client role and all linked data. This cannot be undone.`,
+    t("Transfer this client's profile, addresses, phones, orders, and wallet to {target}?", { target: targetLabel }) + '\n\n' +
+    t('The current account will lose the Client role and all linked data. This cannot be undone.'),
   );
   if (!ok) return;
   transferForm.post(transferProfile(props.client.id).url, {
@@ -179,11 +186,11 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
 <template>
 
-  <Head :title="`Edit ${client.name}`" />
+  <Head :title="t('Edit {name}', { name: client.name })" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="relative overflow-x-auto sm:rounded-lg">
       <div class="pb-6 bg-white dark:bg-gray-900 px-4 py-5 sm:px-6 rounded-t-lg">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Client</h1>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('Edit Client') }}</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ client.email }}</p>
       </div>
 
@@ -191,15 +198,15 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
         <!-- Account -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Account</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Account') }}</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div class="grid gap-2">
-              <Label for="name">Full Name *</Label>
+              <Label for="name">{{ t('Full Name') }} *</Label>
               <Input id="name" v-model="form.name" required />
               <InputError :message="form.errors.name" />
             </div>
             <div class="grid gap-2">
-              <Label for="email">Email <span class="text-gray-400 font-normal">(optional)</span></Label>
+              <Label for="email">{{ t('Email') }} <span class="text-gray-400 font-normal">({{ t('optional') }})</span></Label>
               <Input id="email" type="email" v-model="form.email" />
               <InputError :message="form.errors.email" />
             </div>
@@ -208,44 +215,44 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
         <!-- Profile -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Profile</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Profile') }}</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div class="grid gap-2">
-              <Label for="type">Client Type *</Label>
+              <Label for="type">{{ t('Client Type') }} *</Label>
               <select id="type" v-model="form.type" :class="selectClass">
-                <option value="individual">Individual</option>
-                <option value="company">Company</option>
+                <option value="individual">{{ t('Individual') }}</option>
+                <option value="company">{{ t('Company') }}</option>
               </select>
             </div>
             <div v-if="isCompany" class="grid gap-2">
-              <Label for="company_name">Company Name</Label>
+              <Label for="company_name">{{ t('Company Name') }}</Label>
               <Input id="company_name" v-model="form.company_name" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
               <div class="flex items-center justify-between mb-2">
-                <Label>Phone Numbers *</Label>
-                <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="addPhone">+ Add Phone</Button>
+                <Label>{{ t('Phone Numbers') }} *</Label>
+                <Button type="button" variant="outline" size="sm" class="h-7 text-xs" @click="addPhone">{{ t('+ Add Phone') }}</Button>
               </div>
               <div class="space-y-3">
                 <div v-for="(p, i) in form.phones" :key="p.id ?? i" class="flex gap-2 items-center">
                   <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div class="relative">
                       <select v-model="p.label" :class="selectClass" class="!mt-0">
-                        <option value="Mobile">Mobile</option>
-                        <option value="Work">Work</option>
-                        <option value="Home">Home</option>
-                        <option value="Other">Other</option>
+                        <option value="Mobile">{{ t('Mobile') }}</option>
+                        <option value="Work">{{ t('Work') }}</option>
+                        <option value="Home">{{ t('Home') }}</option>
+                        <option value="Other">{{ t('Other') }}</option>
                       </select>
                     </div>
                     <div class="relative flex gap-1">
                       <Input v-model="p.phone" placeholder="+998 XX XXX XX XX" class="flex-1" />
-                      <Button v-if="p.phone" type="button" variant="outline" size="icon" class="h-9 w-9 bg-green-50 hover:bg-green-100 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800" title="Call" @click.prevent="initiateCall(p.phone)">
+                      <Button v-if="p.phone" type="button" variant="outline" size="icon" class="h-9 w-9 bg-green-50 hover:bg-green-100 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800" :title="t('Call')" @click.prevent="initiateCall(p.phone)">
                         <Phone class="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                   <div class="flex items-center gap-1 pt-0.5">
-                    <Button type="button" variant="outline" size="icon" class="h-9 w-9" :class="p.is_default ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20' : 'text-gray-400'" @click="setPrimaryPhone(i)" title="Set as Primary">
+                    <Button type="button" variant="outline" size="icon" class="h-9 w-9" :class="p.is_default ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20' : 'text-gray-400'" @click="setPrimaryPhone(i)" :title="t('Set as Primary')">
                       <span v-if="p.is_default" class="text-[10px] font-bold">PRI</span>
                       <span v-else class="text-[10px] font-bold opacity-30">PRI</span>
                     </Button>
@@ -258,7 +265,7 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
               <InputError :message="form.errors.phones" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
-              <Label for="notes">Internal Notes</Label>
+              <Label for="notes">{{ t('Internal Notes') }}</Label>
               <textarea id="notes" v-model="form.notes" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
             </div>
           </div>
@@ -268,13 +275,13 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
-              Addresses
+              {{ t('Addresses') }}
               <span class="ml-2 text-xs font-normal text-gray-400">({{ form.addresses.length }})</span>
             </h2>
-            <Button type="button" variant="outline" size="sm" @click="addAddress">+ Add Address</Button>
+            <Button type="button" variant="outline" size="sm" @click="addAddress">{{ t('+ Add Address') }}</Button>
           </div>
 
-          <p v-if="form.addresses.length === 0" class="text-sm text-gray-400 italic">No addresses saved yet.</p>
+          <p v-if="form.addresses.length === 0" class="text-sm text-gray-400 italic">{{ t('No addresses saved yet.') }}</p>
 
           <div v-for="(addr, i) in form.addresses" :key="addr.id ?? i" class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
 
@@ -283,7 +290,7 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {{ addr.label || `Address ${i + 1}` }}
-                  <span v-if="addr.is_default" class="ml-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.5 rounded">Default</span>
+                  <span v-if="addr.is_default" class="ml-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.5 rounded">{{ t('Default') }}</span>
                 </span>
                 <span v-if="addr.address_line" class="text-xs text-gray-400">
                   — {{ addr.address_line.substring(0, 40) }}{{ addr.address_line.length > 40 ? '…' : '' }}
@@ -299,12 +306,12 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
             <div v-show="expandedAddress === i" class="p-4 space-y-4">
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
-                  <Label>Label</Label>
-                  <Input v-model="addr.label" placeholder="e.g. Main, Office, Warehouse" />
+                  <Label>{{ t('Label') }}</Label>
+                  <Input v-model="addr.label" :placeholder="t('e.g. Main, Office, Warehouse')" />
                 </div>
                 <div class="grid gap-2">
-                  <Label>City</Label>
-                  <Input v-model="addr.city" placeholder="City" />
+                  <Label>{{ t('City') }}</Label>
+                  <Input v-model="addr.city" :placeholder="t('City')" />
                 </div>
               </div>
               <div class="grid gap-2 sm:col-span-2">
@@ -315,27 +322,27 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
         </div>
 
         <!-- Profile transfer -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
+        <div v-if="canTransferProfile" class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-base font-semibold text-gray-900 dark:text-white">Transfer Profile to Another User</h2>
+              <h2 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('Transfer Profile to Another User') }}</h2>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Use when this client registered a second account. Moves profile, addresses, phones, orders, and wallet to the chosen user, then removes the Client role here.
+                {{ t('Use when this client registered a second account. Moves profile, addresses, phones, orders, and wallet to the chosen user, then removes the Client role here.') }}
               </p>
             </div>
             <Button type="button" variant="outline" size="sm" @click="transferOpen = !transferOpen">
-              {{ transferOpen ? 'Cancel' : 'Transfer…' }}
+              {{ transferOpen ? t('Cancel') : t('Transfer…') }}
             </Button>
           </div>
 
           <div v-if="transferOpen" class="mt-4 space-y-3">
             <div class="grid gap-2">
-              <Label>Search target user (name, email, or phone)</Label>
-              <Input v-model="transferSearch" placeholder="Start typing to filter…" />
+              <Label>{{ t('Search target user (name, email, or phone)') }}</Label>
+              <Input v-model="transferSearch" :placeholder="t('Start typing to filter…')" />
             </div>
 
             <div class="max-h-64 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-              <p v-if="filteredCandidates.length === 0" class="p-3 text-xs text-gray-400 italic">No matching users.</p>
+              <p v-if="filteredCandidates.length === 0" class="p-3 text-xs text-gray-400 italic">{{ t('No matching users.') }}</p>
               <label
                 v-for="c in filteredCandidates"
                 :key="c.id"
@@ -350,7 +357,7 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
                 <div class="flex-1">
                   <div class="font-medium text-gray-900 dark:text-white">{{ c.name }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ c.email ?? '— no email —' }}
+                    {{ c.email ?? t('— no email —') }}
                     <span v-if="c.phones?.length"> · {{ c.phones[0].phone }}</span>
                   </div>
                 </div>
@@ -366,8 +373,8 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
                 :disabled="!transferForm.target_user_id || transferForm.processing"
                 @click="submitTransfer"
               >
-                <span v-if="transferForm.processing">Transferring…</span>
-                <span v-else>Transfer Profile</span>
+                <span v-if="transferForm.processing">{{ t('Transferring…') }}</span>
+                <span v-else>{{ t('Transfer Profile') }}</span>
               </Button>
             </div>
           </div>
@@ -375,10 +382,10 @@ const selectClass = 'mt-1 cursor-pointer border-input flex h-9 w-full min-w-0 ro
 
         <!-- Actions -->
         <div class="flex items-center justify-end space-x-3 pt-2 pb-6">
-          <Button type="button" @click="$inertia.visit(index().url)" variant="outline">Cancel</Button>
+          <Button type="button" @click="$inertia.visit(index().url)" variant="outline">{{ t('Cancel') }}</Button>
           <Button type="submit" :disabled="form.processing">
-            <span v-if="form.processing">Saving...</span>
-            <span v-else>Save Changes</span>
+            <span v-if="form.processing">{{ t('Saving...') }}</span>
+            <span v-else>{{ t('Save Changes') }}</span>
           </Button>
         </div>
       </form>

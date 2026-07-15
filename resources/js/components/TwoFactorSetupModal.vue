@@ -9,6 +9,7 @@ import { Form } from '@inertiajs/vue3';
 import { useClipboard } from '@vueuse/core';
 import { Check, Copy, Loader2, ScanLine } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface Props {
     requiresConfirmation: boolean;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 const isOpen = defineModel<boolean>('isOpen');
 
 const { copy, copied } = useClipboard();
@@ -30,24 +32,24 @@ const pinInputContainerRef = ref<HTMLElement | null>(null);
 const modalConfig = computed<{ title: string; description: string; buttonText: string }>(() => {
     if (props.twoFactorEnabled) {
         return {
-            title: 'Two-Factor Authentication Enabled',
-            description: 'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-            buttonText: 'Close',
+            title: t('Two-Factor Authentication Enabled'),
+            description: t('Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.'),
+            buttonText: t('Close'),
         };
     }
 
     if (showVerificationStep.value) {
         return {
-            title: 'Verify Authentication Code',
-            description: 'Enter the 6-digit code from your authenticator app',
-            buttonText: 'Continue',
+            title: t('Verify Authentication Code'),
+            description: t('Enter the 6-digit code from your authenticator app'),
+            buttonText: t('Continue'),
         };
     }
 
     return {
-        title: 'Enable Two-Factor Authentication',
-        description: 'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-        buttonText: 'Continue',
+        title: t('Enable Two-Factor Authentication'),
+        description: t('To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app'),
+        buttonText: t('Continue'),
     };
 });
 
@@ -135,7 +137,7 @@ watch(
 
                     <div class="relative flex w-full items-center justify-center">
                         <div class="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span class="relative bg-card px-2 py-1">or, enter the code manually</span>
+                        <span class="relative bg-card px-2 py-1">{{ t('or, enter the code manually') }}</span>
                     </div>
 
                     <div class="flex w-full items-center justify-center space-x-2">
@@ -175,9 +177,9 @@ watch(
                                     @click="showVerificationStep = false"
                                     :disabled="processing"
                                 >
-                                    Back
+                                    {{ t('Back') }}
                                 </Button>
-                                <Button type="submit" class="w-auto flex-1" :disabled="processing || codeValue.length < 6"> Confirm </Button>
+                                <Button type="submit" class="w-auto flex-1" :disabled="processing || codeValue.length < 6"> {{ t('Confirm') }} </Button>
                             </div>
                         </div>
                     </Form>

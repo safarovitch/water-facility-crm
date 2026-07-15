@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Clock, CheckCircle2, Package, Sparkles, Truck, MapPin, XCircle } from 'lucide-vue-next';
 import CourierTrackingMap from './CourierTrackingMap.vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface Step { id: string; label: string; icon: any }
 
@@ -21,23 +22,24 @@ interface ActiveOrder {
 }
 
 const props = defineProps<{ order: ActiveOrder }>();
+const { t } = useI18n();
 
 // Mirror app/Enums/OrderStatus.php (cancelled excluded — handled separately).
-const steps: Step[] = [
-  { id: 'pending',       label: 'Pending',     icon: Clock },
-  { id: 'confirmed',     label: 'Confirmed',   icon: CheckCircle2 },
-  { id: 'in_production', label: 'Preparing',   icon: Package },
-  { id: 'ready',         label: 'Ready',       icon: Sparkles },
-  { id: 'accepted',      label: 'Picked up',   icon: Truck },
-  { id: 'in_transit',    label: 'On the way',  icon: Truck },
-  { id: 'delivered',     label: 'Delivered',   icon: MapPin },
-];
+const steps = computed((): Step[] => [
+  { id: 'pending',       label: t('Pending'),     icon: Clock },
+  { id: 'confirmed',     label: t('Confirmed'),   icon: CheckCircle2 },
+  { id: 'in_production', label: t('Preparing'),   icon: Package },
+  { id: 'ready',         label: t('Ready'),       icon: Sparkles },
+  { id: 'accepted',      label: t('Picked up'),   icon: Truck },
+  { id: 'in_transit',    label: t('On the way'),  icon: Truck },
+  { id: 'delivered',     label: t('Delivered'),   icon: MapPin },
+]);
 
 const isCancelled = computed(() => props.order.status === 'cancelled');
-const currentIndex = computed(() => steps.findIndex((s) => s.id === props.order.status));
-const currentStep = computed(() => steps[currentIndex.value] ?? null);
-const previousStep = computed(() => (currentIndex.value > 0 ? steps[currentIndex.value - 1] : null));
-const nextStep = computed(() => (currentIndex.value >= 0 && currentIndex.value < steps.length - 1 ? steps[currentIndex.value + 1] : null));
+const currentIndex = computed(() => steps.value.findIndex((s) => s.id === props.order.status));
+const currentStep = computed(() => steps.value[currentIndex.value] ?? null);
+const previousStep = computed(() => (currentIndex.value > 0 ? steps.value[currentIndex.value - 1] : null));
+const nextStep = computed(() => (currentIndex.value >= 0 && currentIndex.value < steps.value.length - 1 ? steps.value[currentIndex.value + 1] : null));
 
 const showMap = computed(() => props.order.status === 'in_transit' && !!props.order.courier);
 const initialFix = computed(() => props.order.courier?.last_location ?? null);
@@ -49,7 +51,7 @@ const initialFix = computed(() => props.order.courier?.last_location ?? null);
     <div v-if="isCancelled" class="px-6 py-5 bg-red-50 dark:bg-red-900/20 flex items-center gap-3">
       <XCircle class="h-6 w-6 text-red-500" />
       <div>
-        <p class="font-semibold text-red-900 dark:text-red-100">Order cancelled</p>
+        <p class="font-semibold text-red-900 dark:text-red-100">{{ t('Order cancelled') }}</p>
         <p class="text-sm text-red-700 dark:text-red-200">#{{ order.order_number }}</p>
       </div>
     </div>
@@ -59,11 +61,11 @@ const initialFix = computed(() => props.order.courier?.last_location ?? null);
       <div class="px-6 pt-6">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p class="text-[11px] font-semibold uppercase tracking-widest text-sky-600 dark:text-sky-400">Your order</p>
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-sky-600 dark:text-sky-400">{{ t('Your order') }}</p>
             <p class="font-mono text-xl font-bold text-slate-900 dark:text-slate-100">#{{ order.order_number }}</p>
           </div>
           <div v-if="order.scheduled_delivery_at_human" class="text-right">
-            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Scheduled</p>
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">{{ t('Scheduled') }}</p>
             <p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ order.scheduled_delivery_at_human }}</p>
           </div>
         </div>
@@ -75,7 +77,7 @@ const initialFix = computed(() => props.order.courier?.last_location ?? null);
           <component v-if="currentStep" :is="currentStep.icon" class="h-12 w-12" />
         </div>
         <p class="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
-          {{ currentStep?.label ?? 'In progress' }}
+          {{ currentStep?.label ?? t('In progress') }}
         </p>
 
         <!-- Previous / next hint -->
@@ -86,7 +88,7 @@ const initialFix = computed(() => props.order.courier?.last_location ?? null);
           </div>
           <span v-if="previousStep && nextStep" class="opacity-30">←  ●  →</span>
           <div v-if="nextStep" class="flex items-center gap-1.5 font-semibold text-sky-600 dark:text-sky-400">
-            <span>Next: {{ nextStep.label }}</span>
+            <span>{{ t('Next') }}: {{ nextStep.label }}</span>
             <component :is="nextStep.icon" class="h-3.5 w-3.5" />
           </div>
         </div>
@@ -137,14 +139,14 @@ const initialFix = computed(() => props.order.courier?.last_location ?? null);
               </div>
               <div>
                 <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ order.courier?.name }}</p>
-                <p class="text-xs text-slate-500">Your courier is on the way</p>
+                <p class="text-xs text-slate-500">{{ t('Your courier is on the way') }}</p>
               </div>
             </div>
             <a
               v-if="order.courier?.phone"
               :href="`tel:${order.courier.phone}`"
               class="text-xs font-semibold text-sky-600 hover:text-sky-700"
-            >Call</a>
+            >{{ t('Call') }}</a>
           </div>
           <CourierTrackingMap
             :initial="initialFix"

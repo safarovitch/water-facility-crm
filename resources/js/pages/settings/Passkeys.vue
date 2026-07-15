@@ -2,7 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 import { startRegistration } from '@simplewebauthn/browser';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -22,15 +23,16 @@ defineProps<{
     }>;
 }>();
 
+const { t } = useI18n();
 const page = usePage();
 const flash = page.props.flash as Record<string, string> | undefined;
 
-const breadcrumbItems: BreadcrumbItem[] = [
+const breadcrumbItems = computed((): BreadcrumbItem[] => [
     {
-        title: 'Passkeys',
+        title: t('Passkeys'),
         href: '/settings/passkeys',
     },
-];
+]);
 
 const name = ref('');
 const errorMsg = ref('');
@@ -38,7 +40,7 @@ const registering = ref(false);
 
 const submitRegistration = async () => {
     if (!name.value.trim()) {
-        errorMsg.value = 'Please provide a name for this passkey.';
+        errorMsg.value = t('Please provide a name for this passkey.');
         return;
     }
 
@@ -52,7 +54,7 @@ const submitRegistration = async () => {
         });
 
         if (!optionsResponse.ok) {
-            throw new Error('Failed to get registration options');
+            throw new Error(t('Failed to get registration options'));
         }
 
         const { options } = await optionsResponse.json();
@@ -74,17 +76,17 @@ const submitRegistration = async () => {
                 registering.value = false;
             },
             onError: (errors) => {
-                errorMsg.value = Object.values(errors).flat().join(' ') || 'Failed to save passkey.';
+                errorMsg.value = Object.values(errors).flat().join(' ') || t('Failed to save passkey.');
                 registering.value = false;
             },
         });
     } catch (error: any) {
         if (error.name === 'NotAllowedError') {
-            errorMsg.value = 'Passkey registration was cancelled or denied by the device.';
+            errorMsg.value = t('Passkey registration was cancelled or denied by the device.');
         } else if (error.name === 'SecurityError') {
-            errorMsg.value = 'Passkeys require a secure (HTTPS) connection.';
+            errorMsg.value = t('Passkeys require a secure (HTTPS) connection.');
         } else {
-            errorMsg.value = error.message || 'An error occurred during passkey registration.';
+            errorMsg.value = error.message || t('An error occurred during passkey registration.');
             console.error('Passkey registration error:', error);
         }
         registering.value = false;
@@ -93,7 +95,7 @@ const submitRegistration = async () => {
 
 const deleteForm = useForm({});
 const deletePasskey = (id: number) => {
-    if (confirm('Are you sure you want to remove this passkey? You will no longer be able to sign in with it.')) {
+    if (confirm(t('Are you sure you want to remove this passkey? You will no longer be able to sign in with it.'))) {
         deleteForm.delete(`/settings/passkeys/${id}`, {
             preserveScroll: true,
         });
@@ -111,7 +113,7 @@ const formatDate = (dateString: string) => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Passkeys" />
+        <Head :title="t('Passkeys')" />
 
         <SettingsLayout>
             <div class="space-y-8">
@@ -119,9 +121,9 @@ const formatDate = (dateString: string) => {
                 <div class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
                     <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
                     <div class="text-sm text-blue-800 dark:text-blue-300">
-                        <p class="font-medium">What are Passkeys?</p>
+                        <p class="font-medium">{{ t('What are Passkeys?') }}</p>
                         <p class="mt-1 text-blue-700 dark:text-blue-400">
-                            Passkeys let you sign in securely using your device's Face ID, Touch ID, fingerprint sensor, or hardware security key — no password needed.
+                            {{ t("Passkeys let you sign in securely using your device's Face ID, Touch ID, fingerprint sensor, or hardware security key — no password needed.") }}
                         </p>
                     </div>
                 </div>
@@ -129,18 +131,18 @@ const formatDate = (dateString: string) => {
                 <!-- Register Section -->
                 <div class="space-y-4">
                     <HeadingSmall
-                        title="Register a New Passkey"
-                        description="Add Face ID, Touch ID, or a security key to sign in without a password."
+                        :title="t('Register a New Passkey')"
+                        :description="t('Add Face ID, Touch ID, or a security key to sign in without a password.')"
                     />
 
                     <div class="space-y-4 max-w-md">
                         <div class="grid gap-2">
-                            <Label for="passkey_name">Device Name</Label>
+                            <Label for="passkey_name">{{ t('Device Name') }}</Label>
                             <Input
                                 id="passkey_name"
                                 v-model="name"
                                 type="text"
-                                placeholder="e.g. My MacBook, Work iPhone"
+                                :placeholder="t('e.g. My MacBook, Work iPhone')"
                                 :disabled="registering"
                                 @keyup.enter="submitRegistration"
                             />
@@ -153,7 +155,7 @@ const formatDate = (dateString: string) => {
                             class="gap-2"
                         >
                             <Fingerprint class="h-4 w-4" />
-                            {{ registering ? 'Waiting for device...' : 'Register Passkey' }}
+                            {{ registering ? t('Waiting for device...') : t('Register Passkey') }}
                         </Button>
                     </div>
                 </div>
@@ -161,8 +163,8 @@ const formatDate = (dateString: string) => {
                 <!-- Existing Passkeys -->
                 <div class="space-y-4">
                     <HeadingSmall
-                        title="Your Passkeys"
-                        description="Devices that can sign in to your account without a password."
+                        :title="t('Your Passkeys')"
+                        :description="t('Devices that can sign in to your account without a password.')"
                     />
 
                     <div v-if="passkeys.length > 0" class="divide-y rounded-lg border">
@@ -178,9 +180,9 @@ const formatDate = (dateString: string) => {
                                 <div>
                                     <p class="font-medium">{{ passkey.name }}</p>
                                     <p class="text-sm text-muted-foreground">
-                                        Added {{ formatDate(passkey.created_at) }}
+                                        {{ t('Added') }} {{ formatDate(passkey.created_at) }}
                                         <span v-if="passkey.last_used_at">
-                                            · Last used {{ formatDate(passkey.last_used_at) }}
+                                            · {{ t('Last used') }} {{ formatDate(passkey.last_used_at) }}
                                         </span>
                                     </p>
                                 </div>
@@ -199,9 +201,9 @@ const formatDate = (dateString: string) => {
 
                     <div v-else class="rounded-lg border border-dashed p-8 text-center">
                         <Fingerprint class="mx-auto h-10 w-10 text-muted-foreground/50" />
-                        <p class="mt-3 text-sm text-muted-foreground">No passkeys registered yet.</p>
+                        <p class="mt-3 text-sm text-muted-foreground">{{ t('No passkeys registered yet.') }}</p>
                         <p class="mt-1 text-xs text-muted-foreground/70">
-                            Register one above to enable passwordless sign in.
+                            {{ t('Register one above to enable passwordless sign in.') }}
                         </p>
                     </div>
                 </div>

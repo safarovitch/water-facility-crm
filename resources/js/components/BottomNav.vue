@@ -4,28 +4,36 @@ import { LayoutGrid, ShoppingCart, Wallet, Wrench, Menu, Phone } from 'lucide-vu
 import { computed } from 'vue';
 import { useSidebar } from '@/components/ui/sidebar/utils';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/composables/useI18n';
 
 const page = usePage();
+const { t } = useI18n();
 const { toggleSidebar } = useSidebar();
 
 // adminMode is shared via HandleInertiaRequests — true only when staff has toggled admin mode on
 const adminMode = computed(() => (page.props as any).adminMode as boolean);
 
 const user = computed(() => page.props.auth.user);
+const can = computed(() => page.props.auth.can ?? {});
 
 const navItems = computed(() => {
   if (adminMode.value) {
-    return [
-      { title: 'Home', href: '/admin', icon: LayoutGrid },
-      { title: 'Orders', href: '/admin/orders/index', icon: ShoppingCart },
-      { title: 'Finance', href: '/admin/financial-records', icon: Wallet },
-      { title: 'Inventory', href: '/admin/inventory-items', icon: Wrench }
+    const items = [
+      { title: t('Home'), href: '/admin', icon: LayoutGrid },
+      { title: t('Orders'), href: '/admin/orders/index', icon: ShoppingCart },
     ];
+    if (can.value.accessAccounting) {
+      items.push({ title: t('Finance'), href: '/admin/financial-records', icon: Wallet });
+    }
+    if (can.value.manageInventory) {
+      items.push({ title: t('Inventory'), href: '/admin/inventory-items', icon: Wrench });
+    }
+    return items;
   }
-  
+
   return [
-    { title: 'Home', href: '/dashboard', icon: LayoutGrid },
-    { title: 'Orders', href: '/orders/index', icon: ShoppingCart },
+    { title: t('Home'), href: '/dashboard', icon: LayoutGrid },
+    { title: t('Orders'), href: '/orders/index', icon: ShoppingCart },
   ];
 });
 
@@ -65,7 +73,7 @@ const isActive = (href: string) => {
       class="flex flex-col items-center justify-center flex-1 h-16 gap-1 text-muted-foreground hover:text-primary transition-colors"
     >
        <Phone class="h-5 w-5" />
-       <span class="text-[10px] leading-none">Phone</span>
+       <span class="text-[10px] leading-none">{{ t('Phone') }}</span>
     </button>
 
     <button
@@ -73,7 +81,7 @@ const isActive = (href: string) => {
       class="flex flex-col items-center justify-center flex-1 h-16 gap-1 text-muted-foreground hover:text-primary transition-colors"
     >
        <Menu class="h-5 w-5" />
-       <span class="text-[10px] leading-none">Menu</span>
+       <span class="text-[10px] leading-none">{{ t('Menu') }}</span>
     </button>
   </nav>
 </template>

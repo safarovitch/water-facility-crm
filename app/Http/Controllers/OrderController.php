@@ -155,7 +155,7 @@ class OrderController extends Controller
     // Clients now have a single-page home (/profile) that shows their orders
     // inline. Redirect them there if they hit /orders directly.
     if (!$isAdminPath && auth()->user()?->hasRole('Client')
-        && !auth()->user()?->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+        && !auth()->user()?->isStaff()) {
       return redirect()->route('dashboard');
     }
 
@@ -163,6 +163,12 @@ class OrderController extends Controller
       ->when(
         !$isAdminPath && $authUserId,
         fn($q) => $q->where('user_id', $authUserId)
+      )
+      // Couriers without manager/admin rights only ever see the orders
+      // assigned to them, even on the admin path.
+      ->when(
+        $isAdminPath && auth()->user()?->isCourierOnly(),
+        fn($q) => $q->where('courier_id', $authUserId)
       )
       ->when(
         request('status'),
@@ -638,11 +644,13 @@ class OrderController extends Controller
       abort(404);
     }
 
+    $this->ensureCourierOwnsOrder($order);
+
     // Clients use the single-page home which opens a read-only modal for
     // order details. Send them there so they don't see the sidebar-wrapped
     // admin order page.
     if (!$isAdminPath && auth()->user()?->hasRole('Client')
-        && !auth()->user()?->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+        && !auth()->user()?->isStaff()) {
       return redirect()->route('dashboard');
     }
 
@@ -665,10 +673,26 @@ class OrderController extends Controller
       // Expected vs. returned reusable containers, plus the deposit owed for
       // any shortfall. The admin sees this on delivery to know what to bill.
       'reusable_summary' => array_values($order->reusableDepositSummary()),
-      'couriers' => User::role('Currier')->withCount(['orders' => function ($q) {
-        $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
-      }])->get(),
+      // Only users who may (re)assign couriers get the roster; a plain
+      // courier must not see or pick other couriers.
+      'couriers' => auth()->user()?->isCourierOnly()
+        ? collect()
+        : User::role('Currier')->withCount(['orders' => function ($q) {
+            $q->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled]);
+          }])->get(),
     ]);
+  }
+
+  /**
+   * Couriers without manager/admin rights may only act on orders assigned
+   * to them. 404 (not 403) so foreign order numbers aren't confirmed.
+   */
+  private function ensureCourierOwnsOrder(Order $order): void
+  {
+    $user = auth()->user();
+    if (request()->is('admin/*') && $user?->isCourierOnly() && $order->courier_id !== $user->id) {
+      abort(404);
+    }
   }
 
   public function edit(Order $order): Response
@@ -870,6 +894,14 @@ class OrderController extends Controller
 
   public function updateStatus(Order $order)
   {
+    $this->ensureCourierOwnsOrder($order);
+
+    // Cancelling is a manager/admin action (see the admin.orders.cancel
+    // route); couriers must not sneak it in through a status update.
+    if (auth()->user()?->isCourierOnly() && request('status') === OrderStatus::Cancelled) {
+      abort(403, 'Couriers cannot cancel orders.');
+    }
+
     $data = request()->validate([
       'status'             => ['required', 'in:' . implode(',', OrderStatus::getValues())],
       'actual_delivery_at' => ['nullable', 'date'],
@@ -1090,6 +1122,8 @@ class OrderController extends Controller
 
   public function payWithWallet(Order $order, \App\Services\WalletService $walletService, OrderAccountingService $orderAccounting)
   {
+    $this->ensureCourierOwnsOrder($order);
+
     // Ensure we have the latest order state, especially after partial delivery
     // where total_amount gets recalculated
     $order = $order->fresh(['items.product.rawMaterials', 'returnedMaterials']);
@@ -1153,6 +1187,8 @@ class OrderController extends Controller
    */
   public function payFromWalletBalance(Order $order, \App\Services\WalletService $walletService, OrderAccountingService $orderAccounting)
   {
+    $this->ensureCourierOwnsOrder($order);
+
     $order = $order->fresh(['items.product.rawMaterials', 'returnedMaterials', 'client.wallet']);
 
     if ($order->status->value === OrderStatus::Cancelled) {
@@ -1289,6 +1325,8 @@ class OrderController extends Controller
    */
   public function collectDeferred(Order $order)
   {
+    $this->ensureCourierOwnsOrder($order);
+
     $data = request()->validate([
       'raw_material_ids' => ['required', 'array', 'min:1'],
       'raw_material_ids.*' => ['required', 'exists:raw_materials,id'],

@@ -3,6 +3,26 @@ import type { LucideIcon } from 'lucide-vue-next';
 
 export interface Auth {
     user: User;
+    can: Abilities;
+}
+
+export interface Abilities {
+    accessAdmin?: boolean;
+    viewAdminStats?: boolean;
+    manageClients?: boolean;
+    deleteClients?: boolean;
+    viewForecasts?: boolean;
+    assignCurriers?: boolean;
+    viewCurrierActivities?: boolean;
+    manageOrders?: boolean;
+    deleteOrders?: boolean;
+    accessAccounting?: boolean;
+    manageAccounting?: boolean;
+    manageUsers?: boolean;
+    manageProducts?: boolean;
+    manageInventory?: boolean;
+    manageRawMaterials?: boolean;
+    manageSubscriptions?: boolean;
 }
 
 export interface BreadcrumbItem {

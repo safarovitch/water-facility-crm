@@ -16,6 +16,7 @@ import type { BreadcrumbItem, NavItem } from '@/types';
 import { InertiaLinkProps, Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const page = usePage();
+const { t } = useI18n();
 const auth = computed(() => page.props.auth);
 
 const isCurrentRoute = computed(() => (url: NonNullable<InertiaLinkProps['href']>) => urlIsActive(url, page.url));
@@ -37,12 +39,12 @@ const activeItemStyles = computed(
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: t('Dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
     },
     {
-        title: 'Users',
+        title: t('Users'),
         href: dashboard(),
         icon: LayoutGrid,
     },
@@ -65,7 +67,7 @@ const rightNavItems: NavItem[] = [
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" class="w-[300px] p-6">
-                            <SheetTitle class="sr-only">Navigation Menu</SheetTitle>
+                            <SheetTitle class="sr-only">{{ t('Navigation Menu') }}</SheetTitle>
                             <SheetHeader class="flex justify-start text-left">
                                 <BrandLogo class="h-7 w-auto dark:brightness-0 dark:invert" />
                             </SheetHeader>

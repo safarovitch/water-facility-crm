@@ -11,6 +11,7 @@ import { index, update } from '@/routes/admin/products';
 import { computed, ref } from 'vue';
 import { PlusCircle, Trash2, Box } from 'lucide-vue-next';
 import { usePage } from '@inertiajs/vue3';
+import { useI18n } from '@/composables/useI18n';
 
 interface RawMaterialCombo {
   id: number;
@@ -45,10 +46,12 @@ const props = defineProps<{
   availableRawMaterials: RawMaterialCombo[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Products', href: index().url },
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Products'), href: index().url },
   { title: props.product.name?.ru ?? props.product.sku, href: '#' },
-];
+]);
 
 const availableLocales = usePage().props.available_locales as string[];
 
@@ -122,7 +125,7 @@ const selectClass = cn(
 
 <template>
 
-  <Head :title="`Edit ${product.name?.[availableLocales[0]] ?? product.sku}`" />
+  <Head :title="t('Edit {name}', { name: product.name?.[availableLocales[0]] ?? product.sku })" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="relative overflow-x-auto sm:rounded-lg">
       <div class="p-4 pb-6 bg-white dark:bg-gray-900">
@@ -147,22 +150,22 @@ const selectClass = cn(
 
         <!-- Image Upload -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Product Image') }}</h2>
           <div class="flex items-center gap-6">
             <div class="w-32 h-32 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group">
               <img v-if="getImageUrl" :src="getImageUrl" class="w-full h-full object-cover" />
-              <div v-else class="text-gray-400 text-xs text-center p-2">No image</div>
+              <div v-else class="text-gray-400 text-xs text-center p-2">{{ t('No image') }}</div>
 
               <label for="image_upload" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                <span class="text-white text-xs font-medium">Change</span>
+                <span class="text-white text-xs font-medium">{{ t('Change') }}</span>
               </label>
               <input id="image_upload" type="file" ref="fileInput" @change="handleFileChange" class="hidden" accept="image/*" />
             </div>
             <div class="space-y-1">
-              <p class="text-sm font-medium text-gray-900 dark:text-white">Update product image</p>
-              <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('Update product image') }}</p>
+              <p class="text-xs text-gray-500">{{ t('PNG, JPG, GIF up to 2MB') }}</p>
               <Button type="button" variant="outline" size="sm" @click="triggerUpload">
-                Select File
+                {{ t('Select File') }}
               </Button>
             </div>
           </div>
@@ -171,28 +174,28 @@ const selectClass = cn(
 
         <!-- Basic Info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Basic Info</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Basic Info') }}</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <!-- Multilingual Name -->
             <div class="grid gap-2 sm:col-span-1">
-              <Label :for="'name_' + currentLang">Name ({{ currentLang.toUpperCase() }}) *</Label>
+              <Label :for="'name_' + currentLang">{{ t('Name') }} ({{ currentLang.toUpperCase() }}) *</Label>
               <Input :id="'name_' + currentLang" v-model="form.name[currentLang]" required />
               <InputError :message="form.errors[`name.${currentLang}` as keyof typeof form.errors]" />
             </div>
             <div class="grid gap-2">
-              <Label for="sku">SKU *</Label>
+              <Label for="sku">{{ t('SKU') }} *</Label>
               <Input id="sku" v-model="form.sku" required />
               <InputError :message="form.errors.sku" />
             </div>
             <div class="grid gap-2 sm:col-span-2">
-              <Label for="status">Status *</Label>
+              <Label for="status">{{ t('Status') }} *</Label>
               <select id="status" v-model="form.status" :class="selectClass">
-                <option v-for="(label, value) in props.statuses" :key="value" :value="value">{{ label }}</option>
+                <option v-for="(label, value) in props.statuses" :key="value" :value="value">{{ t(String(label)) }}</option>
               </select>
             </div>
             <!-- Multilingual Short description -->
             <div class="grid gap-2 sm:col-span-2">
-              <Label :for="'short_desc_' + currentLang">Short Description ({{ currentLang.toUpperCase() }})</Label>
+              <Label :for="'short_desc_' + currentLang">{{ t('Short Description') }} ({{ currentLang.toUpperCase() }})</Label>
               <textarea :id="'short_desc_' + currentLang" v-model="form.short_description[currentLang]" rows="2" class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
               <InputError :message="form.errors[`short_description.${currentLang}` as keyof typeof form.errors]" />
             </div>
@@ -201,19 +204,19 @@ const selectClass = cn(
 
         <!-- Pricing -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Pricing</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Pricing') }}</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div class="grid gap-2">
-              <Label for="price">Price *</Label>
+              <Label for="price">{{ t('Price') }} *</Label>
               <Input id="price" type="number" step="0.01" min="0" v-model="form.price" required />
               <InputError :message="form.errors.price" />
             </div>
             <div class="grid gap-2">
-              <Label for="sale_price">Sale Price</Label>
+              <Label for="sale_price">{{ t('Sale Price') }}</Label>
               <Input id="sale_price" type="number" step="0.01" min="0" v-model="form.sale_price" />
             </div>
             <div class="grid gap-2">
-              <Label for="cost">Cost</Label>
+              <Label for="cost">{{ t('Cost') }}</Label>
               <Input id="cost" type="number" step="0.01" min="0" v-model="form.cost" />
             </div>
           </div>
@@ -221,30 +224,30 @@ const selectClass = cn(
 
         <!-- Inventory -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Inventory</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ t('Inventory') }}</h2>
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div class="grid gap-2">
-              <Label for="quantity">Stock Quantity *</Label>
+              <Label for="quantity">{{ t('Stock Quantity') }} *</Label>
               <Input id="quantity" type="number" min="0" v-model.number="form.quantity" required />
               <InputError :message="form.errors.quantity" />
             </div>
             <div class="grid gap-2">
-              <Label for="weight">Weight (kg)</Label>
+              <Label for="weight">{{ t('Weight (kg)') }}</Label>
               <Input id="weight" type="number" step="0.01" min="0" v-model="form.weight" />
             </div>
             <div class="flex items-center gap-3">
               <input id="manage_stock" type="checkbox" v-model="form.manage_stock" class="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-600" />
-              <Label for="manage_stock" class="mb-0 cursor-pointer">Track stock levels</Label>
+              <Label for="manage_stock" class="mb-0 cursor-pointer">{{ t('Track stock levels') }}</Label>
             </div>
             <template v-if="form.manage_stock">
               <div class="grid gap-2">
-                <Label for="low_stock_threshold">Low Stock Threshold</Label>
+                <Label for="low_stock_threshold">{{ t('Low Stock Threshold') }}</Label>
                 <Input id="low_stock_threshold" type="number" min="0" v-model.number="form.low_stock_threshold" />
               </div>
               <div class="grid gap-2">
-                <Label for="low_stock_action">Low Stock Action</Label>
+                <Label for="low_stock_action">{{ t('Low Stock Action') }}</Label>
                 <select id="low_stock_action" v-model="form.low_stock_action" :class="selectClass">
-                  <option v-for="(label, value) in props.lowStockActions" :key="value" :value="value">{{ label }}</option>
+                  <option v-for="(label, value) in props.lowStockActions" :key="value" :value="value">{{ t(String(label)) }}</option>
                 </select>
               </div>
             </template>
@@ -255,32 +258,32 @@ const selectClass = cn(
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6 mt-6">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-base font-semibold text-gray-900 dark:text-white">Bill of Materials (BOM)</h2>
-              <p class="text-sm text-gray-500">Define the raw materials consumed when this product is produced.</p>
+              <h2 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('Bill of Materials (BOM)') }}</h2>
+              <p class="text-sm text-gray-500">{{ t('Define the raw materials consumed when this product is produced.') }}</p>
             </div>
             <Button type="button" @click="addRawMaterial" variant="outline" size="sm" class="gap-2">
-              <PlusCircle class="w-4 h-4" /> Add Material
+              <PlusCircle class="w-4 h-4" /> {{ t('Add Material') }}
             </Button>
           </div>
 
           <div v-if="form.raw_materials.length === 0" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
             <Box class="w-8 h-8 mx-auto text-gray-400 mb-2" />
-            <p class="text-sm text-gray-500">No raw materials attached.</p>
-            <Button type="button" variant="link" @click="addRawMaterial" class="p-0 h-auto text-blue-600">Add first material</Button>
+            <p class="text-sm text-gray-500">{{ t('No raw materials attached.') }}</p>
+            <Button type="button" variant="link" @click="addRawMaterial" class="p-0 h-auto text-blue-600">{{ t('Add first material') }}</Button>
           </div>
 
           <div v-else class="space-y-3">
             <div v-for="(rm, index) in form.raw_materials" :key="index" class="flex items-end gap-3 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
               <div class="flex-1 space-y-1">
-                <Label>Raw Material</Label>
+                <Label>{{ t('Raw Material') }}</Label>
                 <select v-model="rm.id" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-800 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                   <option v-for="material in props.availableRawMaterials" :key="material.id" :value="material.id">
-                    {{ material.name }} (Measured in {{ material.unit }})
+                    {{ material.name }} ({{ t('Measured in') }} {{ material.unit }})
                   </option>
                 </select>
               </div>
               <div class="w-40 space-y-1">
-                <Label>Quantity Consumed</Label>
+                <Label>{{ t('Quantity Consumed') }}</Label>
                 <Input v-model="rm.quantity" type="number" step="0.0001" min="0" required class="bg-white dark:bg-gray-800" />
               </div>
               <Button type="button" @click="removeRawMaterial(index)" variant="ghost" size="icon" class="h-9 w-9 text-red-500 hover:text-red-700 dark:hover:bg-red-900/30">
@@ -292,10 +295,10 @@ const selectClass = cn(
         </div>
 
         <div class="flex items-center justify-end space-x-3 pt-2 pb-6">
-          <Button type="button" @click="$inertia.visit(index().url)" variant="outline">Cancel</Button>
+          <Button type="button" @click="$inertia.visit(index().url)" variant="outline">{{ t('Cancel') }}</Button>
           <Button type="submit" :disabled="form.processing">
-            <span v-if="form.processing">Saving...</span>
-            <span v-else>Save Changes</span>
+            <span v-if="form.processing">{{ t('Saving...') }}</span>
+            <span v-else>{{ t('Save Changes') }}</span>
           </Button>
         </div>
       </form>

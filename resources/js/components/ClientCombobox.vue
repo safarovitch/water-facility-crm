@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Check, ChevronsUpDown, Search, X } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface UserProfile { company_name: string | null; type: string }
 interface Client {
@@ -17,8 +18,10 @@ const props = withDefaults(defineProps<{
   /** Forwarded to the trigger so `:required` validation / labels still work. */
   id?: string;
 }>(), {
-  placeholder: 'Select client...',
+  placeholder: undefined,
 });
+
+const { t } = useI18n();
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: number | null): void }>();
 
@@ -122,7 +125,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocPointer));
       class="border-input flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span :class="['truncate text-left', selected ? '' : 'text-muted-foreground']">
-        {{ selected ? label(selected) : placeholder }}
+        {{ selected ? label(selected) : (placeholder ?? t('Select client...')) }}
       </span>
       <span class="flex items-center gap-1 shrink-0">
         <X
@@ -146,7 +149,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocPointer));
           v-model="query"
           @keydown="onKeydown"
           type="text"
-          placeholder="Search by name or company..."
+          :placeholder="t('Search by name or company...')"
           class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm dark:bg-gray-900 dark:border-gray-600 dark:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
@@ -176,7 +179,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocPointer));
         </li>
 
         <li v-if="filtered.length === 0" class="px-3 py-6 text-center text-sm text-muted-foreground">
-          No clients found.
+          {{ t('No clients found.') }}
         </li>
       </ul>
     </div>

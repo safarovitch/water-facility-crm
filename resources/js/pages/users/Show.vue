@@ -18,6 +18,7 @@ import {
     BarChart3, Star, PhoneCall, PhoneIncoming, PhoneOff, PhoneMissed,
     MapPin, Building, Plus, X, RotateCcw, ShoppingBag, Loader2, Edit
 } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface UserAddress {
     id: number;
@@ -142,6 +143,7 @@ const props = defineProps<{
     statuses: Record<string, string>;
 }>();
 
+const { t } = useI18n();
 const isDepositModalOpen = ref(false);
 const depositForm = useForm({
     amount: 100,
@@ -180,10 +182,10 @@ useIntersectionObserver(loadMoreTrigger, ([{ isIntersecting }]) => {
     if (isIntersecting) loadMoreOrders();
 });
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Users', href: index().url },
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+    { title: t('Users'), href: index().url },
     { title: props.profileUser.name, href: show({ user: props.profileUser.id }).url },
-];
+]);
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
 
@@ -227,7 +229,7 @@ const maxDeliveries = props.staffStats
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head :title="`${profileUser.name} — Profile`" />
+        <Head :title="`${profileUser.name} — ${t('Profile')}`" />
 
         <div class="space-y-8">
 
@@ -256,7 +258,7 @@ const maxDeliveries = props.staffStats
                     <div>
                         <div class="flex items-center gap-3">
                             <h1 class="text-3xl font-extrabold tracking-tight text-foreground">{{ profileUser.name }}</h1>
-                            <Badge v-if="profileUser.is_self" variant="outline" class="bg-primary/5 text-primary border-primary/20 backdrop-blur-sm">Your Profile</Badge>
+                            <Badge v-if="profileUser.is_self" variant="outline" class="bg-primary/5 text-primary border-primary/20 backdrop-blur-sm">{{ t('Your Profile') }}</Badge>
                         </div>
                         <div class="mt-2 flex flex-wrap items-center gap-2">
                             <Badge
@@ -270,7 +272,7 @@ const maxDeliveries = props.staffStats
                             </Badge>
                             <span class="text-[10px] font-bold text-muted-foreground ml-1 uppercase tracking-widest flex items-center gap-1.5 opacity-60">
                                 <Calendar class="h-3 w-3" />
-                                Since {{ profileUser.created_at_human }}
+                                {{ t('Since') }} {{ profileUser.created_at_human }}
                             </span>
                         </div>
                     </div>
@@ -281,7 +283,7 @@ const maxDeliveries = props.staffStats
                     <Button variant="outline" as-child size="sm" class="rounded-xl h-10 px-4">
                         <Link :href="(profileUser.is_self && profileUser.is_client) ? '/profile/edit' : (profileUser.is_self ? profileEdit().url : (profileUser.is_client ? clientEdit({ client: profileUser.id }).url : edit({ user: profileUser.id }).url))">
                             <Edit class="mr-2 h-4 w-4" />
-                            Edit Profile
+                            {{ t('Edit Profile') }}
                         </Link>
                     </Button>
                 </div>
@@ -297,12 +299,12 @@ const maxDeliveries = props.staffStats
                         <CardHeader class="pb-3 border-b bg-muted/30">
                             <CardTitle class="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                 <UserIcon class="h-4 w-4" />
-                                Contact Profile
+                                {{ t('Contact Profile') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-5 space-y-5">
                             <div>
-                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-70">Email Address</p>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-70">{{ t('Email Address') }}</p>
                                 <div class="flex items-center gap-2 group">
                                     <Mail class="h-4 w-4 text-primary opacity-60" />
                                     <p class="text-sm font-medium">{{ profileUser.email }}</p>
@@ -310,7 +312,7 @@ const maxDeliveries = props.staffStats
                             </div>
 
                             <div>
-                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5 opacity-70">Phone Numbers</p>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5 opacity-70">{{ t('Phone Numbers') }}</p>
                                 <div v-if="profileUser.phones && profileUser.phones.length > 0" class="space-y-2.5">
                                     <div v-for="phone in profileUser.phones" :key="phone.id" class="flex items-center justify-between group p-2 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-sidebar-border/50">
                                         <div class="flex items-center gap-3">
@@ -320,7 +322,7 @@ const maxDeliveries = props.staffStats
                                             <div>
                                                 <p class="text-sm font-bold flex items-center gap-2">
                                                     {{ phone.phone }}
-                                                    <span v-if="phone.is_default" class="text-[9px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded uppercase font-black tracking-tighter border border-green-500/20">Primary</span>
+                                                    <span v-if="phone.is_default" class="text-[9px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded uppercase font-black tracking-tighter border border-green-500/20">{{ t('Primary') }}</span>
                                                 </p>
                                                 <p class="text-[10px] text-muted-foreground">{{ phone.label }}</p>
                                             </div>
@@ -333,11 +335,11 @@ const maxDeliveries = props.staffStats
                                     </div>
                                     <p class="text-sm font-bold">{{ profileUser.phone }}</p>
                                 </div>
-                                <p v-else class="text-xs text-muted-foreground italic pl-2">No phone numbers assigned.</p>
+                                <p v-else class="text-xs text-muted-foreground italic pl-2">{{ t('No phone numbers assigned.') }}</p>
                             </div>
 
                             <div v-if="profileUser.sip_extension">
-                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-70">SIP Extension</p>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-70">{{ t('SIP Extension') }}</p>
                                 <div class="flex items-center gap-2">
                                     <div class="bg-orange-500/10 p-2 rounded-lg text-orange-600">
                                         <PhoneCall class="h-4 w-4" />
@@ -353,7 +355,7 @@ const maxDeliveries = props.staffStats
                         <CardHeader class="pb-3 border-b bg-muted/30">
                             <CardTitle class="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                 <MapPin class="h-4 w-4" />
-                                Delivery Addresses
+                                {{ t('Delivery Addresses') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-5 space-y-4">
@@ -363,14 +365,14 @@ const maxDeliveries = props.staffStats
                                     <div>
                                         <div class="flex items-center gap-2 mb-1">
                                             <p class="text-sm font-black">{{ address.label }}</p>
-                                            <span v-if="address.is_default" class="text-[9px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded uppercase font-black border border-blue-500/20">Default</span>
+                                            <span v-if="address.is_default" class="text-[9px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded uppercase font-black border border-blue-500/20">{{ t('Default') }}</span>
                                         </div>
                                         <p class="text-sm text-foreground/80 leading-relaxed">{{ address.address_line }}</p>
                                         <p v-if="address.city || address.region" class="text-[11px] text-muted-foreground mt-1 font-medium">{{ address.city }}{{ address.city && address.region ? ', ' : '' }}{{ address.region }}</p>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="text-xs text-muted-foreground italic">No addresses assigned.</p>
+                            <p v-else class="text-xs text-muted-foreground italic">{{ t('No addresses assigned.') }}</p>
                         </CardContent>
                     </Card>
 
@@ -379,28 +381,28 @@ const maxDeliveries = props.staffStats
                         <CardHeader class="pb-3 border-b border-blue-100 dark:border-blue-900/30 bg-blue-50/30 dark:bg-blue-900/10">
                             <CardTitle class="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-2">
                                 <Wallet class="h-4 w-4" />
-                                Digital Wallet
+                                {{ t('Digital Wallet') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-0">
                             <!-- Balance -->
                             <div class="p-6 text-center border-b border-sidebar-border/40">
-                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Current Balance</p>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">{{ t('Current Balance') }}</p>
                                 <div class="flex items-baseline justify-center gap-1.5">
                                     <span class="text-3xl font-black tracking-tighter">{{ fmt(Number(profileUser.wallet?.balance || 0)) }}</span>
                                     <span class="text-xs font-bold text-muted-foreground">{{ profileUser.wallet?.currency || 'TJS' }}</span>
                                 </div>
                                 <Button variant="outline" size="sm" class="mt-4 w-full h-9 rounded-xl border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold gap-2" @click="isDepositModalOpen = true">
                                     <Plus class="h-4 w-4" />
-                                    Manual Deposit
+                                    {{ t('Manual Deposit') }}
                                 </Button>
                             </div>
 
                             <!-- Recent Transactions -->
                             <div class="p-5">
-                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-4 opacity-70">Recent Transactions</p>
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-4 opacity-70">{{ t('Recent Transactions') }}</p>
                                 <div v-if="transactions.length === 0" class="py-4 text-center text-xs text-muted-foreground italic">
-                                    No transaction history.
+                                    {{ t('No transaction history.') }}
                                 </div>
                                 <ul v-else class="space-y-3">
                                     <li v-for="tx in transactions" :key="tx.id" class="flex items-center justify-between group">
@@ -414,7 +416,7 @@ const maxDeliveries = props.staffStats
                                                 <RotateCcw v-else class="h-3 w-3" />
                                             </div>
                                             <div>
-                                                <p class="text-xs font-black capitalize">{{ tx.type }}</p>
+                                                <p class="text-xs font-black capitalize">{{ t(tx.type) }}</p>
                                                 <p class="text-[9px] text-muted-foreground">{{ tx.created_at_human }}</p>
                                             </div>
                                         </div>
@@ -442,7 +444,7 @@ const maxDeliveries = props.staffStats
                                             <ShoppingCart class="h-5 w-5 text-blue-600" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Total Orders</p>
+                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">{{ t('Total Orders') }}</p>
                                             <p class="text-2xl font-black">{{ clientStats.totalOrders }}</p>
                                         </div>
                                     </div>
@@ -455,7 +457,7 @@ const maxDeliveries = props.staffStats
                                             <CheckCircle2 class="h-5 w-5 text-green-600" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Delivered</p>
+                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">{{ t('Delivered') }}</p>
                                             <p class="text-2xl font-black">{{ clientStats.deliveredOrders }}</p>
                                         </div>
                                     </div>
@@ -468,7 +470,7 @@ const maxDeliveries = props.staffStats
                                             <Clock class="h-5 w-5 text-yellow-600" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Active</p>
+                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">{{ t('Active') }}</p>
                                             <p class="text-2xl font-black">{{ clientStats.pendingOrders }}</p>
                                         </div>
                                     </div>
@@ -481,7 +483,7 @@ const maxDeliveries = props.staffStats
                                             <TrendingUp class="h-5 w-5 text-primary" />
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">This Month</p>
+                                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-tighter">{{ t('This Month') }}</p>
                                             <p class="text-2xl font-black">{{ clientStats.thisMonthOrders }}</p>
                                         </div>
                                     </div>
@@ -495,25 +497,25 @@ const maxDeliveries = props.staffStats
                         <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
                             <Card class="border-sidebar-border/50 shadow-none">
                                 <CardContent class="pt-6 text-left">
-                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Total Delivered</p>
+                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">{{ t('Total Delivered') }}</p>
                                     <p class="text-3xl font-black tracking-tighter">{{ staffStats.totalDelivered }}</p>
                                     <div class="mt-2 flex items-center gap-1 text-[11px]" :class="trendClass(staffStats.deliveryTrend)">
                                         <TrendingUp v-if="staffStats.deliveryTrend > 0" class="h-3 w-3" />
                                         <TrendingDown v-else-if="staffStats.deliveryTrend < 0" class="h-3 w-3" />
-                                        {{ Math.abs(staffStats.deliveryTrend) }}% vs last month
+                                        {{ Math.abs(staffStats.deliveryTrend) }}% {{ t('vs last month') }}
                                     </div>
                                 </CardContent>
                             </Card>
                             <Card class="border-sidebar-border/50 shadow-none">
                                 <CardContent class="pt-6 text-left">
-                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Revenue Handled</p>
+                                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">{{ t('Revenue Handled') }}</p>
                                     <p class="text-2xl font-black tracking-tighter">{{ fmt(staffStats.totalRevenue) }}</p>
-                                    <p class="text-[10px] text-muted-foreground font-medium mt-1">Total across all orders</p>
+                                    <p class="text-[10px] text-muted-foreground font-medium mt-1">{{ t('Total across all orders') }}</p>
                                 </CardContent>
                             </Card>
                             <Card class="border-sidebar-border/50 shadow-none md:col-span-2">
                                 <CardHeader class="pb-2 pt-4 flex flex-row items-center justify-between">
-                                    <CardTitle class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-70">Delivery Trend (6M)</CardTitle>
+                                    <CardTitle class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-70">{{ t('Delivery Trend (6M)') }}</CardTitle>
                                 </CardHeader>
                                 <CardContent class="pt-0">
                                     <div class="flex items-end gap-1.5 h-16 pt-2">
@@ -521,7 +523,7 @@ const maxDeliveries = props.staffStats
                                             <div class="w-full bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40" :style="{ height: `${(m.total / maxDeliveries) * 100}%` }"></div>
                                             <!-- Tooltip -->
                                             <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-sm border whitespace-nowrap z-10">
-                                                {{ m.total }} calls
+                                                {{ m.total }}
                                             </div>
                                         </div>
                                     </div>
@@ -536,26 +538,26 @@ const maxDeliveries = props.staffStats
                             <div>
                                 <CardTitle class="text-lg font-black flex items-center gap-2">
                                     <ShoppingBag class="h-5 w-5 text-primary" />
-                                    Order History
+                                    {{ t('Order History') }}
                                 </CardTitle>
-                                <CardDescription class="text-xs">Comprehensive log of all orders related to this user.</CardDescription>
+                                <CardDescription class="text-xs">{{ t('Comprehensive log of all orders related to this user.') }}</CardDescription>
                             </div>
-                            <Link href="/admin/orders/index" class="text-xs font-bold text-primary hover:underline">View All Orders</Link>
+                            <Link href="/admin/orders/index" class="text-xs font-bold text-primary hover:underline">{{ t('View All Orders') }}</Link>
                         </CardHeader>
                         <CardContent class="p-0">
                             <div v-if="orders.total === 0" class="p-16 text-center">
                                 <ShoppingBag class="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-                                <p class="text-muted-foreground text-sm font-medium">No order history found for this account.</p>
+                                <p class="text-muted-foreground text-sm font-medium">{{ t('No order history found for this account.') }}</p>
                             </div>
                             <div v-else>
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left">
                                         <thead>
                                             <tr class="bg-muted/30 border-b border-sidebar-border/50">
-                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Order</th>
-                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</th>
-                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Details</th>
-                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Amount</th>
+                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">{{ t('Order') }}</th>
+                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">{{ t('Status') }}</th>
+                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">{{ t('Details') }}</th>
+                                                <th class="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">{{ t('Amount') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-sidebar-border/50">
@@ -568,14 +570,14 @@ const maxDeliveries = props.staffStats
                                                 </td>
                                                 <td class="px-6 py-5">
                                                     <Badge :class="['px-2 py-0.5 text-[10px] font-black uppercase rounded-lg border-2', statusColor(order.status)]">
-                                                        {{ order.status }}
+                                                        {{ t(order.status) }}
                                                     </Badge>
                                                 </td>
                                                 <td class="px-6 py-5">
                                                     <div class="flex items-center gap-2 group-hover:translate-x-0.5 transition-transform">
                                                         <Package class="h-3.5 w-3.5 text-muted-foreground opacity-60" />
                                                         <p class="text-xs text-muted-foreground font-medium truncate max-w-[180px]">
-                                                            {{ order.items.map(i => i.product?.name).filter(Boolean).join(', ') || 'No products listed' }}
+                                                            {{ order.items.map(i => i.product?.name).filter(Boolean).join(', ') || t('No products listed') }}
                                                         </p>
                                                     </div>
                                                 </td>
@@ -591,7 +593,7 @@ const maxDeliveries = props.staffStats
                                 <div v-if="nextPageUrl" ref="loadMoreTrigger" class="py-10 flex flex-col items-center justify-center gap-3 border-t bg-muted/5">
                                     <div v-if="isLoadingMore" class="flex items-center gap-3 text-sm font-bold text-muted-foreground animate-pulse">
                                         <Loader2 class="h-5 w-5 animate-spin text-primary" />
-                                        Loading historical records...
+                                        {{ t('Loading historical records...') }}
                                     </div>
                                     <div v-else class="h-10"></div>
                                 </div>
@@ -605,15 +607,15 @@ const maxDeliveries = props.staffStats
                             <div>
                                 <CardTitle class="text-lg font-black flex items-center gap-2">
                                     <PhoneCall class="h-5 w-5 text-primary" />
-                                    Call Activity
+                                    {{ t('Call Activity') }}
                                 </CardTitle>
-                                <CardDescription class="text-xs">Recent voice communication logs associated with this account.</CardDescription>
+                                <CardDescription class="text-xs">{{ t('Recent voice communication logs associated with this account.') }}</CardDescription>
                             </div>
                         </CardHeader>
                         <CardContent class="p-0">
                             <div v-if="callHistory.length === 0" class="p-16 text-center">
                                 <PhoneOff class="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-                                <p class="text-muted-foreground text-sm font-medium">No call logs recorded for this user.</p>
+                                <p class="text-muted-foreground text-sm font-medium">{{ t('No call logs recorded for this user.') }}</p>
                             </div>
                             <div v-else class="max-h-[600px] overflow-y-auto">
                                 <ul class="divide-y divide-sidebar-border/50">
@@ -639,7 +641,7 @@ const maxDeliveries = props.staffStats
                                                             {{ call.created_at }}
                                                         </span>
                                                         <Badge :class="['px-2 py-0 h-4 text-[9px] font-black uppercase rounded-md border', callStatusColor(call.status)]">
-                                                            {{ call.status }}
+                                                            {{ t(call.status) }}
                                                         </Badge>
                                                         <span v-if="call.status === 'answered'" class="font-black bg-muted px-2 py-0.5 rounded text-foreground/70">
                                                             {{ fmtDuration(call.duration) }}
@@ -650,7 +652,7 @@ const maxDeliveries = props.staffStats
                                             
                                             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
                                                 <Button v-if="call.phone" variant="ghost" size="icon" as-child class="h-10 w-10 text-primary hover:text-primary hover:bg-primary/5 rounded-2xl border border-sidebar-border/40 shadow-sm">
-                                                    <a :href="`tel:${call.phone}`" title="Call Back">
+                                                    <a :href="`tel:${call.phone}`" :title="t('Call Back')">
                                                         <PhoneCall class="h-4.5 w-4.5" />
                                                     </a>
                                                 </Button>
@@ -677,38 +679,38 @@ const maxDeliveries = props.staffStats
                         <div class="flex justify-between items-center">
                             <CardTitle class="text-lg font-black flex items-center gap-2">
                                 <Wallet class="h-5 w-5 text-blue-600" />
-                                Manual Deposit
+                                {{ t('Manual Deposit') }}
                             </CardTitle>
                             <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="isDepositModalOpen = false">
                                 <X class="h-5 w-5" />
                             </Button>
                         </div>
-                        <CardDescription>Directly add funds to {{ profileUser.name }}'s digital wallet.</CardDescription>
+                        <CardDescription>{{ t("Directly add funds to {name}'s digital wallet.", { name: profileUser.name }) }}</CardDescription>
                     </CardHeader>
                     <CardContent class="pt-6 space-y-6">
                         <div class="space-y-2.5">
-                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Deposit Amount ({{ profileUser.wallet?.currency || ($page.props.currency as string) || 'TJS' }})</label>
+                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{{ t('Deposit Amount') }} ({{ profileUser.wallet?.currency || ($page.props.currency as string) || 'TJS' }})</label>
                             <div class="relative">
                                 <Plus class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <input v-model="depositForm.amount" type="number" step="1" min="1" class="w-full text-4xl font-black p-6 pl-12 bg-muted/30 border-2 border-sidebar-border rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all" />
                             </div>
                         </div>
                         <div class="space-y-2.5">
-                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Transaction Note</label>
-                            <input v-model="depositForm.notes" type="text" placeholder="e.g., Manual top-up via cash" class="w-full p-4 bg-muted/30 border border-sidebar-border rounded-xl focus:border-primary outline-none transition-all text-sm font-medium" />
+                            <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{{ t('Transaction Note') }}</label>
+                            <input v-model="depositForm.notes" type="text" :placeholder="t('e.g., Manual top-up via cash')" class="w-full p-4 bg-muted/30 border border-sidebar-border rounded-xl focus:border-primary outline-none transition-all text-sm font-medium" />
                         </div>
                         
                         <div class="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-start gap-4">
                             <Clock class="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                             <p class="text-[11px] text-blue-700/80 font-medium leading-relaxed">
-                                This action is permanent and will trigger a transaction record. The balance will be updated instantly for the user.
+                                {{ t('This action is permanent and will trigger a transaction record. The balance will be updated instantly for the user.') }}
                             </p>
                         </div>
 
                         <Button @click="submitDeposit" :disabled="depositForm.processing" class="w-full h-14 rounded-2xl font-black text-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/20 gap-3 transition-all active:scale-[0.98]">
                             <Plus v-if="!depositForm.processing" class="h-6 w-6" />
                             <Loader2 v-else class="h-6 w-6 animate-spin" />
-                            {{ depositForm.processing ? 'Processing...' : 'Confirm Deposit' }}
+                            {{ depositForm.processing ? t('Processing...') : t('Confirm Deposit') }}
                         </Button>
                     </CardContent>
                 </Card>

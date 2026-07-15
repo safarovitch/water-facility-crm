@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PlusCircle, Search, Edit, Trash2, Box } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 
 interface RawMaterial {
   id: number;
@@ -45,10 +47,12 @@ const props = defineProps<{
   statuses: string[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Products', href: '/admin/products/index' },
-  { title: 'Raw Materials', href: '/admin/raw-materials' },
-];
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Products'), href: '/admin/products/index' },
+  { title: t('Raw Materials'), href: '/admin/raw-materials' },
+]);
 
 const formatCurrency = (value: number | string) => {
   const currency = (usePage().props.currency as string) || 'USD';
@@ -119,24 +123,24 @@ const submit = () => {
 };
 
 const deleteRecord = (id: number) => {
-  if (confirm('Are you sure you want to delete this raw material? It may be linked to manufactured products.')) {
+  if (confirm(t('Are you sure you want to delete this raw material? It may be linked to manufactured products.'))) {
     router.delete(`/admin/raw-materials/${id}`);
   }
 };
 </script>
 
 <template>
-  <Head title="Raw Materials" />
+  <Head :title="t('Raw Materials')" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-6 container mx-auto">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Raw Materials</h1>
-          <p class="text-sm text-muted-foreground mt-1">Manage consumable inventory for building products.</p>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">{{ t('Raw Materials') }}</h1>
+          <p class="text-sm text-muted-foreground mt-1">{{ t('Manage consumable inventory for building products.') }}</p>
         </div>
         <Button @click="openCreateModal" class="gap-2 shadow-sm font-semibold rounded-xl">
-          <PlusCircle class="h-4 w-4" /> Add Material
+          <PlusCircle class="h-4 w-4" /> {{ t('Add Material') }}
         </Button>
       </div>
 
@@ -145,20 +149,20 @@ const deleteRecord = (id: number) => {
             <!-- Filters -->
             <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
                 <div class="space-y-1 relative w-64">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Search') }}</Label>
                     <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-                    <Input v-model="filterForm.search" placeholder="Search by name or sku..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilters" />
+                    <Input v-model="filterForm.search" :placeholder="t('Search by name or sku...')" class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="applyFilters" />
                 </div>
                 <div class="space-y-1 w-40">
-                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">Status</Label>
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Status') }}</Label>
                     <select v-model="filterForm.status" class="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-900 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                        <option value="">All Statuses</option>
-                        <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ status }}</option>
+                        <option value="">{{ t('All Statuses') }}</option>
+                        <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ t(status) }}</option>
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-9">Apply</Button>
-                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-9 text-muted-foreground">Reset</Button>
+                    <Button @click="applyFilters" variant="secondary" size="sm" class="h-9">{{ t('Apply') }}</Button>
+                    <Button @click="resetFilters" variant="ghost" size="sm" class="h-9 text-muted-foreground">{{ t('Reset') }}</Button>
                 </div>
             </div>
 
@@ -167,11 +171,11 @@ const deleteRecord = (id: number) => {
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Material</th>
-                            <th class="px-6 py-4 font-semibold">Stock Level</th>
-                            <th class="px-6 py-4 font-semibold">Unit Cost</th>
-                            <th class="px-6 py-4 font-semibold">Status</th>
-                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                            <th class="px-6 py-4 font-semibold">{{ t('Material') }}</th>
+                            <th class="px-6 py-4 font-semibold">{{ t('Stock Level') }}</th>
+                            <th class="px-6 py-4 font-semibold">{{ t('Unit Cost') }}</th>
+                            <th class="px-6 py-4 font-semibold">{{ t('Status') }}</th>
+                            <th class="px-6 py-4 font-semibold text-right">{{ t('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
@@ -179,7 +183,7 @@ const deleteRecord = (id: number) => {
                             <td class="px-6 py-4">
                               <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 {{ item.name }}
-                                <Badge v-if="item.is_reusable" variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-[10px] px-1.5 py-0">Reusable</Badge>
+                                <Badge v-if="item.is_reusable" variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-[10px] px-1.5 py-0">{{ t('Reusable') }}</Badge>
                               </div>
                               <div class="text-xs text-gray-500 mt-0.5" v-if="item.sku">SKU: {{ item.sku }}</div>
                             </td>
@@ -193,12 +197,12 @@ const deleteRecord = (id: number) => {
                                   <span class="text-xs text-muted-foreground ml-1">/ {{ item.unit }}</span>
                                 </div>
                                 <div v-if="item.is_reusable" class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                  Deposit: <span class="font-medium">{{ formatCurrency(item.deposit_price) }}</span>
+                                  {{ t('Deposit') }}: <span class="font-medium">{{ formatCurrency(item.deposit_price) }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <Badge :variant="item.status === 'active' ? 'default' : 'secondary'" class="capitalize">
-                                    {{ item.status }}
+                                    {{ t(item.status) }}
                                 </Badge>
                             </td>
                             <td class="px-6 py-4 text-right">
@@ -216,7 +220,7 @@ const deleteRecord = (id: number) => {
                             <td colspan="5" class="px-6 py-12 text-center text-muted-foreground">
                                 <div class="flex flex-col items-center justify-center opacity-60">
                                     <Box class="h-10 w-10 mb-3 text-gray-400" />
-                                    <p class="font-medium text-sm">No raw materials found.</p>
+                                    <p class="font-medium text-sm">{{ t('No raw materials found.') }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -237,43 +241,43 @@ const deleteRecord = (id: number) => {
       <Dialog v-model:open="isDialogOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">{{ editingRecord ? 'Edit Raw Material' : 'Add Raw Material' }}</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ editingRecord ? t('Edit Raw Material') : t('Add Raw Material') }}</DialogTitle>
             <DialogDescription>
-              Define components used to build your products.
+              {{ t('Define components used to build your products.') }}
             </DialogDescription>
           </DialogHeader>
           <form @submit.prevent="submit" class="space-y-4 py-2">
             
             <div class="space-y-2">
-              <Label for="name">Material Name <span class="text-red-500">*</span></Label>
-              <Input v-model="form.name" id="name" placeholder="E.g. 19L Plastic Bottle" required />
+              <Label for="name">{{ t('Material Name') }} <span class="text-red-500">*</span></Label>
+              <Input v-model="form.name" id="name" :placeholder="t('E.g. 19L Plastic Bottle')" required />
             </div>
 
             <div class="space-y-2">
-              <Label for="sku">SKU Code</Label>
-              <Input v-model="form.sku" id="sku" placeholder="Optional identifier" />
+              <Label for="sku">{{ t('SKU Code') }}</Label>
+              <Input v-model="form.sku" id="sku" :placeholder="t('Optional identifier')" />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label for="current_stock">Current Stock</Label>
+                <Label for="current_stock">{{ t('Current Stock') }}</Label>
                 <Input v-model="form.current_stock" type="number" step="0.01" id="current_stock" required />
               </div>
               <div class="space-y-2">
-                <Label for="unit">Unit <span class="text-red-500">*</span></Label>
-                <Input v-model="form.unit" id="unit" list="unit-suggestions" placeholder="pcs, L, kg..." required />
+                <Label for="unit">{{ t('Unit') }} <span class="text-red-500">*</span></Label>
+                <Input v-model="form.unit" id="unit" list="unit-suggestions" :placeholder="t('pcs, L, kg...')" required />
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                 <Label for="cost_per_unit">Cost Per Unit</Label>
+                 <Label for="cost_per_unit">{{ t('Cost Per Unit') }}</Label>
                  <Input v-model="form.cost_per_unit" type="number" step="0.01" min="0" id="cost_per_unit" placeholder="0.00" />
               </div>
               <div class="space-y-2">
-                <Label for="status">Status</Label>
+                <Label for="status">{{ t('Status') }}</Label>
                 <select v-model="form.status" id="status" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ status }}</option>
+                    <option v-for="status in statuses" :key="status" :value="status" class="capitalize">{{ t(status) }}</option>
                 </select>
               </div>
             </div>
@@ -281,16 +285,16 @@ const deleteRecord = (id: number) => {
             <div class="flex items-center gap-2 pt-2 pb-2 border-b border-gray-100 dark:border-gray-800">
               <input type="checkbox" id="is_reusable" v-model="form.is_reusable" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
               <div class="grid gap-0.5">
-                  <Label for="is_reusable" class="cursor-pointer font-semibold">Reusable Material</Label>
-                  <p class="text-xs text-muted-foreground">Select if this material (like a 20L bottle) is returned by clients and can be restocked without repurchasing.</p>
+                  <Label for="is_reusable" class="cursor-pointer font-semibold">{{ t('Reusable Material') }}</Label>
+                  <p class="text-xs text-muted-foreground">{{ t('Select if this material (like a 20L bottle) is returned by clients and can be restocked without repurchasing.') }}</p>
               </div>
             </div>
 
             <div v-if="form.is_reusable" class="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 dark:border-blue-900/40 dark:bg-blue-900/10 p-3">
-              <Label for="deposit_price" class="font-semibold">Deposit Price <span class="text-xs text-muted-foreground font-normal">(charged when not returned)</span></Label>
+              <Label for="deposit_price" class="font-semibold">{{ t('Deposit Price') }} <span class="text-xs text-muted-foreground font-normal">({{ t('charged when not returned') }})</span></Label>
               <Input v-model="form.deposit_price" type="number" step="0.01" min="0" id="deposit_price" placeholder="0.00" />
               <p class="text-xs text-muted-foreground">
-                What the client pays per unit when they don't return this container with their next order. This is the replacement price you quote — typically your cost plus a small fee — and is separate from <span class="font-medium">Cost Per Unit</span>.
+                {{ t("What the client pays per unit when they don't return this container with their next order. This is the replacement price you quote — typically your cost plus a small fee — and is separate from") }} <span class="font-medium">{{ t('Cost Per Unit') }}</span>.
               </p>
             </div>
 
@@ -301,9 +305,9 @@ const deleteRecord = (id: number) => {
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t mt-4">
-              <Button type="button" variant="outline" @click="isDialogOpen = false" class="shadow-sm">Cancel</Button>
+              <Button type="button" variant="outline" @click="isDialogOpen = false" class="shadow-sm">{{ t('Cancel') }}</Button>
               <Button type="submit" :disabled="form.processing" class="shadow-sm min-w-[120px]">
-                {{ form.processing ? 'Saving...' : (editingRecord ? 'Update' : 'Add Material') }}
+                {{ form.processing ? t('Saving...') : (editingRecord ? t('Update') : t('Add Material')) }}
               </Button>
             </div>
           </form>

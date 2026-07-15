@@ -2,6 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import { index, create, edit } from '@/routes/admin/permissions';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -12,12 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Edit, KeySquare } from 'lucide-vue-next';
 
-const breadcrumbs: BreadcrumbItem[] = [
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
     {
-        title: 'Permissions',
+        title: t('Permissions'),
         href: index().url
     },
-];
+]);
 
 interface Paginated<T> {
     data: T[];
@@ -45,14 +49,14 @@ const doSearch = () => {
 </script>
 
 <template>
-    <Head title="Permissions" />
+    <Head :title="t('Permissions')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6 container mx-auto">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Permissions</h1>
-                    <p class="text-sm text-muted-foreground mt-1">Manage system privileges boundaries and capability access.</p>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-foreground">{{ t('Permissions') }}</h1>
+                    <p class="text-sm text-muted-foreground mt-1">{{ t('Manage system privileges boundaries and capability access.') }}</p>
                 </div>
                 <Link :href="create().url">
                     <Button class="gap-2 shadow-sm font-semibold rounded-xl">
@@ -66,12 +70,12 @@ const doSearch = () => {
                     <!-- Filters -->
                     <div class="p-4 bg-gray-50/50 dark:bg-gray-800/30 flex flex-wrap gap-3 items-end border-b">
                         <div class="space-y-1 relative w-64 flex-1 max-w-sm">
-                            <Label class="text-xs uppercase tracking-wider text-muted-foreground">Search</Label>
+                            <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Search') }}</Label>
                             <Search class="absolute left-2.5 top-7 h-4 w-4 text-muted-foreground" />
-                            <Input v-model="search" placeholder="Search permissions by name..." class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
+                            <Input v-model="search" :placeholder="t('Search permissions by name...')" class="h-9 w-full bg-white dark:bg-gray-900 border-input shadow-sm pl-9" @keyup.enter="doSearch" />
                         </div>
                         <div class="flex gap-2">
-                            <Button @click="doSearch" variant="secondary" size="sm" class="h-9">Search</Button>
+                            <Button @click="doSearch" variant="secondary" size="sm" class="h-9">{{ t('Search') }}</Button>
                         </div>
                     </div>
 
@@ -80,9 +84,9 @@ const doSearch = () => {
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-muted-foreground uppercase bg-gray-50 dark:bg-gray-800/50">
                                 <tr>
-                                    <th class="px-6 py-4 font-semibold">Permission Flag</th>
-                                    <th class="px-6 py-4 font-semibold">Guard Logic</th>
-                                    <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                                    <th class="px-6 py-4 font-semibold">{{ t('Permission Flag') }}</th>
+                                    <th class="px-6 py-4 font-semibold">{{ t('Guard Logic') }}</th>
+                                    <th class="px-6 py-4 font-semibold text-right">{{ t('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
@@ -107,7 +111,7 @@ const doSearch = () => {
                                     <td colspan="3" class="px-6 py-12 text-center text-muted-foreground">
                                         <div class="flex flex-col items-center justify-center opacity-60">
                                             <KeySquare class="h-10 w-10 mb-3 text-gray-400" />
-                                            <p class="font-medium text-sm">No permissions found.</p>
+                                            <p class="font-medium text-sm">{{ t('No permissions found.') }}</p>
                                         </div>
                                     </td>
                                 </tr>

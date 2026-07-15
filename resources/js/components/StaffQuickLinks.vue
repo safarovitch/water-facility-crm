@@ -13,9 +13,12 @@ import {
     ToggleRight
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 const page = usePage();
+const { t } = useI18n();
 const user = computed(() => page.props.auth.user);
+const can = computed(() => page.props.auth.can ?? {});
 const pendingCount = computed(() => (page.props as any).pending_orders_count ?? 0);
 const userRoles = computed(() => user.value?.roles ?? []);
 const isCourier = computed(() => userRoles.value.map((r: string) => r.toLowerCase()).includes('currier'));
@@ -28,34 +31,37 @@ const quickActions = computed(() => {
     const actions = [];
 
     actions.push({
-        title: 'Orders',
-        description: 'View and manage orders',
+        title: isCourier.value && !can.value.assignCurriers ? t('My Deliveries') : t('Orders'),
+        description: isCourier.value && !can.value.assignCurriers ? t('Assigned delivery tasks') : t('View and manage orders'),
         href: '/admin/orders/index',
         icon: ShoppingCart,
         badge: pendingCount.value > 0 ? pendingCount.value : null,
     });
 
-    if (isCourier.value) {
+    // Assignments overview is for courier managers / admins only.
+    if (can.value.assignCurriers) {
         actions.push({
-            title: 'My Deliveries',
-            description: 'Assigned delivery tasks',
+            title: t('Currier Assignments'),
+            description: t('Assign couriers to orders'),
             href: '/admin/orders/assignments',
             icon: Truck,
             badge: null,
         });
     }
 
-    actions.push({
-        title: 'Clients',
-        description: 'Customer database',
-        href: '/admin/clients/index',
-        icon: Users2,
-        badge: null,
-    });
+    if (can.value.manageClients) {
+        actions.push({
+            title: t('Clients'),
+            description: t('Customer database'),
+            href: '/admin/clients/index',
+            icon: Users2,
+            badge: null,
+        });
+    }
 
     actions.push({
-        title: 'Admin Dashboard',
-        description: 'Full statistics & metrics',
+        title: can.value.viewAdminStats ? t('Admin Dashboard') : t('My Dashboard'),
+        description: can.value.viewAdminStats ? t('Full statistics & metrics') : t('Your deliveries & earnings'),
         href: '/admin',
         icon: LayoutGrid,
         badge: null,
@@ -69,12 +75,12 @@ const quickActions = computed(() => {
     <div class="space-y-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Hello, {{ user.name }}</h1>
-                <p class="text-muted-foreground mt-1">Switch to admin mode for full access to management tools.</p>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">{{ t('Hello, {name}', { name: user.name }) }}</h1>
+                <p class="text-muted-foreground mt-1">{{ t('Switch to admin mode for full access to management tools.') }}</p>
             </div>
             <Button @click="switchToAdmin" class="gap-2 h-11 md:h-10 w-full md:w-auto">
                 <ToggleRight class="h-4 w-4" />
-                Switch to Admin Mode
+                {{ t('Switch to Admin Mode') }}
             </Button>
         </div>
 
@@ -84,13 +90,13 @@ const quickActions = computed(() => {
                     <ClipboardList class="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                    <p class="font-bold text-primary">{{ pendingCount }} pending orders</p>
-                    <p class="text-xs text-primary/70">Awaiting processing or dispatch</p>
+                    <p class="font-bold text-primary">{{ t('{count} pending orders', { count: pendingCount }) }}</p>
+                    <p class="text-xs text-primary/70">{{ t('Awaiting processing or dispatch') }}</p>
                 </div>
             </div>
             <Link href="/admin/orders/index?status=pending">
                 <Button variant="outline" size="sm" class="border-primary/30 text-primary">
-                    View <ArrowRight class="h-3 w-3 ml-1" />
+                    {{ t('View') }} <ArrowRight class="h-3 w-3 ml-1" />
                 </Button>
             </Link>
         </div>

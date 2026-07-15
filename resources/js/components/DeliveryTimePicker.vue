@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +17,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>();
+const { t } = useI18n();
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -114,7 +116,7 @@ watch([datePart, timePart], () => {
     />
     <select
       v-model="timePart"
-      aria-label="Delivery time slot"
+      :aria-label="t('Delivery time slot')"
       class="flex h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-gray-600 dark:bg-input/30 dark:text-white"
     >
       <option v-for="slot in slots" :key="slot" :value="slot">{{ slot }}</option>

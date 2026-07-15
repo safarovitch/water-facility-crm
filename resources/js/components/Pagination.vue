@@ -2,12 +2,15 @@
 import { computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/composables/useI18n';
 
 interface PaginationLink {
   url: string | null;
   label: string;
   active: boolean;
 }
+
+const { t } = useI18n();
 
 const props = defineProps<{
   /** A Laravel paginator object (flat) or an API-resource paginator ({ meta, links }). */
@@ -36,7 +39,7 @@ function go(url: string | null) {
     class="px-6 py-4 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50/50 dark:bg-gray-800/30"
   >
     <p v-if="total" class="text-sm text-muted-foreground">
-      Showing {{ from }}–{{ to }} of {{ total }}
+      {{ t('Showing {from}–{to} of {total}', { from, to, total }) }}
     </p>
     <div class="flex flex-wrap gap-1">
       <template v-for="(link, key) in links" :key="key">

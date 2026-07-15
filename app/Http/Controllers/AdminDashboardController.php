@@ -20,12 +20,18 @@ class AdminDashboardController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+        if (! $user->isStaff()) {
             return redirect()->route('dashboard');
         }
 
         if (! $request->session()->get('admin_mode', false)) {
             $request->session()->put('admin_mode', true);
+        }
+
+        // Couriers (incl. courier managers without a full-admin role) only
+        // see their own workload — never company-wide totals or revenue.
+        if ($user->isCourierStaff()) {
+            return $this->courierDashboard($user);
         }
 
         $today = now()->startOfDay();
@@ -172,6 +178,63 @@ class AdminDashboardController extends Controller
             'unassignedOrders' => $unassignedOrders,
             'lowStockProducts' => $lowStockProducts,
             'lowStockRawMaterials' => $lowStockRawMaterials,
+        ]);
+    }
+
+    /**
+     * Delivery dashboard scoped to the signed-in courier: their assigned
+     * orders, the revenue they collected, and their upcoming deliveries.
+     */
+    private function courierDashboard(User $user): Response
+    {
+        $today = now()->startOfDay();
+        $thisMonth = now()->startOfMonth();
+
+        $myOrders = Order::where('courier_id', $user->id);
+
+        $stats = [
+            'activeOrders' => (clone $myOrders)
+                ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+                ->count(),
+            'deliveredToday' => (clone $myOrders)
+                ->where('status', OrderStatus::Delivered)
+                ->where('actual_delivery_at', '>=', $today)
+                ->count(),
+            'deliveredMonth' => (clone $myOrders)
+                ->where('status', OrderStatus::Delivered)
+                ->where('actual_delivery_at', '>=', $thisMonth)
+                ->count(),
+            'revenueToday' => (float) (clone $myOrders)
+                ->where('status', OrderStatus::Delivered)
+                ->where('actual_delivery_at', '>=', $today)
+                ->sum('paid_amount'),
+            'revenueMonth' => (float) (clone $myOrders)
+                ->where('status', OrderStatus::Delivered)
+                ->where('actual_delivery_at', '>=', $thisMonth)
+                ->sum('paid_amount'),
+        ];
+
+        $upcomingDeliveries = (clone $myOrders)
+            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+            ->with(['client:id,name', 'items.product:id,name'])
+            ->orderByRaw('scheduled_delivery_at IS NULL, scheduled_delivery_at asc')
+            ->limit(20)
+            ->get()
+            ->map(fn($o) => [
+                'id' => $o->id,
+                'order_number' => $o->order_number,
+                'client_name' => $o->contact_name ?: ($o->client?->name ?? '—'),
+                'delivery_address' => $o->delivery_address,
+                'status' => $o->status->value ?? $o->status,
+                'total_amount' => (float) $o->total_amount,
+                'paid_amount' => (float) $o->paid_amount,
+                'scheduled_delivery_at' => $o->scheduled_delivery_at,
+                'created_at_human' => $o->created_at_human,
+            ]);
+
+        return Inertia::render('CurrierDashboard', [
+            'stats' => $stats,
+            'upcomingDeliveries' => $upcomingDeliveries,
         ]);
     }
 }

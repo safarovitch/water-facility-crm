@@ -10,17 +10,19 @@ import { show } from '@/routes/two-factor';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 const page = usePage();
+const { t } = useI18n();
 const user = page.props.auth.user as any;
 const isClient = user?.roles?.includes('Client') && !user?.roles?.some((r: string) => ['Admin','Manager','Operator','Currier'].includes(r));
 
 const sidebarNavItems = computed((): NavItem[] => [
-    { title: 'Profile',     href: edit() },
-    { title: 'Password',    href: editPassword() },
-    { title: 'Passkeys',    href: '/settings/passkeys' },
-    ...(!isClient ? [{ title: 'Two-Factor Auth', href: show() }] : []),
-    { title: 'Appearance',  href: appearance() },
+    { title: t('Profile'),     href: edit() },
+    { title: t('Password'),    href: editPassword() },
+    { title: t('Passkeys'),    href: '/settings/passkeys' },
+    ...(!isClient ? [{ title: t('Two-Factor Auth'), href: show() }] : []),
+    { title: t('Appearance'),  href: appearance() },
 ]);
 
 const currentPath = typeof window !== undefined ? window.location.pathname : '';
@@ -28,7 +30,7 @@ const currentPath = typeof window !== undefined ? window.location.pathname : '';
 
 <template>
     <div>
-        <Heading title="Settings" description="Manage your profile and account settings" />
+        <Heading :title="t('Settings')" :description="t('Manage your profile and account settings')" />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">

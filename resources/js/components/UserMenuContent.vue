@@ -8,12 +8,14 @@ import type { User } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { LogOut, Settings, LayoutGrid, UserIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface Props {
     user: User;
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 const page = usePage();
 
 const adminMode = computed(() => (page.props as any).adminMode as boolean);
@@ -48,14 +50,14 @@ const switchMode = () => {
         >
             <LayoutGrid v-if="!adminMode" class="mr-2 h-4 w-4 text-primary" />
             <UserIcon v-else class="mr-2 h-4 w-4" />
-            {{ adminMode ? 'Switch to User View' : 'Switch to Admin View' }}
+            {{ adminMode ? t('Switch to User View') : t('Switch to Admin View') }}
         </DropdownMenuItem>
 
         <!-- Settings -->
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="edit()" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
-                Settings
+                {{ t('Settings') }}
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -63,7 +65,7 @@ const switchMode = () => {
     <DropdownMenuItem :as-child="true">
         <Link class="block w-full" :href="logout()" @click="handleLogout" as="button" data-test="logout-button">
             <LogOut class="mr-2 h-4 w-4" />
-            Log out
+            {{ t('Log out') }}
         </Link>
     </DropdownMenuItem>
 </template>

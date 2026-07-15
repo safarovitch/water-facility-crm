@@ -19,7 +19,15 @@ class FinancialRecordController extends Controller
 
     public function index(Request $request): Response
     {
+        // Couriers only see the expenses they recorded themselves and never
+        // company-wide revenue/income figures.
+        $courierScoped = $request->user()->isCourierStaff();
+
         $query = FinancialRecord::with('recorder');
+
+        if ($courierScoped) {
+            $query->where('recorded_by_id', $request->user()->id);
+        }
 
         // Filtering
         if ($request->filled('type')) {
@@ -44,9 +52,11 @@ class FinancialRecordController extends Controller
         $totalsQuery = clone $query;
         $totalExpense = (float) $totalsQuery->where('type', FinancialTransactionType::Expense)->sum('amount');
 
-        // Calculate total order revenue (from delivered orders)
-        $totalRevenue = (float) Order::where('status', OrderStatus::Delivered)
-            ->sum('total_amount');
+        // Calculate total order revenue (from delivered orders) — hidden
+        // from courier staff.
+        $totalRevenue = $courierScoped
+            ? null
+            : (float) Order::where('status', OrderStatus::Delivered)->sum('total_amount');
 
         // Whitelisted sorting; default to newest transaction first.
         if (! $this->applySort($query, [
@@ -71,12 +81,16 @@ class FinancialRecordController extends Controller
 
         return Inertia::render('Financial/Index', [
             'records'      => $records,
-            'summary'      => [
+            'summary'      => $courierScoped ? [
+                // Own expenses only — no revenue/income/balance for couriers.
+                'total_expense' => $totalExpense,
+            ] : [
                 'total_revenue' => $totalRevenue,
                 'total_income'  => $totalIncome,
                 'total_expense' => $totalExpense,
                 'balance'       => $totalIncome - $totalExpense,
             ],
+            'courierScoped' => $courierScoped,
             'filters'      => $request->only(['type', 'category', 'from', 'to']),
             'types'        => FinancialTransactionType::asSelectArray(),
             'categories'   => $categories,
@@ -94,6 +108,12 @@ class FinancialRecordController extends Controller
             'receipt'          => ['nullable', 'image', 'max:5120'],
         ]);
 
+        // Couriers may only record expenses, never income entries.
+        if ($request->user()->isCourierStaff()
+            && $data['type'] !== FinancialTransactionType::Expense) {
+            abort(403, 'Couriers can only record expenses.');
+        }
+
         $data['recorded_by_id'] = auth()->id();
 
         $record = FinancialRecord::create($data);
@@ -107,6 +127,12 @@ class FinancialRecordController extends Controller
 
     public function update(Request $request, FinancialRecord $financialRecord)
     {
+        // Couriers may only edit their own expense records.
+        if ($request->user()->isCourierStaff()
+            && $financialRecord->recorded_by_id !== $request->user()->id) {
+            abort(404);
+        }
+
         $data = $request->validate([
             'amount'           => ['required', 'numeric', 'min:0.01'],
             'type'             => ['required', 'string', new EnumValue(FinancialTransactionType::class)],

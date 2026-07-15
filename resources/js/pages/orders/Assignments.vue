@@ -21,6 +21,7 @@ import {
   Box
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 interface CourierOption extends User {
   avatar_url: string;
@@ -36,10 +37,12 @@ const props = defineProps<{
   statuses: Record<string, string>;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Orders', href: '/orders/index' },
-  { title: 'Currier Assignments', href: '/orders/assignments' },
-];
+const { t } = useI18n();
+
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Orders'), href: '/orders/index' },
+  { title: t('Currier Assignments'), href: '/orders/assignments' },
+]);
 
 const selectedStatus = ref<string>('ready');
 const searchQuery = ref('');
@@ -69,6 +72,17 @@ const statusColor = (status: string) => {
   };
   return m[status] ?? 'bg-gray-500/10 text-gray-600 border-gray-500/20';
 };
+
+const statusLabel = computed((): Record<string, string> => ({
+  pending: t('Pending'),
+  confirmed: t('Confirmed'),
+  in_production: t('In Production'),
+  ready: t('Ready'),
+  accepted: t('Picked up'),
+  in_transit: t('On the way'),
+  delivered: t('Delivered'),
+  cancelled: t('Cancelled'),
+}));
 
 // ── Searchable Currier Select State ──────────────────────────────────────────
 
@@ -122,26 +136,26 @@ const isModalOpen = computed({
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Currier Assignments" />
+    <Head :title="t('Currier Assignments')" />
 
     <div class="space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Currier Assignments</h1>
-          <p class="text-muted-foreground mt-1 text-sm font-medium">Manage and monitor active delivery assignments.</p>
+          <h1 class="text-3xl font-extrabold tracking-tight text-foreground">{{ t('Currier Assignments') }}</h1>
+          <p class="text-muted-foreground mt-1 text-sm font-medium">{{ t('Manage and monitor active delivery assignments.') }}</p>
         </div>
         
         <div class="flex items-center gap-4 bg-white dark:bg-sidebar p-2 px-3 rounded-2xl shadow-sm border border-sidebar-border/60">
             <div class="flex items-center gap-3 px-4 py-1 border-r border-sidebar-border/60">
                 <Users2 class="h-4 w-4 text-primary" />
                 <div class="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                    Curriers: {{ couriers.length }}
+                    {{ t('Curriers') }}: {{ couriers.length }}
                 </div>
             </div>
             <div class="flex items-center gap-3 px-4 py-1">
                 <Package class="h-4 w-4 text-emerald-500" />
                 <div class="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                    Active Orders: {{ orders.length }}
+                    {{ t('Active Orders') }}: {{ orders.length }}
                 </div>
             </div>
         </div>
@@ -155,7 +169,7 @@ const isModalOpen = computed({
                     <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
                         v-model="searchQuery" 
-                        placeholder="Search order # or client..." 
+                        :placeholder="t('Search order # or client...')" 
                         class="pl-9 rounded-xl border-sidebar-border/60 focus-visible:ring-primary"
                     />
                 </div>
@@ -166,9 +180,9 @@ const isModalOpen = computed({
                         v-model="selectedStatus"
                         class="h-9 px-3 text-xs font-bold rounded-xl border border-sidebar-border/60 bg-transparent outline-none focus:ring-1 focus:ring-primary appearance-none pr-8 relative cursor-pointer"
                     >
-                        <option value="">All Active Statuses</option>
+                        <option value="">{{ t('All Active Statuses') }}</option>
                         <option v-for="(val, key) in statuses" :key="val" :value="val">
-                            {{ key }}
+                            {{ statusLabel[val] ?? t(String(key)) }}
                         </option>
                     </select>
                 </div>
@@ -176,10 +190,10 @@ const isModalOpen = computed({
 
             <div class="flex gap-2">
                 <Button variant="outline" size="sm" class="rounded-xl h-9 font-bold text-xs" @click="selectedStatus = 'ready'">
-                    Default: Ready
+                    {{ t('Default: Ready') }}
                 </Button>
                 <Button variant="ghost" size="sm" class="rounded-xl h-9 font-bold text-xs" @click="selectedStatus = ''; searchQuery = ''">
-                    Clear All
+                    {{ t('Clear All') }}
                 </Button>
             </div>
           </div>
@@ -189,10 +203,10 @@ const isModalOpen = computed({
             <table class="w-full text-sm text-left">
               <thead class="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-y bg-muted/30 sticky top-0 z-20">
                 <tr>
-                  <th class="px-6 py-4">Order Details</th>
-                  <th class="px-6 py-4">Client</th>
-                  <th class="px-6 py-4">Status</th>
-                  <th class="px-6 py-4">Assignment</th>
+                  <th class="px-6 py-4">{{ t('Order Details') }}</th>
+                  <th class="px-6 py-4">{{ t('Client') }}</th>
+                  <th class="px-6 py-4">{{ t('Status') }}</th>
+                  <th class="px-6 py-4">{{ t('Assignment') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-sidebar-border/40">
@@ -200,7 +214,7 @@ const isModalOpen = computed({
                     <td colspan="4" class="px-6 py-20 text-center">
                         <div class="flex flex-col items-center gap-2 opacity-40">
                             <Truck class="h-10 w-10 mb-2" />
-                            <p class="font-black tracking-widest uppercase text-xs">No orders found matching filters</p>
+                            <p class="font-black tracking-widest uppercase text-xs">{{ t('No orders found matching filters') }}</p>
                         </div>
                     </td>
                 </tr>
@@ -219,7 +233,7 @@ const isModalOpen = computed({
                   </td>
                   <td class="px-6 py-4">
                     <Badge :class="['px-2 py-0.5 text-[9px] font-black uppercase rounded-lg border', statusColor(order.status)]">
-                      {{ order.status.replace('_', ' ') }}
+                      {{ statusLabel[order.status] ?? order.status.replace('_', ' ') }}
                     </Badge>
                   </td>
                   <td class="px-6 py-4">
@@ -235,7 +249,7 @@ const isModalOpen = computed({
                             <span class="w-1.5 h-1.5 min-w-[6px] rounded-full bg-blue-500"></span>
                             <span class="font-bold truncate">{{ order.courier.name }}</span>
                           </span>
-                          <span v-else class="text-xs">Assign...</span>
+                          <span v-else class="text-xs">{{ t('Assign...') }}</span>
                           <ChevronDown class="h-3 w-3 opacity-40 flex-shrink-0 ml-1" />
                         </Button>
                     </div>
@@ -251,9 +265,9 @@ const isModalOpen = computed({
       <Dialog v-model:open="isModalOpen">
         <DialogContent class="sm:max-w-xl">
           <DHeader>
-            <DialogTitle class="text-xl font-bold">Assign Currier</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Assign Currier') }}</DialogTitle>
             <DialogDescription v-if="currentOrderToAssign">
-              Select an available currier to process Order #<span class="font-bold text-foreground">{{ currentOrderToAssign.order_number }}</span>.
+              {{ t('Select an available currier to process Order') }} #<span class="font-bold text-foreground">{{ currentOrderToAssign.order_number }}</span>.
             </DialogDescription>
           </DHeader>
           
@@ -263,7 +277,7 @@ const isModalOpen = computed({
               <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 v-model="courierSearch" 
-                placeholder="Search curriers by name..." 
+                :placeholder="t('Search curriers by name...')" 
                 class="pl-9 h-10 w-full rounded-xl bg-muted/40"
               />
             </div>
@@ -279,8 +293,8 @@ const isModalOpen = computed({
                   <Box class="w-5 h-5 text-gray-400" />
                 </div>
                 <div>
-                  <p class="font-bold text-gray-900 dark:text-gray-100">Unassign Order</p>
-                  <p class="text-xs text-gray-500">Remove currently assigned currier.</p>
+                  <p class="font-bold text-gray-900 dark:text-gray-100">{{ t('Unassign Order') }}</p>
+                  <p class="text-xs text-gray-500">{{ t('Remove currently assigned currier.') }}</p>
                 </div>
               </div>
             </button>
@@ -302,22 +316,22 @@ const isModalOpen = computed({
                 <!-- Avatar with status indicator -->
                 <div class="relative">
                   <img :src="courier.avatar_url" :alt="courier.name" class="w-12 h-12 rounded-full object-cover border-2 shadow-sm" :class="(currentOrderToAssign && currentOrderToAssign.courier_id === courier.id) ? 'border-blue-500' : 'border-white dark:border-gray-900'" />
-                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? 'Online' : 'Offline'"></span>
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? t('Online') : t('Offline')"></span>
                 </div>
                 
                 <div class="flex-1 min-w-0">
                   <p class="font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-2">
                     {{ courier.name }}
-                    <span v-if="currentOrderToAssign && currentOrderToAssign.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">Current</span>
+                    <span v-if="currentOrderToAssign && currentOrderToAssign.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">{{ t('Current') }}</span>
                   </p>
                   <div class="flex items-center gap-3 mt-1">
                     <span class="text-xs font-medium text-gray-500 flex items-center gap-1">
                       <div class="w-2 h-2 rounded-full" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'"></div>
-                      {{ isCurrierOnline(courier) ? 'Online' : 'Offline' }}
+                      {{ isCurrierOnline(courier) ? t('Online') : t('Offline') }}
                     </span>
                     <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" :class="courier.orders_count > 0 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'">
                       <Box class="w-3 h-3" />
-                      {{ courier.orders_count }} active tasks
+                      {{ courier.orders_count }} {{ t('active tasks') }}
                     </span>
                   </div>
                 </div>
@@ -326,7 +340,7 @@ const isModalOpen = computed({
             
             <div v-if="filteredCouriers.length === 0" class="py-8 text-center bg-gray-50 dark:bg-gray-800/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
                 <Users2 class="h-8 w-8 mx-auto text-gray-400 mb-2 opacity-50" />
-                <p class="text-sm font-bold text-muted-foreground">No curriers found</p>
+                <p class="text-sm font-bold text-muted-foreground">{{ t('No curriers found') }}</p>
             </div>
           </div>
         </DialogContent>

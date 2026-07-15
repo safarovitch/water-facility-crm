@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
 import MapChooser from '@/components/MapChooser.vue';
 import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw } from 'lucide-vue-next';
+import { useI18n } from '@/composables/useI18n';
 
 interface UserProfile { company_name: string | null; region: string | null; }
 interface OrderItem {
@@ -112,19 +113,23 @@ const props = defineProps<{
   couriers: CourierOption[];
 }>();
 
+const { t } = useI18n();
 const adminMode = computed(() => !!usePage().props.adminMode);
+const can = computed(() => usePage().props.auth.can ?? {});
 
 const indexRoute = computed(() => adminMode.value ? adminIndex : guestIndex);
 const showRoute = computed(() => adminMode.value ? adminShow : guestShow);
-const editRoute = computed(() => adminMode.value ? adminEdit : null);
-const cancelRoute = computed(() => adminMode.value ? adminCancel : null);
+// Editing, cancelling and (re)assigning need manager/admin rights; plain
+// couriers can only update status / collect payment on their own orders.
+const editRoute = computed(() => adminMode.value && can.value.manageOrders ? adminEdit : null);
+const cancelRoute = computed(() => adminMode.value && can.value.manageOrders ? adminCancel : null);
 const updateStatusRoute = computed(() => adminMode.value ? adminUpdateStatus : null);
-const assignRoute = computed(() => adminMode.value ? adminAssignRoute : null);
+const assignRoute = computed(() => adminMode.value && can.value.assignCurriers ? adminAssignRoute : null);
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Orders', href: indexRoute.value().url },
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Orders'), href: indexRoute.value().url },
   { title: props.order.order_number, href: '#' },
-];
+]);
 
 const statusBadge: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
@@ -137,16 +142,16 @@ const statusBadge: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
 
-const statusLabel: Record<string, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  in_production: 'In Production',
-  ready: 'Ready',
-  accepted: 'Picked up',
-  in_transit: 'On the way',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-};
+const statusLabel = computed((): Record<string, string> => ({
+  pending: t('Pending'),
+  confirmed: t('Confirmed'),
+  in_production: t('In Production'),
+  ready: t('Ready'),
+  accepted: t('Picked up'),
+  in_transit: t('On the way'),
+  delivered: t('Delivered'),
+  cancelled: t('Cancelled'),
+}));
 
 const validTransitions: Record<string, string[]> = {
   pending: ['confirmed', 'cancelled'],
@@ -157,7 +162,11 @@ const validTransitions: Record<string, string[]> = {
   cancelled: [],
 };
 
-const nextStatuses = computed(() => validTransitions[props.order.status] ?? []);
+// Cancelling goes through the manager-only cancel route, so drop that
+// transition for users without it (plain couriers).
+const nextStatuses = computed(() =>
+  (validTransitions[props.order.status] ?? []).filter(s => s !== 'cancelled' || !!cancelRoute.value)
+);
 
 const isUpdatingStatus = ref(false);
 const isDeliveryModalOpen = ref(false);
@@ -182,7 +191,9 @@ const overpaymentOnOrder = computed(() => {
 watch(
   () => (page.props.flash as { pending_overpayment_refund?: { amount: number } })?.pending_overpayment_refund,
   (pending) => {
-    if (pending && adminMode.value) {
+    // Refunding to wallet is an admin-tier route; don't offer the modal to
+    // courier staff.
+    if (pending && adminMode.value && can.value.manageAccounting) {
       isOverpaymentRefundModalOpen.value = true;
     }
   },
@@ -305,7 +316,7 @@ const submitStatusUpdate = () => {
 const submitCancellation = () => {
   const reason = cancelForm.value.cancellation_reason.trim();
   if (!reason) {
-    cancelError.value = 'Please provide a reason for the cancellation.';
+    cancelError.value = t('Please provide a reason for the cancellation.');
     return;
   }
   cancelError.value = '';
@@ -316,7 +327,7 @@ const submitCancellation = () => {
       cancelForm.value.cancellation_reason = '';
     },
     onError: (errors: Record<string, string>) => {
-      cancelError.value = errors.cancellation_reason ?? 'Could not cancel the order.';
+      cancelError.value = errors.cancellation_reason ?? t('Could not cancel the order.');
     },
   });
 };
@@ -441,8 +452,8 @@ const statusButtonClass = (s: string) => {
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-mono">{{ order.order_number }}</h1>
             <p class="text-sm text-gray-500 mt-1">
-              Created <span class="font-medium text-gray-700 dark:text-gray-300">{{ order.created_at_human }}</span>
-              <span class="text-xs ml-1">({{ order.created_at_formatted }})</span> by {{ order.creator?.name ?? 'System' }}
+              {{ t('Created') }} <span class="font-medium text-gray-700 dark:text-gray-300">{{ order.created_at_human }}</span>
+              <span class="text-xs ml-1">({{ order.created_at_formatted }})</span> {{ t('by') }} {{ order.creator?.name ?? t('System') }}
             </p>
           </div>
           <div class="flex items-center gap-3 flex-wrap">
@@ -486,7 +497,7 @@ const statusButtonClass = (s: string) => {
                 <div class="mx-auto mb-2 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden"></div>
 
                 <div class="px-4 py-2 border-b border-gray-50 dark:border-gray-700/50 mb-1">
-                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Order Status</p>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ t('Update Order Status') }}</p>
                 </div>
                 <div class="px-1 pb-safe sm:pb-16">
                   <button
@@ -503,7 +514,7 @@ const statusButtonClass = (s: string) => {
                     <span class="capitalize">{{ statusLabel[status] ?? status.replace('_', ' ') }}</span>
                     <div v-if="status === pendingStatus" class="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight">
                       <Check class="w-3 h-3" />
-                      Confirm
+                      {{ t('Confirm') }}
                     </div>
                     <Check v-else-if="status === order.status" class="w-4 h-4 text-green-500" />
                   </button>
@@ -512,7 +523,7 @@ const statusButtonClass = (s: string) => {
             </div>
 
             <Button
-              v-if="adminMode"
+              v-if="adminMode && can.manageOrders"
               type="button"
               variant="outline"
               size="sm"
@@ -520,7 +531,7 @@ const statusButtonClass = (s: string) => {
               @click="isRepeatModalOpen = true"
             >
               <RotateCcw class="w-4 h-4 mr-2" />
-              Repeat Order
+              {{ t('Repeat Order') }}
             </Button>
 
             <!-- Editing a cancelled order would double-restore stock (cancel already
@@ -529,11 +540,11 @@ const statusButtonClass = (s: string) => {
             <Link v-if="editRoute && order.status !== 'cancelled'" :href="editRoute(order.id).url">
               <Button variant="outline" size="sm" class="rounded-xl h-10 px-4">
                 <Edit class="w-4 h-4 mr-2" />
-                Edit Order
+                {{ t('Edit Order') }}
               </Button>
             </Link>
             <Button
-              v-if="adminMode"
+              v-if="adminMode && can.deleteOrders"
               type="button"
               variant="outline"
               size="sm"
@@ -541,7 +552,7 @@ const statusButtonClass = (s: string) => {
               @click="isDeleteModalOpen = true"
             >
               <Trash2 class="w-4 h-4 mr-2" />
-              Delete
+              {{ t('Delete') }}
             </Button>
           </div>
 
@@ -556,14 +567,14 @@ const statusButtonClass = (s: string) => {
         class="rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-900/15 dark:border-blue-900/50 px-5 py-4 space-y-2"
       >
         <p v-if="order.parent_order" class="text-sm text-blue-900 dark:text-blue-100">
-          <span class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mr-2">Backorder of</span>
+          <span class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mr-2">{{ t('Backorder of') }}</span>
           <Link :href="showRoute(order.parent_order.id).url" class="font-semibold hover:underline">
             #{{ order.parent_order.order_number }}
           </Link>
           <span class="text-xs text-blue-700/80 dark:text-blue-300/80 ml-1 capitalize">({{ statusLabel[order.parent_order.status] ?? order.parent_order.status.replace('_', ' ') }})</span>
         </p>
         <div v-if="(order.backorders?.length ?? 0) > 0">
-          <p class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mb-1">Backorders from this delivery</p>
+          <p class="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-300 mb-1">{{ t('Backorders from this delivery') }}</p>
           <ul class="space-y-1">
             <li v-for="b in order.backorders" :key="b.id" class="text-sm flex items-center gap-2 flex-wrap">
               <Link :href="showRoute(b.id).url" class="font-semibold text-blue-900 dark:text-blue-100 hover:underline">
@@ -580,12 +591,12 @@ const statusButtonClass = (s: string) => {
       <div v-if="isCancelled" class="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/50 px-5 py-4">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <div class="text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-300">Order cancelled</div>
+            <div class="text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-300">{{ t('Order cancelled') }}</div>
             <p class="mt-1 text-sm text-red-900 dark:text-red-100 whitespace-pre-line">
-              {{ order.cancellation_reason || 'No reason was recorded.' }}
+              {{ order.cancellation_reason || t('No reason was recorded.') }}
             </p>
             <p class="mt-2 text-xs text-red-700/80 dark:text-red-300/80">
-              <span v-if="order.canceller">By {{ order.canceller.name }}</span>
+              <span v-if="order.canceller">{{ t('By') }} {{ order.canceller.name }}</span>
               <span v-if="order.cancelled_at_human"> · {{ order.cancelled_at_human }}</span>
               <span v-if="order.cancelled_at_formatted" class="ml-1 opacity-70">({{ order.cancelled_at_formatted }})</span>
             </p>
@@ -596,7 +607,7 @@ const statusButtonClass = (s: string) => {
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Client info -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Client</h2>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{{ t('Client') }}</h2>
           <p class="font-semibold text-gray-900 dark:text-white">
             <Link :href="adminMode ? `/admin/clients/${order.client.id}` : '#'" :class="adminMode ? 'hover:underline hover:text-blue-600 transition-colors' : 'cursor-default'">
               {{ order.contact_name || order.client.name }}
@@ -609,7 +620,7 @@ const statusButtonClass = (s: string) => {
             </a>
           </p>
           <p v-if="order.contact_name && order.client.name !== order.contact_name" class="text-[11px] text-gray-400 mt-1">
-            Linked to account: {{ order.client.name }}
+            {{ t('Linked to account') }}: {{ order.client.name }}
           </p>
           <p class="text-sm text-gray-500" :class="{ 'mt-2': order.contact_name }">{{ order.client.email }}</p>
           <p class="text-sm text-gray-500 flex items-center gap-2" v-if="order.client.phone && order.client.phone !== order.contact_phone">
@@ -625,78 +636,86 @@ const statusButtonClass = (s: string) => {
 
         <!-- Delivery -->
         <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Delivery</h2>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{{ t('Delivery') }}</h2>
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">Scheduled:</span>
+            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">{{ t('Scheduled') }}:</span>
             <span v-if="order.scheduled_delivery_at_human" class="block font-semibold text-base">{{ order.scheduled_delivery_at_human }}</span>
             <span class="text-xs text-gray-500">{{ order.scheduled_delivery_at_formatted ?? order.scheduled_delivery_at ?? '—' }}</span>
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-4" v-if="order.actual_delivery_at">
-            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">Actual:</span>
+            <span class="font-medium uppercase text-[10px] tracking-wider text-gray-400 block mb-1">{{ t('Actual') }}:</span>
             <span v-if="order.actual_delivery_at_human" class="block font-semibold text-base text-green-600">{{ order.actual_delivery_at_human }}</span>
             <span class="text-xs text-gray-500">{{ order.actual_delivery_at_formatted ?? order.actual_delivery_at }}</span>
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2">
-            <span class="font-medium">Address:</span>
+            <span class="font-medium">{{ t('Address') }}:</span>
             <span v-if="order.delivery_address === 'Self Pickup'" class="ml-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 rounded">
-              🏬 Self Pickup
+              🏬 {{ t('Self Pickup') }}
             </span>
             <MapChooser v-else :lat="order.lat" :lng="order.lng" :address="order.delivery_address" class="ml-1" />
           </p>
           <p class="text-sm text-gray-700 dark:text-gray-300 mt-2" v-if="order.notes">
-            <span class="font-medium">Notes:</span> {{ order.notes }}
+            <span class="font-medium">{{ t('Notes') }}:</span> {{ order.notes }}
           </p>
 
           <div v-if="adminMode && isSelfPickup && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
             <div class="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-lg px-3 py-2">
-              🏬 Self-pickup order — no courier needed.
+              🏬 {{ t('Self-pickup order — no courier needed.') }}
             </div>
           </div>
-          <div v-else-if="adminMode && !isCancelled" class="mt-4 pt-4 border-t dark:border-gray-700">
-            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">Currier Assignment</label>
+          <div v-else-if="adminMode && !isCancelled && assignRoute" class="mt-4 pt-4 border-t dark:border-gray-700">
+            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">{{ t('Currier Assignment') }}</label>
             <div class="flex items-center gap-2">
               <Button @click="isAssignModalOpen = true" variant="outline" class="w-full justify-between font-normal h-12" :class="order.courier ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 shadow-none' : ''">
                 <span v-if="order.courier" class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/40"></span>
-                  Assigned to: <span class="font-bold">{{ order.courier.name }}</span>
+                  {{ t('Assigned to') }}: <span class="font-bold">{{ order.courier.name }}</span>
                 </span>
-                <span v-else>Click to assign currier...</span>
+                <span v-else>{{ t('Click to assign currier...') }}</span>
                 <ChevronDown class="w-4 h-4 opacity-50" />
               </Button>
             </div>
+          </div>
+          <!-- Couriers see who the order is assigned to but cannot reassign. -->
+          <div v-else-if="adminMode && !isCancelled && order.courier" class="mt-4 pt-4 border-t dark:border-gray-700">
+            <label class="text-[10px] uppercase font-bold text-gray-400 block mb-2 tracking-wider font-mono">{{ t('Currier Assignment') }}</label>
+            <p class="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/40"></span>
+              {{ t('Assigned to') }}: <span class="font-bold">{{ order.courier.name }}</span>
+            </p>
           </div>
         </div>
 
         <!-- Payment summary — admin only. Clients see no monetary totals. -->
         <div v-if="adminMode" class="bg-white dark:bg-gray-800 shadow sm:rounded-lg px-4 py-5 sm:p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Payment</h2>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{{ t('Payment') }}</h2>
           <div class="space-y-1 text-sm">
             <div v-if="Number(order.discount_amount) > 0" class="flex justify-between">
-              <span class="text-gray-500">Subtotal</span>
+              <span class="text-gray-500">{{ t('Subtotal') }}</span>
               <span class="text-gray-700 dark:text-gray-300">{{ (Number(order.total_amount) + Number(order.discount_amount)).toFixed(2) }}</span>
             </div>
             <div v-if="Number(order.discount_amount) > 0" class="flex justify-between">
-              <span class="text-pink-600 dark:text-pink-300 font-medium">Discount</span>
+              <span class="text-pink-600 dark:text-pink-300 font-medium">{{ t('Discount') }}</span>
               <span class="text-pink-600 dark:text-pink-300 font-medium">-{{ Number(order.discount_amount).toFixed(2) }}</span>
             </div>
             <div v-else-if="Number(order.discount_amount) < 0" class="flex justify-between">
-              <span class="text-orange-600 dark:text-orange-300 font-medium">Surcharge</span>
+              <span class="text-orange-600 dark:text-orange-300 font-medium">{{ t('Surcharge') }}</span>
               <span class="text-orange-600 dark:text-orange-300 font-medium">+{{ Math.abs(Number(order.discount_amount)).toFixed(2) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">Total</span>
+              <span class="text-gray-500">{{ t('Total') }}</span>
               <span class="font-semibold text-gray-900 dark:text-white">{{ order.total_amount }}</span>
             </div>
             <div v-if="Number(order.deposit_charge) > 0" class="flex justify-between">
-              <span class="text-blue-700 dark:text-blue-300 font-medium">Bottle deposit</span>
+              <span class="text-blue-700 dark:text-blue-300 font-medium">{{ t('Bottle deposit') }}</span>
               <span class="text-blue-700 dark:text-blue-300 font-medium">+{{ Number(order.deposit_charge).toFixed(2) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">Paid</span>
+              <span class="text-gray-500">{{ t('Paid') }}</span>
               <span class="text-green-600 font-medium">{{ order.paid_amount }}</span>
             </div>
             <div class="flex justify-between border-t dark:border-gray-700 pt-1 mt-1">
-              <span class="text-gray-700 dark:text-gray-300 font-medium">Balance due</span>
+              <span class="text-gray-700 dark:text-gray-300 font-medium">{{ t('Balance due') }}</span>
               <span :class="order.balance_due > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
                 {{ order.balance_due.toFixed(2) }} <span class="text-[10px] uppercase ml-1 opacity-60">{{ ($page.props.currency as string) || 'USD' }}</span>
               </span>
@@ -708,16 +727,16 @@ const statusButtonClass = (s: string) => {
               : order.payment_status === 'partial'
                 ? 'bg-yellow-100 text-yellow-700'
                 : 'bg-red-100 text-red-700'">
-              {{ order.payment_status }}
+              {{ t(order.payment_status) }}
             </span>
           </div>
 
           <div class="mt-4 pt-4 border-t dark:border-gray-700" v-if="!isCancelled && order.balance_due > 0 && order.payment_status !== 'paid'">
             <button @click="openWalletPayModal" class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]">
               <Wallet class="size-5" />
-              Pay
+              {{ t('Pay') }}
             </button>
-            <p class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest">Use wallet balance or record another payment</p>
+            <p class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest">{{ t('Use wallet balance or record another payment') }}</p>
           </div>
         </div>
       </div>
@@ -725,15 +744,15 @@ const statusButtonClass = (s: string) => {
       <!-- Line Items -->
       <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
         <div class="px-4 py-4 sm:px-6 border-b dark:border-gray-700">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Items</h2>
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">{{ t('Items') }}</h2>
         </div>
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-              <th class="px-6 py-3">Product</th>
-              <th class="px-6 py-3 text-right">Qty</th>
-              <th v-if="adminMode" class="px-6 py-3 text-right">Unit Price</th>
-              <th v-if="adminMode" class="px-6 py-3 text-right">Subtotal</th>
+              <th class="px-6 py-3">{{ t('Product') }}</th>
+              <th class="px-6 py-3 text-right">{{ t('Qty') }}</th>
+              <th v-if="adminMode" class="px-6 py-3 text-right">{{ t('Unit Price') }}</th>
+              <th v-if="adminMode" class="px-6 py-3 text-right">{{ t('Subtotal') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -751,7 +770,7 @@ const statusButtonClass = (s: string) => {
                       {{ resolveProductName(item.product.name) }}
                     </Link>
                     <span v-if="item.is_gift" class="text-[10px] uppercase tracking-wide bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 px-2 py-0.5 rounded font-bold">
-                      Gift
+                      {{ t('Gift') }}
                     </span>
                   </div>
                 </div>
@@ -761,28 +780,28 @@ const statusButtonClass = (s: string) => {
                 <span
                   v-if="item.delivered_quantity != null && item.delivered_quantity !== item.quantity"
                   class="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300"
-                  :title="`Delivered ${item.delivered_quantity} of ${item.quantity}`"
+                  :title="t('Delivered {delivered} of {ordered}', { delivered: item.delivered_quantity, ordered: item.quantity })"
                 >
-                  Delivered {{ item.delivered_quantity }}
+                  {{ t('Delivered') }} {{ item.delivered_quantity }}
                 </span>
               </td>
               <td v-if="adminMode" class="px-6 py-3 text-right" :class="item.is_gift ? 'line-through text-gray-400' : ''">{{ item.unit_price }}</td>
               <td v-if="adminMode" class="px-6 py-3 text-right font-semibold" :class="item.is_gift ? 'text-pink-600 dark:text-pink-300' : 'text-gray-900 dark:text-white'">
-                {{ item.is_gift ? 'Free' : item.subtotal }}
+                {{ item.is_gift ? t('Free') : item.subtotal }}
               </td>
             </tr>
           </tbody>
           <tfoot v-if="adminMode">
             <tr class="bg-gray-50 dark:bg-gray-700">
-              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Items total</td>
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">{{ t('Items total') }}</td>
               <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">{{ order.total_amount }}</td>
             </tr>
             <tr v-if="Number(order.deposit_charge) > 0" class="bg-gray-50 dark:bg-gray-700">
-              <td colspan="3" class="px-6 py-3 text-right font-semibold text-blue-700 dark:text-blue-300">Bottle deposit</td>
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-blue-700 dark:text-blue-300">{{ t('Bottle deposit') }}</td>
               <td class="px-6 py-3 text-right font-bold text-blue-700 dark:text-blue-300">+{{ Number(order.deposit_charge).toFixed(2) }}</td>
             </tr>
             <tr v-if="Number(order.deposit_charge) > 0" class="bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600">
-              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">Grand total</td>
+              <td colspan="3" class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">{{ t('Grand total') }}</td>
               <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">
                 {{ (Number(order.total_amount) + Number(order.deposit_charge)).toFixed(2) }}
               </td>
@@ -796,16 +815,16 @@ const statusButtonClass = (s: string) => {
         <div class="px-4 py-4 sm:px-6 border-b border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/20 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package-check"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7.08 12 12 20.71 7.08"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
-            Returned Materials Log
+            {{ t('Returned Materials Log') }}
           </h2>
-          <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 py-0.5 px-2.5 rounded-full font-bold">Collected & pending</span>
+          <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 py-0.5 px-2.5 rounded-full font-bold">{{ t('Collected & pending') }}</span>
         </div>
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-400">
             <tr>
-              <th class="px-6 py-3 font-semibold">Material Model</th>
-              <th class="px-6 py-3 text-right font-semibold">Collected</th>
-              <th class="px-6 py-3 text-right font-semibold">To collect later</th>
+              <th class="px-6 py-3 font-semibold">{{ t('Material Model') }}</th>
+              <th class="px-6 py-3 text-right font-semibold">{{ t('Collected') }}</th>
+              <th class="px-6 py-3 text-right font-semibold">{{ t('To collect later') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -829,7 +848,7 @@ const statusButtonClass = (s: string) => {
                   >
                     <Loader2 v-if="collectingDeferred.includes(item.id)" class="h-3 w-3 animate-spin" />
                     <Check v-else class="h-3 w-3" />
-                    Collected
+                    {{ t('Collected') }}
                   </Button>
                 </div>
                 <span v-else class="text-gray-300 dark:text-gray-600">—</span>
@@ -843,9 +862,9 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isAssignModalOpen">
         <DialogContent class="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Assign Currier</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Assign Currier') }}</DialogTitle>
             <DialogDescription>
-              Select an available currier to process this order.
+              {{ t('Select an available currier to process this order.') }}
             </DialogDescription>
           </DialogHeader>
           
@@ -861,8 +880,8 @@ const statusButtonClass = (s: string) => {
                   <Box class="w-5 h-5 text-gray-400" />
                 </div>
                 <div>
-                  <p class="font-bold text-gray-900 dark:text-gray-100">Unassign Order</p>
-                  <p class="text-xs text-gray-500">Remove currently assigned currier.</p>
+                  <p class="font-bold text-gray-900 dark:text-gray-100">{{ t('Unassign Order') }}</p>
+                  <p class="text-xs text-gray-500">{{ t('Remove currently assigned currier.') }}</p>
                 </div>
               </div>
             </button>
@@ -884,22 +903,22 @@ const statusButtonClass = (s: string) => {
                 <!-- Avatar with status indicator -->
                 <div class="relative">
                   <img :src="courier.avatar_url" :alt="courier.name" class="w-12 h-12 rounded-full object-cover border-2 shadow-sm" :class="order.courier_id === courier.id ? 'border-blue-500' : 'border-white dark:border-gray-900'" />
-                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? 'Online' : 'Offline'"></span>
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'" :title="isCurrierOnline(courier) ? t('Online') : t('Offline')"></span>
                 </div>
                 
                 <div class="flex-1 min-w-0">
                   <p class="font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-2">
                     {{ courier.name }}
-                    <span v-if="order.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">Current</span>
+                    <span v-if="order.courier_id === courier.id" class="text-[10px] uppercase font-black tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded text-center">{{ t('Current') }}</span>
                   </p>
                   <div class="flex items-center gap-3 mt-1">
                     <span class="text-xs font-medium text-gray-500 flex items-center gap-1">
                       <div class="w-2 h-2 rounded-full" :class="isCurrierOnline(courier) ? 'bg-green-500' : 'bg-gray-400'"></div>
-                      {{ isCurrierOnline(courier) ? 'Online' : 'Offline' }}
+                      {{ isCurrierOnline(courier) ? t('Online') : t('Offline') }}
                     </span>
                     <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" :class="courier.orders_count > 0 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'">
                       <Box class="w-3 h-3" />
-                      {{ courier.orders_count }} active tasks
+                      {{ courier.orders_count }} {{ t('active tasks') }}
                     </span>
                   </div>
                 </div>
@@ -913,15 +932,14 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isOverpaymentRefundModalOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Return overpayment to wallet?</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Return overpayment to wallet?') }}</DialogTitle>
             <DialogDescription>
-              Credit {{ (overpaymentOnOrder || (page.props.flash as any)?.pending_overpayment_refund?.amount || 0).toFixed(2) }}
-              to <strong>{{ order.client.name }}</strong>'s wallet and align the order's paid amount with the new total.
+              {{ t("Credit {amount} to {name}'s wallet and align the order's paid amount with the new total.", { amount: (overpaymentOnOrder || (page.props.flash as any)?.pending_overpayment_refund?.amount || 0).toFixed(2), name: order.client.name }) }}
             </DialogDescription>
           </DialogHeader>
           <div class="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" :disabled="overpaymentRefundProcessing" @click="isOverpaymentRefundModalOpen = false">
-              Not now
+              {{ t('Not now') }}
             </Button>
             <Button
               type="button"
@@ -929,7 +947,7 @@ const statusButtonClass = (s: string) => {
               :disabled="overpaymentRefundProcessing"
               @click="confirmOverpaymentRefund"
             >
-              {{ overpaymentRefundProcessing ? 'Processing…' : 'Refund to wallet' }}
+              {{ overpaymentRefundProcessing ? t('Processing…') : t('Refund to wallet') }}
             </Button>
           </div>
         </DialogContent>
@@ -939,9 +957,9 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isWalletPayModalOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Pay this order</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Pay this order') }}</DialogTitle>
             <DialogDescription>
-              Balance due: <span class="font-semibold">{{ Number(order.balance_due).toFixed(2) }} {{ ($page.props.currency as string) || '' }}</span>
+              {{ t('Balance due') }}: <span class="font-semibold">{{ Number(order.balance_due).toFixed(2) }} {{ ($page.props.currency as string) || '' }}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -949,16 +967,15 @@ const statusButtonClass = (s: string) => {
             <!-- Option 1: use the client's existing wallet balance -->
             <div class="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-900/15 p-4 space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-xs uppercase tracking-wider font-bold text-blue-700 dark:text-blue-300">Existing wallet balance</span>
+                <span class="text-xs uppercase tracking-wider font-bold text-blue-700 dark:text-blue-300">{{ t('Existing wallet balance') }}</span>
                 <span class="font-mono text-lg font-bold text-blue-900 dark:text-blue-100">
                   {{ walletBalance.toFixed(2) }}
                   <span class="text-xs font-normal text-blue-700/80 dark:text-blue-300/80 ml-1">{{ ($page.props.currency as string) || '' }}</span>
                 </span>
               </div>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                Applies real funds already in {{ order.client.name }}'s wallet — up to
-                {{ Math.min(walletBalance, Number(order.balance_due)).toFixed(2) }} now.
-                <span v-if="walletBalance < Number(order.balance_due)">Not enough to cover the full balance; the remainder stays due.</span>
+                {{ t("Applies real funds already in {name}'s wallet — up to {amount} now.", { name: order.client.name, amount: Math.min(walletBalance, Number(order.balance_due)).toFixed(2) }) }}
+                <span v-if="walletBalance < Number(order.balance_due)">{{ t('Not enough to cover the full balance; the remainder stays due.') }}</span>
               </p>
               <Button
                 type="button"
@@ -968,15 +985,15 @@ const statusButtonClass = (s: string) => {
               >
                 <Loader2 v-if="payFromBalanceProcessing" class="w-4 h-4 mr-2 animate-spin" />
                 <Wallet v-else class="w-4 h-4 mr-2" />
-                {{ payFromBalanceProcessing ? 'Processing…' : (walletBalance <= 0 ? 'No wallet balance available' : 'Use wallet balance') }}
+                {{ payFromBalanceProcessing ? t('Processing…') : (walletBalance <= 0 ? t('No wallet balance available') : t('Use wallet balance')) }}
               </Button>
             </div>
 
             <!-- Option 2: staff received payment out-of-band (cash, etc.) — record it via the wallet ledger -->
             <div class="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-900/15 p-4 space-y-2">
-              <span class="text-xs uppercase tracking-wider font-bold text-green-700 dark:text-green-300">Received payment another way</span>
+              <span class="text-xs uppercase tracking-wider font-bold text-green-700 dark:text-green-300">{{ t('Received payment another way') }}</span>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                Tops the wallet up for the full balance and immediately applies it — use this when the client already paid you directly (cash, transfer) and you just need to record it.
+                {{ t('Tops the wallet up for the full balance and immediately applies it — use this when the client already paid you directly (cash, transfer) and you just need to record it.') }}
               </p>
               <Button
                 type="button"
@@ -986,12 +1003,12 @@ const statusButtonClass = (s: string) => {
                 @click="confirmWalletPay"
               >
                 <Loader2 v-if="walletPayProcessing" class="w-4 h-4 mr-2 animate-spin" />
-                {{ walletPayProcessing ? 'Processing…' : 'Top up & pay in full' }}
+                {{ walletPayProcessing ? t('Processing…') : t('Top up & pay in full') }}
               </Button>
             </div>
 
             <div class="flex justify-end pt-2 border-t dark:border-gray-700">
-              <Button type="button" variant="outline" :disabled="walletPayProcessing || payFromBalanceProcessing" @click="isWalletPayModalOpen = false">Cancel</Button>
+              <Button type="button" variant="outline" :disabled="walletPayProcessing || payFromBalanceProcessing" @click="isWalletPayModalOpen = false">{{ t('Cancel') }}</Button>
             </div>
           </div>
         </DialogContent>
@@ -1003,22 +1020,22 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isDeleteModalOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold text-red-700 dark:text-red-300">Delete this order?</DialogTitle>
+            <DialogTitle class="text-xl font-bold text-red-700 dark:text-red-300">{{ t('Delete this order?') }}</DialogTitle>
             <DialogDescription>
-              The order, its line items, and its returned-materials records are removed permanently. Inventory is restored for any items still considered out of stock. Wallet transactions tied to this order stay in the ledger as historical record.
+              {{ t('The order, its line items, and its returned-materials records are removed permanently. Inventory is restored for any items still considered out of stock. Wallet transactions tied to this order stay in the ledger as historical record.') }}
             </DialogDescription>
           </DialogHeader>
 
           <div class="py-3 space-y-3">
             <div v-if="(order.backorders?.length ?? 0) > 0" class="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/15 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-              ⚠ This order has {{ order.backorders.length }} backorder{{ order.backorders.length === 1 ? '' : 's' }}. They will remain but lose their link back to this order.
+              ⚠ {{ t('This order has {count} backorder(s). They will remain but lose their link back to this order.', { count: order.backorders.length }) }}
             </div>
             <div v-if="Number(order.paid_amount) > 0" class="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/15 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-              ⚠ {{ Number(order.paid_amount).toFixed(2) }} {{ ($page.props.currency as string) || '' }} was paid against this order. Wallet entries stay; no automatic refund.
+              ⚠ {{ Number(order.paid_amount).toFixed(2) }} {{ ($page.props.currency as string) || '' }} {{ t('was paid against this order. Wallet entries stay; no automatic refund.') }}
             </div>
 
             <label class="text-xs uppercase font-bold text-gray-500 block">
-              Type <span class="font-mono text-gray-900 dark:text-white">{{ deleteConfirmExpected }}</span> to confirm
+              {{ t('Type') }} <span class="font-mono text-gray-900 dark:text-white">{{ deleteConfirmExpected }}</span> {{ t('to confirm') }}
             </label>
             <input
               v-model="deleteConfirmText"
@@ -1029,7 +1046,7 @@ const statusButtonClass = (s: string) => {
             />
 
             <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
-              <Button type="button" variant="outline" :disabled="deleteProcessing" @click="isDeleteModalOpen = false">Keep Order</Button>
+              <Button type="button" variant="outline" :disabled="deleteProcessing" @click="isDeleteModalOpen = false">{{ t('Keep Order') }}</Button>
               <Button
                 type="button"
                 class="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1038,7 +1055,7 @@ const statusButtonClass = (s: string) => {
               >
                 <Loader2 v-if="deleteProcessing" class="w-4 h-4 mr-2 animate-spin" />
                 <Trash2 v-else class="w-4 h-4 mr-2" />
-                {{ deleteProcessing ? 'Deleting…' : 'Delete forever' }}
+                {{ deleteProcessing ? t('Deleting…') : t('Delete forever') }}
               </Button>
             </div>
           </div>
@@ -1049,27 +1066,27 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isCancelModalOpen">
         <DialogContent class="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Cancel Order</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Cancel Order') }}</DialogTitle>
             <DialogDescription>
-              Record why this order is being cancelled. The note is kept for later statistics.
+              {{ t('Record why this order is being cancelled. The note is kept for later statistics.') }}
             </DialogDescription>
           </DialogHeader>
 
           <div class="space-y-3 py-2">
-            <label class="text-xs uppercase font-bold text-gray-500 block">Reason *</label>
+            <label class="text-xs uppercase font-bold text-gray-500 block">{{ t('Reason') }} *</label>
             <textarea
               v-model="cancelForm.cancellation_reason"
               rows="4"
               maxlength="1000"
-              placeholder="e.g. Client unreachable, duplicate order, wrong address…"
+              :placeholder="t('e.g. Client unreachable, duplicate order, wrong address…')"
               class="block w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
             ></textarea>
             <p v-if="cancelError" class="text-xs text-red-600">{{ cancelError }}</p>
 
             <div class="flex justify-end gap-3 pt-4 border-t dark:border-gray-700 mt-2">
-              <Button type="button" variant="outline" @click="isCancelModalOpen = false">Keep Order</Button>
+              <Button type="button" variant="outline" @click="isCancelModalOpen = false">{{ t('Keep Order') }}</Button>
               <Button type="button" class="bg-red-600 hover:bg-red-700 text-white" @click="submitCancellation">
-                Cancel Order
+                {{ t('Cancel Order') }}
               </Button>
             </div>
           </div>
@@ -1079,15 +1096,15 @@ const statusButtonClass = (s: string) => {
       <Dialog v-model:open="isDeliveryModalOpen">
         <DialogContent class="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle class="text-xl font-bold">Confirm Delivery</DialogTitle>
+            <DialogTitle class="text-xl font-bold">{{ t('Confirm Delivery') }}</DialogTitle>
             <DialogDescription>
-              Record the actual delivery time and log any bottles or containers returned by the client.
+              {{ t('Record the actual delivery time and log any bottles or containers returned by the client.') }}
             </DialogDescription>
           </DialogHeader>
 
           <div class="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
             <div>
-                <label class="text-xs uppercase font-bold text-gray-500 block mb-1">Actual Delivery Time</label>
+                <label class="text-xs uppercase font-bold text-gray-500 block mb-1">{{ t('Actual Delivery Time') }}</label>
                 <input type="datetime-local" v-model="statusForm.actual_delivery_at" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-full" />
             </div>
 
@@ -1096,14 +1113,14 @@ const statusButtonClass = (s: string) => {
                  dismiss / deliver-later toggle. -->
             <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/30 p-4 space-y-3">
               <div class="flex items-center justify-between">
-                <label class="text-xs uppercase font-bold text-gray-500">Delivered Quantities</label>
-                <span class="text-[10px] text-gray-400">Ordered → Delivered</span>
+                <label class="text-xs uppercase font-bold text-gray-500">{{ t('Delivered Quantities') }}</label>
+                <span class="text-[10px] text-gray-400">{{ t('Ordered → Delivered') }}</span>
               </div>
               <div v-for="(line, idx) in statusForm.delivered_items" :key="line.order_item_id" class="rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 p-3">
                 <div class="flex items-center gap-3">
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ productName(props.order.items[idx]?.product?.name) }}</p>
-                    <p class="text-[11px] text-gray-500">Ordered {{ props.order.items[idx]?.quantity }}</p>
+                    <p class="text-[11px] text-gray-500">{{ t('Ordered') }} {{ props.order.items[idx]?.quantity }}</p>
                   </div>
                   <input
                     type="number"
@@ -1118,7 +1135,7 @@ const statusButtonClass = (s: string) => {
                   class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap"
                 >
                   <span class="text-[11px] uppercase font-bold tracking-wide text-amber-600 dark:text-amber-400">
-                    Short by {{ (props.order.items[idx]?.quantity ?? 0) - line.delivered_quantity }}
+                    {{ t('Short by') }} {{ (props.order.items[idx]?.quantity ?? 0) - line.delivered_quantity }}
                   </span>
                   <div class="ml-auto inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
                     <button
@@ -1130,7 +1147,7 @@ const statusButtonClass = (s: string) => {
                           ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
                           : 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                       ]"
-                    >Dismiss</button>
+                    >{{ t('Dismiss') }}</button>
                     <button
                       type="button"
                       @click="line.shortfall_action = 'backorder'"
@@ -1140,20 +1157,20 @@ const statusButtonClass = (s: string) => {
                           ? 'bg-blue-600 text-white'
                           : 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                       ]"
-                    >Deliver later</button>
+                    >{{ t('Deliver later') }}</button>
                   </div>
                 </div>
               </div>
               <p class="text-[11px] text-gray-500 leading-snug">
-                <span class="font-semibold">Dismiss</span> restores stock and reduces the bill;
-                <span class="font-semibold">Deliver later</span> additionally creates a follow-up order for the shortfall.
+                <span class="font-semibold">{{ t('Dismiss') }}</span> {{ t('restores stock and reduces the bill;') }}
+                <span class="font-semibold">{{ t('Deliver later') }}</span> {{ t('additionally creates a follow-up order for the shortfall.') }}
               </p>
             </div>
 
             <div v-if="statusForm.returned_materials.length > 0" class="rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-900/10 p-4 space-y-3">
                 <div>
-                  <p class="text-xs uppercase font-bold text-blue-700 dark:text-blue-300">Empty containers</p>
-                  <p class="text-[11px] text-blue-700/80 dark:text-blue-300/80">Record how many empties you collected now and how many you'll collect later. Whatever is left is charged at the deposit price.</p>
+                  <p class="text-xs uppercase font-bold text-blue-700 dark:text-blue-300">{{ t('Empty containers') }}</p>
+                  <p class="text-[11px] text-blue-700/80 dark:text-blue-300/80">{{ t("Record how many empties you collected now and how many you'll collect later. Whatever is left is charged at the deposit price.") }}</p>
                 </div>
 
                 <div
@@ -1163,12 +1180,12 @@ const statusButtonClass = (s: string) => {
                 >
                   <div class="flex items-center justify-between gap-2">
                     <span class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ reusableSummaryById[rm.raw_material_id]?.raw_material.name }}</span>
-                    <span class="text-[11px] text-gray-500">Expected <span class="font-semibold text-gray-700 dark:text-gray-200">{{ reusableSummaryById[rm.raw_material_id]?.expected }}</span></span>
+                    <span class="text-[11px] text-gray-500">{{ t('Expected') }} <span class="font-semibold text-gray-700 dark:text-gray-200">{{ reusableSummaryById[rm.raw_material_id]?.expected }}</span></span>
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
                     <label class="flex flex-col gap-1">
-                      <span class="text-[11px] font-semibold text-gray-500 uppercase">Collected now</span>
+                      <span class="text-[11px] font-semibold text-gray-500 uppercase">{{ t('Collected now') }}</span>
                       <input
                         type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
                         v-model.number="rm.quantity"
@@ -1176,7 +1193,7 @@ const statusButtonClass = (s: string) => {
                       />
                     </label>
                     <label class="flex flex-col gap-1">
-                      <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase">Collect later</span>
+                      <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase">{{ t('Collect later') }}</span>
                       <input
                         type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
                         v-model.number="rm.deferred_quantity"
@@ -1186,17 +1203,17 @@ const statusButtonClass = (s: string) => {
                   </div>
 
                   <div class="flex items-center justify-between text-xs">
-                    <span v-if="(rm.deferred_quantity || 0) > 0" class="text-amber-600 dark:text-amber-400 font-medium">⏳ {{ rm.deferred_quantity }} to collect later</span>
+                    <span v-if="(rm.deferred_quantity || 0) > 0" class="text-amber-600 dark:text-amber-400 font-medium">⏳ {{ rm.deferred_quantity }} {{ t('to collect later') }}</span>
                     <span v-else></span>
-                    <span v-if="lineCharge(rm) > 0" class="font-semibold text-red-600 dark:text-red-400">Deposit charge {{ lineCharge(rm).toFixed(2) }}</span>
-                    <span v-else class="font-semibold text-green-600 dark:text-green-400">No deposit charge</span>
+                    <span v-if="lineCharge(rm) > 0" class="font-semibold text-red-600 dark:text-red-400">{{ t('Deposit charge') }} {{ lineCharge(rm).toFixed(2) }}</span>
+                    <span v-else class="font-semibold text-green-600 dark:text-green-400">{{ t('No deposit charge') }}</span>
                   </div>
                 </div>
             </div>
             
             <div class="flex justify-end gap-3 pt-4 border-t mt-4">
-              <Button type="button" variant="outline" @click="isDeliveryModalOpen = false">Cancel</Button>
-              <Button type="button" class="bg-green-600 hover:bg-green-700 text-white" @click="submitStatusUpdate">Save Delivery</Button>
+              <Button type="button" variant="outline" @click="isDeliveryModalOpen = false">{{ t('Cancel') }}</Button>
+              <Button type="button" class="bg-green-600 hover:bg-green-700 text-white" @click="submitStatusUpdate">{{ t('Save Delivery') }}</Button>
             </div>
           </div>
         </DialogContent>

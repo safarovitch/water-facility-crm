@@ -29,6 +29,20 @@ class User extends Authenticatable implements HasPasskeys
   use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasHumanTimestamps, HasApiTokens, \Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 
   /**
+   * Roles with full back-office access. Couriers are staff but are NOT in
+   * this list — they only get the delivery-scoped subset of the admin area.
+   */
+  public const ADMIN_ROLES = [
+    'Admin',
+    'Staff manager',
+    'Product manager',
+    'Finance manager',
+    'Content manager',
+  ];
+
+  public const COURIER_ROLES = ['Currier', 'Currier manager'];
+
+  /**
    * The attributes that are mass assignable.
    *
    * @var list<string>
@@ -190,6 +204,46 @@ class User extends Authenticatable implements HasPasskeys
   public function isCurrier(): bool
   {
     return $this->hasRole('Currier');
+  }
+
+  public function isCurrierManager(): bool
+  {
+    return $this->hasRole('Currier manager');
+  }
+
+  /**
+   * Full back-office access (all admin sections, totals, deletes).
+   */
+  public function hasAdminAccess(): bool
+  {
+    return $this->hasAnyRole(self::ADMIN_ROLES);
+  }
+
+  /**
+   * Courier-side staff (Currier / Currier manager) WITHOUT a full-admin
+   * role. These users get the restricted delivery view of the admin area:
+   * own orders, own expenses, clients (no delete) and forecasts.
+   */
+  public function isCourierStaff(): bool
+  {
+    return ! $this->hasAdminAccess() && $this->hasAnyRole(self::COURIER_ROLES);
+  }
+
+  /**
+   * A currier without manager rights: sees only orders assigned to himself
+   * and cannot assign couriers or see other couriers' activity.
+   */
+  public function isCourierOnly(): bool
+  {
+    return $this->isCourierStaff() && ! $this->isCurrierManager();
+  }
+
+  /**
+   * Any role that may enter the admin area at all.
+   */
+  public function isStaff(): bool
+  {
+    return $this->hasAdminAccess() || $this->hasAnyRole(self::COURIER_ROLES);
   }
 
   public function locations(): HasMany

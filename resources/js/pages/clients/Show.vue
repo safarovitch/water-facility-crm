@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { edit } from '@/routes/admin/clients';
 import { useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
+
+// Wallet deposits post to an admin-only route; hide the action from couriers.
+const canDepositWallet = computed(() => !!usePage().props.auth.can?.manageUsers);
 import { useIntersectionObserver, onClickOutside } from '@vueuse/core';
 import axios from 'axios';
 import { Phone, Edit, MapPin, Building, User as UserIcon, Calendar, Clock, Wallet, Plus, X, RotateCcw, ShoppingBag, Package, Loader2 } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
+import { useI18n } from '@/composables/useI18n';
 
+const { t } = useI18n();
 const isDepositModalOpen = ref(false);
 
 const depositForm = useForm({
@@ -154,10 +159,10 @@ useIntersectionObserver(
   }
 );
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Clients', href: '/admin/clients/index' },
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: t('Clients'), href: '/admin/clients/index' },
   { title: props.client.name, href: '#' },
-];
+]);
 
 const isCompany = computed(() => props.client.user_profile?.type === 'company');
 
@@ -202,12 +207,12 @@ const formatDate = (dateString: string) => {
             <div class="flex items-center gap-3">
               <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ client.name }}</h1>
               <span class="px-2.5 py-1 text-xs font-semibold rounded-md shadow-sm border bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 uppercase tracking-wider">
-                {{ client.user_profile?.type || 'Individual' }}
+                {{ client.user_profile?.type === 'company' ? t('Company') : t('Individual') }}
               </span>
             </div>
             <p class="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
               <Calendar class="w-4 h-4 opacity-70" />
-              Customer since {{ new Date(client.created_at).getFullYear() }}
+              {{ t('Customer since') }} {{ new Date(client.created_at).getFullYear() }}
             </p>
           </div>
         </div>
@@ -215,7 +220,7 @@ const formatDate = (dateString: string) => {
         <Link :href="edit(client.id).url">
           <Button variant="outline" class="flex items-center gap-2">
             <Edit class="w-4 h-4" />
-            Edit Profile
+            {{ t('Edit Profile') }}
           </Button>
         </Link>
       </div>
@@ -227,16 +232,16 @@ const formatDate = (dateString: string) => {
 
           <!-- Contact Details -->
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Contact Details</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">{{ t('Contact Details') }}</h2>
 
             <div class="space-y-4">
               <div>
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ t('Email') }}</p>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ client.email }}</p>
               </div>
 
               <div>
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Phone Numbers</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ t('Phone Numbers') }}</p>
                 <div v-if="client.phones && client.phones.length > 0" class="space-y-2">
                   <div v-for="phone in client.phones" :key="phone.id" class="flex items-center justify-between group py-1.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <div class="flex items-center gap-3">
@@ -246,38 +251,38 @@ const formatDate = (dateString: string) => {
                       <div>
                         <p class="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                           {{ phone.phone }}
-                          <span v-if="phone.is_default" class="text-[10px] bg-green-100 text-green-700 px-1.5 rounded uppercase font-bold tracking-wider">Primary</span>
+                          <span v-if="phone.is_default" class="text-[10px] bg-green-100 text-green-700 px-1.5 rounded uppercase font-bold tracking-wider">{{ t('Primary') }}</span>
                         </p>
                         <p class="text-xs text-gray-500 truncate">{{ phone.label }}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" class="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 dark:text-green-400" @click="initiateCall(phone.phone)" title="Call">
+                    <Button variant="ghost" size="sm" class="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 dark:text-green-400" @click="initiateCall(phone.phone)" :title="t('Call')">
                       <Phone class="w-4 h-4 fill-current" />
                     </Button>
                   </div>
                 </div>
-                <p v-else class="text-sm text-gray-500 italic">No phone numbers assigned.</p>
+                <p v-else class="text-sm text-gray-500 italic">{{ t('No phone numbers assigned.') }}</p>
               </div>
             </div>
           </div>
 
           <!-- Addresses -->
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Addresses</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">{{ t('Addresses') }}</h2>
             <div v-if="client.addresses && client.addresses.length > 0" class="space-y-4">
               <div v-for="address in client.addresses" :key="address.id" class="flex gap-3 items-start border-l-2 border-gray-100 dark:border-gray-700 pl-3 py-1">
                 <MapPin class="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                 <div>
                   <div class="flex items-center gap-2 mb-0.5">
                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ address.label }}</p>
-                    <span v-if="address.is_default" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 rounded uppercase font-bold tracking-wider">Default</span>
+                    <span v-if="address.is_default" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 rounded uppercase font-bold tracking-wider">{{ t('Default') }}</span>
                   </div>
                   <p class="text-sm text-gray-600 dark:text-gray-400">{{ address.address_line }}</p>
                   <p v-if="address.city || address.region" class="text-xs text-gray-500 mt-0.5">{{ address.city }}{{ address.city && address.region ? ', ' : '' }}{{ address.region }}</p>
                 </div>
               </div>
             </div>
-            <p v-else class="text-sm text-gray-500 italic">No addresses assigned.</p>
+            <p v-else class="text-sm text-gray-500 italic">{{ t('No addresses assigned.') }}</p>
           </div>
 
           <!-- Financial Overview (Wallet, Credit, Transactions) -->
@@ -285,7 +290,7 @@ const formatDate = (dateString: string) => {
             <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/20">
               <h2 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Wallet class="w-4 h-4 text-gray-400" />
-                Financial Overview
+                {{ t('Financial Overview') }}
               </h2>
             </div>
             
@@ -293,22 +298,22 @@ const formatDate = (dateString: string) => {
               <!-- Wallet Balance -->
               <div class="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/40 space-y-3">
                 <div>
-                  <p class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Available Balance</p>
+                  <p class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">{{ t('Available Balance') }}</p>
                   <p class="text-xl font-black text-gray-900 dark:text-white">
                     {{ client.wallet?.balance ?? '0.00' }} <span class="text-xs font-medium opacity-70">{{ client.wallet?.currency ?? 'TJS' }}</span>
                   </p>
                 </div>
-                <Button variant="outline" size="sm" class="w-full bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 gap-2 h-9 shadow-sm" @click="isDepositModalOpen = true">
+                <Button v-if="canDepositWallet" variant="outline" size="sm" class="w-full bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 gap-2 h-9 shadow-sm" @click="isDepositModalOpen = true">
                   <Plus class="w-4 h-4" />
-                  Add Funds
+                  {{ t('Add Funds') }}
                 </Button>
               </div>
 
               <div>
-                <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">Recent Transactions</h3>
+                <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">{{ t('Recent Transactions') }}</h3>
                 <div class="p-0 max-h-[250px] overflow-y-auto -mx-6 px-6">
                   <div v-if="transactions.length === 0" class="py-4 text-center text-xs text-gray-500">
-                    No transactions found.
+                    {{ t('No transactions found.') }}
                   </div>
                   <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800 border-t dark:border-gray-700">
                     <li v-for="tx in transactions" :key="tx.id" class="py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group flex items-center justify-between">
@@ -322,7 +327,7 @@ const formatDate = (dateString: string) => {
                           <RotateCcw v-else class="w-3 h-3" />
                         </div>
                         <div>
-                          <p class="text-xs font-bold text-gray-900 dark:text-white capitalize">{{ tx.type }}</p>
+                          <p class="text-xs font-bold text-gray-900 dark:text-white capitalize">{{ t(tx.type) }}</p>
                           <p class="text-[10px] text-gray-500">{{ formatDate(tx.created_at) }}</p>
                         </div>
                       </div>
@@ -330,7 +335,7 @@ const formatDate = (dateString: string) => {
                         <p class="text-xs font-black" :class="tx.type === 'deposit' ? 'text-green-600' : 'text-red-500'">
                           {{ tx.type === 'deposit' ? '+' : '-' }}{{ tx.amount }}
                         </p>
-                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 uppercase font-bold">{{ tx.status }}</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 uppercase font-bold">{{ t(tx.status) }}</span>
                       </div>
                     </li>
                   </ul>
@@ -341,7 +346,7 @@ const formatDate = (dateString: string) => {
 
           <!-- Internal Notes (if any) -->
           <div v-if="client.user_profile?.notes" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Internal Notes</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">{{ t('Internal Notes') }}</h2>
             <p class="text-sm text-gray-700 dark:text-gray-300 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-100 dark:border-yellow-900/40">
               {{ client.user_profile.notes }}
             </p>
@@ -357,13 +362,13 @@ const formatDate = (dateString: string) => {
             <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <ShoppingBag class="w-5 h-5 text-gray-400" />
-                Order History
+                {{ t('Order History') }}
               </h2>
-              <Link v-if="orders.total > 0" href="/admin/orders/index" class="text-sm text-blue-600 hover:underline">View All</Link>
+              <Link v-if="orders.total > 0" href="/admin/orders/index" class="text-sm text-blue-600 hover:underline">{{ t('View All') }}</Link>
             </div>
             <div class="p-0">
               <div v-if="orders.total === 0" class="p-8 text-center text-gray-500">
-                No orders found for this client.
+                {{ t('No orders found for this client.') }}
               </div>
               <div v-else>
                 <!-- Desktop Table -->
@@ -371,11 +376,11 @@ const formatDate = (dateString: string) => {
                   <table class="w-full text-left">
                     <thead>
                       <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order #</th>
-                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Items</th>
-                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Order #') }}</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Date') }}</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Status') }}</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Items') }}</th>
+                        <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">{{ t('Total') }}</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -395,13 +400,13 @@ const formatDate = (dateString: string) => {
                             'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400': order.status === 'processing',
                             'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400': order.status === 'cancelled',
                           }">
-                            {{ order.status }}
+                            {{ t(order.status) }}
                           </span>
                         </td>
                         <td class="px-6 py-4">
                           <div class="flex items-center gap-1 text-xs text-gray-500">
                             <Package class="w-3.5 h-3.5" />
-                            <span>{{ order.items.length }} items</span>
+                            <span>{{ order.items.length }} {{ t('items') }}</span>
                             <span class="mx-1">•</span>
                             <span class="truncate max-w-[150px]">
                               {{ order.items.map(i => i.product?.name).filter(Boolean).join(', ') }}
@@ -430,13 +435,13 @@ const formatDate = (dateString: string) => {
                         'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400': order.status === 'processing',
                         'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400': order.status === 'cancelled',
                       }">
-                        {{ order.status }}
+                        {{ t(order.status) }}
                       </span>
                     </div>
                     <div class="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-gray-100 dark:border-gray-800">
                       <div class="flex items-center gap-1 text-xs text-gray-500">
                         <Package class="w-3.5 h-3.5" />
-                        <span>{{ order.items.length }} items</span>
+                        <span>{{ order.items.length }} {{ t('items') }}</span>
                       </div>
                       <span class="text-sm font-black text-gray-900 dark:text-white">{{ order.total_amount }} TJS</span>
                     </div>
@@ -448,7 +453,7 @@ const formatDate = (dateString: string) => {
               <div v-if="nextPageUrl" ref="loadMoreTrigger" class="py-6 flex justify-center border-t border-gray-100 dark:border-gray-700">
                 <div v-if="isLoadingMore" class="flex items-center gap-2 text-sm text-gray-500">
                   <Loader2 class="w-4 h-4 animate-spin" />
-                  <span>Loading more orders...</span>
+                  <span>{{ t('Loading more orders...') }}</span>
                 </div>
                 <div v-else class="h-4"></div>
               </div>
@@ -460,12 +465,12 @@ const formatDate = (dateString: string) => {
             <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Phone class="w-5 h-5 text-gray-400" />
-                Call History
+                {{ t('Call History') }}
               </h2>
             </div>
             <div class="p-0 max-h-[400px] overflow-y-auto">
               <div v-if="calls.length === 0" class="p-8 text-center text-gray-500">
-                No call history found for this client.
+                {{ t('No call history found for this client.') }}
               </div>
               <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
                 <li v-for="call in calls" :key="call.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group flex flex-col">
@@ -518,7 +523,7 @@ const formatDate = (dateString: string) => {
             <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <Wallet class="size-5 text-blue-600 dark:text-blue-400" />
-                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">Add Funds (Admin)</h3>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ t('Add Funds (Admin)') }}</h3>
                 </div>
                 <button @click="isDepositModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <X class="size-5" />
@@ -526,21 +531,21 @@ const formatDate = (dateString: string) => {
             </div>
             <div class="p-6 space-y-4 text-left">
                 <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Amount ({{ client.wallet?.currency ?? 'TJS' }})</label>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Amount') }} ({{ client.wallet?.currency ?? 'TJS' }})</label>
                     <input v-model="depositForm.amount" type="number" step="1" min="1" class="w-full text-3xl font-black p-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-xl focus:border-blue-500 outline-none transition-all dark:text-white" />
                 </div>
                 <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Internal Notes</label>
-                    <input v-model="depositForm.notes" type="text" placeholder="e.g., Cash payment received" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl focus:border-blue-500 outline-none transition-all dark:text-white" />
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Internal Notes') }}</label>
+                    <input v-model="depositForm.notes" type="text" :placeholder="t('e.g., Cash payment received')" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl focus:border-blue-500 outline-none transition-all dark:text-white" />
                 </div>
                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30">
                     <p class="text-xs text-blue-700 dark:text-blue-300">
-                        Funds will be added to <strong>{{ client.name }}</strong>'s wallet instantly.
+                        {{ t("Funds will be added to {name}'s wallet instantly.", { name: client.name }) }}
                     </p>
                 </div>
                 <button @click="submitDeposit" :disabled="depositForm.processing" class="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
                     <Plus v-if="!depositForm.processing" class="size-5" />
-                    {{ depositForm.processing ? 'Processing...' : 'Confirm Admin Deposit' }}
+                    {{ depositForm.processing ? t('Processing...') : t('Confirm Admin Deposit') }}
                 </button>
             </div>
         </div>

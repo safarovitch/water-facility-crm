@@ -93,7 +93,7 @@ const en: Dictionary = {
     statDeliveryLabel: 'Delivery',
     statDeliveryValue: 'Year-round',
     statSourceLabel: 'Source',
-    statSourceValue: 'Varzob',
+    statSourceValue: 'Varzob ~ 3000 m',
   },
   about: {
     eyebrow: 'Our source',
@@ -140,7 +140,7 @@ const en: Dictionary = {
     body:
       'Pay per bottle or set up a regular delivery — whatever suits your home or office best.',
     popular: 'Popular',
-    disclaimer: 'Prices are indicative. A refundable bottle deposit may apply on first order.',
+    disclaimer: 'A refundable bottle deposit may apply on first order.',
     custom: 'Custom',
     unitTjs: 'TJS',
     singleName: 'Single Bottle',
@@ -186,8 +186,8 @@ const en: Dictionary = {
     emailLabel: 'Email',
     serviceLabel: 'Service area',
     serviceValue: 'Dushanbe & surrounding districts',
-    hoursLabel: 'Hours',
-    hoursValue: 'Daily, 09:00 – 17:00',
+    hoursLabel: 'Work hours',
+    hoursValue: 'Monday-Saturday, 09:00 – 17:00',
   },
   footer: {
     rights: 'All rights reserved.',
@@ -224,7 +224,7 @@ const ru: Dictionary = {
     statDeliveryLabel: 'Доставка',
     statDeliveryValue: 'Круглый год',
     statSourceLabel: 'Источник',
-    statSourceValue: 'Варзоб',
+    statSourceValue: 'Варзоб ~ 3000 м',
   },
   about: {
     eyebrow: 'Наш источник',
@@ -271,7 +271,7 @@ const ru: Dictionary = {
     body:
       'Платите за бутыль или подключите регулярную доставку — как удобнее вам или вашему офису.',
     popular: 'Популярное',
-    disclaimer: 'Цены ориентировочные. При первом заказе может быть возвратный залог за бутыль.',
+    disclaimer: 'При первом заказе может быть возвратный залог за бутыль.',
     custom: 'По запросу',
     unitTjs: 'TJS',
     singleName: 'Одна бутыль',
@@ -317,8 +317,8 @@ const ru: Dictionary = {
     emailLabel: 'Эл. почта',
     serviceLabel: 'Зона обслуживания',
     serviceValue: 'Душанбе и пригороды',
-    hoursLabel: 'Часы работы',
-    hoursValue: 'Ежедневно, 09:00 – 17:00',
+    hoursLabel: 'Время работы',
+    hoursValue: 'Понедельник-суббота, 09:00 – 17:00',
   },
   footer: {
     rights: 'Все права защищены.',
@@ -356,7 +356,7 @@ const tg: Dictionary = {
     statDeliveryLabel: 'Расонидан',
     statDeliveryValue: 'Тамоми сол',
     statSourceLabel: 'Сарчашма',
-    statSourceValue: 'Варзоб',
+    statSourceValue: 'Варзоб ~ 3000 м',
   },
   about: {
     eyebrow: 'Сарчашмаи мо',
@@ -403,7 +403,7 @@ const tg: Dictionary = {
     body:
       'Барои ҳар зарф пардохт кунед ё расонидани доимиро ба роҳ монед — ҳамон тавре ки барои хона ё дафтаратон қулай аст.',
     popular: 'Маъмул',
-    disclaimer: 'Нархҳо тахминӣ. Дар фармоиши аввал гарави баргардонидашавандаи зарф эҳтимол дорад.',
+    disclaimer: 'Дар фармоиши аввал гарави баргардонидашавандаи зарф эҳтимол дорад.',
     custom: 'Бо талабот',
     unitTjs: 'TJS',
     singleName: 'Як зарф',
@@ -449,8 +449,8 @@ const tg: Dictionary = {
     emailLabel: 'Почтаи электронӣ',
     serviceLabel: 'Минтақаи хидмат',
     serviceValue: 'Душанбе ва ноҳияҳои атроф',
-    hoursLabel: 'Соатҳои корӣ',
-    hoursValue: 'Ҳаррӯза, 11:00 – 03:00',
+    hoursLabel: 'Вактҳои корӣ',
+    hoursValue: 'Душанбе-Шанбе, 11:00 – 03:00',
   },
   footer: {
     rights: 'Ҳама ҳуқуқҳо ҳифз шудаанд.',

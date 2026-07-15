@@ -4,6 +4,8 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 import {
     ShoppingCart, TrendingUp, Users2, Package,
     Clock, CheckCircle, AlertCircle, XCircle,
@@ -84,11 +86,13 @@ const props = defineProps<{
     lowStockRawMaterials: LowStockRawMaterial[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: dashboard().url },
-];
+const { t } = useI18n();
 
-const { t } = useLocale();
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+    { title: t('Dashboard'), href: dashboard().url },
+]);
+
+const { t: tl } = useLocale();
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
 const fmtCurrency = (n: number) => {
@@ -96,23 +100,23 @@ const fmtCurrency = (n: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
 };
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-    pending:      { label: 'Pending',      color: 'text-amber-500   bg-amber-500/10',   icon: Clock },
-    confirmed:    { label: 'Confirmed',    color: 'text-blue-500    bg-blue-500/10',    icon: CheckCircle },
-    in_production:{ label: 'In Production',color: 'text-purple-500  bg-purple-500/10',  icon: Factory },
-    ready:        { label: 'Ready',        color: 'text-green-500   bg-green-500/10',   icon: ArrowUpRight },
-    accepted:     { label: 'Picked up',    color: 'text-indigo-500  bg-indigo-500/10',  icon: Truck },
-    in_transit:   { label: 'On the way',   color: 'text-sky-500     bg-sky-500/10',     icon: Truck },
-    delivered:    { label: 'Delivered',    color: 'text-emerald-500 bg-emerald-500/10', icon: Truck },
-    cancelled:    { label: 'Cancelled',    color: 'text-red-500     bg-red-500/10',     icon: XCircle },
-};
+const statusConfig = computed((): Record<string, { label: string; color: string; icon: any }> => ({
+    pending:      { label: t('Pending'),      color: 'text-amber-500   bg-amber-500/10',   icon: Clock },
+    confirmed:    { label: t('Confirmed'),    color: 'text-blue-500    bg-blue-500/10',    icon: CheckCircle },
+    in_production:{ label: t('In Production'),color: 'text-purple-500  bg-purple-500/10',  icon: Factory },
+    ready:        { label: t('Ready'),        color: 'text-green-500   bg-green-500/10',   icon: ArrowUpRight },
+    accepted:     { label: t('Picked up'),    color: 'text-indigo-500  bg-indigo-500/10',  icon: Truck },
+    in_transit:   { label: t('On the way'),   color: 'text-sky-500     bg-sky-500/10',     icon: Truck },
+    delivered:    { label: t('Delivered'),    color: 'text-emerald-500 bg-emerald-500/10', icon: Truck },
+    cancelled:    { label: t('Cancelled'),    color: 'text-red-500     bg-red-500/10',     icon: XCircle },
+}));
 
 const allStatuses = ['pending', 'confirmed', 'in_production', 'ready', 'accepted', 'in_transit', 'delivered', 'cancelled'];
 const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStatus[s] ?? 0), 1);
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('Dashboard')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6">
@@ -123,9 +127,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total Orders</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Total Orders') }}</p>
                             <p class="mt-2 text-3xl font-bold text-foreground">{{ fmt(stats.totalOrders) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ stats.todayOrders }} today · {{ stats.thisMonthOrders }} this month</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ stats.todayOrders }} {{ t('today') }} · {{ stats.thisMonthOrders }} {{ t('this month') }}</p>
                         </div>
                         <div class="rounded-lg bg-primary/10 p-2.5">
                             <ShoppingCart class="h-5 w-5 text-primary" />
@@ -137,9 +141,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Revenue Collected</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Revenue Collected') }}</p>
                             <p class="mt-2 text-2xl font-bold text-foreground">{{ fmtCurrency(stats.totalRevenue) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ fmtCurrency(stats.monthRevenue) }} this month</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ fmtCurrency(stats.monthRevenue) }} {{ t('this month') }}</p>
                         </div>
                         <div class="rounded-lg bg-emerald-500/10 p-2.5">
                             <TrendingUp class="h-5 w-5 text-emerald-500" />
@@ -151,9 +155,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Outstanding</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Outstanding') }}</p>
                             <p class="mt-2 text-2xl font-bold text-foreground">{{ fmtCurrency(stats.totalOutstanding) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">unpaid balance</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ t('unpaid balance') }}</p>
                         </div>
                         <div class="rounded-lg bg-red-500/10 p-2.5">
                             <AlertCircle class="h-5 w-5 text-red-500" />
@@ -165,9 +169,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Clients</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Clients') }}</p>
                             <p class="mt-2 text-3xl font-bold text-foreground">{{ fmt(stats.totalClients) }}</p>
-                            <p class="mt-1 text-xs text-emerald-500">+{{ stats.newClientsMonth }} this month</p>
+                            <p class="mt-1 text-xs text-emerald-500">+{{ stats.newClientsMonth }} {{ t('this month') }}</p>
                         </div>
                         <div class="rounded-lg bg-blue-500/10 p-2.5">
                             <Users2 class="h-5 w-5 text-blue-500" />
@@ -182,9 +186,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fulfillments Today</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Fulfillments Today') }}</p>
                             <p class="mt-2 text-3xl font-bold text-emerald-500">{{ fmt(performance.fulfillmentsToday) }}</p>
-                            <p class="mt-1 text-[10px] text-muted-foreground uppercase text-emerald-500/80 font-semibold tracking-wider">Orders successfully delivered</p>
+                            <p class="mt-1 text-[10px] text-muted-foreground uppercase text-emerald-500/80 font-semibold tracking-wider">{{ t('Orders successfully delivered') }}</p>
                         </div>
                         <div class="rounded-lg bg-emerald-500/10 p-2.5">
                             <Truck class="h-5 w-5 text-emerald-500" />
@@ -196,12 +200,12 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Active Couriers</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Active Couriers') }}</p>
                             <div class="mt-2 flex items-baseline gap-2">
                                 <p class="text-3xl font-bold text-blue-500">{{ performance.activeCouriers }}</p>
                                 <p class="text-sm font-bold text-muted-foreground">/ {{ performance.totalCouriers }}</p>
                             </div>
-                            <div class="mt-1 flex items-center gap-1.5"><div class="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></div><p class="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Fleet Online Now</p></div>
+                            <div class="mt-1 flex items-center gap-1.5"><div class="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></div><p class="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">{{ t('Fleet Online Now') }}</p></div>
                         </div>
                         <div class="rounded-lg bg-blue-500/10 p-2.5">
                             <Activity class="h-5 w-5 text-blue-500" />
@@ -213,12 +217,12 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Avg. Delivery Pace</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Avg. Delivery Pace') }}</p>
                             <div class="mt-2 flex items-baseline gap-1">
                                 <p class="text-3xl font-bold text-purple-500">{{ performance.avgDeliveryMinutes > 0 ? performance.avgDeliveryMinutes : '--' }}</p>
-                                <p v-if="performance.avgDeliveryMinutes > 0" class="text-sm font-bold text-purple-500/70">min</p>
+                                <p v-if="performance.avgDeliveryMinutes > 0" class="text-sm font-bold text-purple-500/70">{{ t('min') }}</p>
                             </div>
-                            <p class="mt-1 text-[10px] text-muted-foreground uppercase text-purple-500/80 font-semibold tracking-wider">Average time to fulfill</p>
+                            <p class="mt-1 text-[10px] text-muted-foreground uppercase text-purple-500/80 font-semibold tracking-wider">{{ t('Average time to fulfill') }}</p>
                         </div>
                         <div class="rounded-lg bg-purple-500/10 p-2.5">
                             <Clock4 class="h-5 w-5 text-purple-500" />
@@ -230,9 +234,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-primary/20 bg-primary/5 p-5 shadow-inner dark:border-primary/20">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wider text-primary shadow-sm">Pending Dispatch</p>
+                            <p class="text-xs font-medium uppercase tracking-wider text-primary shadow-sm">{{ t('Pending Dispatch') }}</p>
                             <p class="mt-2 text-3xl font-bold text-primary">{{ unassignedOrders.length }}</p>
-                            <p class="mt-1 text-[10px] text-primary/70 uppercase font-semibold tracking-wider">Awaiting Courier Assignment</p>
+                            <p class="mt-1 text-[10px] text-primary/70 uppercase font-semibold tracking-wider">{{ t('Awaiting Courier Assignment') }}</p>
                         </div>
                         <div class="rounded-lg bg-primary/20 p-2.5">
                             <PackageMinus class="h-5 w-5 text-primary" />
@@ -248,7 +252,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="col-span-1 rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border md:col-span-2">
                     <div class="mb-4 flex items-center gap-2">
                         <BarChart3 class="h-4 w-4 text-muted-foreground" />
-                        <h3 class="text-sm font-semibold text-foreground">Orders by Status</h3>
+                        <h3 class="text-sm font-semibold text-foreground">{{ t('Orders by Status') }}</h3>
                     </div>
                     <div class="space-y-3">
                         <div v-for="status in allStatuses" :key="status" class="flex items-center gap-3">
@@ -281,9 +285,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                     <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                         <div class="flex items-start justify-between">
                             <div>
-                                <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Products</p>
+                                <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Products') }}</p>
                                 <p class="mt-2 text-3xl font-bold text-foreground">{{ fmt(stats.totalProducts) }}</p>
-                                <p class="mt-1 text-xs text-muted-foreground">{{ stats.activeProducts }} active</p>
+                                <p class="mt-1 text-xs text-muted-foreground">{{ stats.activeProducts }} {{ t('active') }}</p>
                             </div>
                             <div class="rounded-lg bg-violet-500/10 p-2.5">
                                 <Package class="h-5 w-5 text-violet-500" />
@@ -295,7 +299,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                     <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                         <div class="mb-3 flex items-center gap-2">
                             <DollarSign class="h-4 w-4 text-muted-foreground" />
-                            <h3 class="text-sm font-semibold text-foreground">Top Products</h3>
+                            <h3 class="text-sm font-semibold text-foreground">{{ t('Top Products') }}</h3>
                         </div>
                         <div v-if="topProducts.length" class="space-y-2">
                             <div
@@ -306,14 +310,14 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                                     {{ idx + 1 }}
                                 </span>
-                                <span class="flex-1 truncate text-xs font-medium text-foreground">{{ t(product.name) }}</span>
+                                <span class="flex-1 truncate text-xs font-medium text-foreground">{{ tl(product.name) }}</span>
                                 <div class="flex gap-2 text-xs text-muted-foreground">
-                                    <span>{{ product.total_sold }} sold</span>
-                                    <span class="text-emerald-500">{{ product.total_gifted }} gifted</span>
+                                    <span>{{ product.total_sold }} {{ t('sold') }}</span>
+                                    <span class="text-emerald-500">{{ product.total_gifted }} {{ t('gifted') }}</span>
                                 </div>
                             </div>
                         </div>
-                        <p v-else class="text-xs text-muted-foreground">No sales data yet.</p>
+                        <p v-else class="text-xs text-muted-foreground">{{ t('No sales data yet.') }}</p>
                     </div>
                 </div>
             </div>
@@ -325,9 +329,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                     <div class="flex items-center justify-between border-b border-primary/10 px-5 py-4">
                         <div class="flex items-center gap-2">
                             <Truck class="h-4 w-4 text-primary" />
-                            <h3 class="text-sm font-semibold text-primary">Pending Dispatch Queue</h3>
+                            <h3 class="text-sm font-semibold text-primary">{{ t('Pending Dispatch Queue') }}</h3>
                         </div>
-                        <a href="/orders/assignments" class="text-xs font-bold uppercase tracking-wider text-primary hover:underline">Dispatch All &rarr;</a>
+                        <a href="/orders/assignments" class="text-xs font-bold uppercase tracking-wider text-primary hover:underline">{{ t('Dispatch All') }} &rarr;</a>
                     </div>
                     <div class="p-0">
                         <!-- Desktop Queue -->
@@ -335,9 +339,9 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                             <table class="w-full text-sm">
                                 <thead>
                                     <tr class="border-b border-primary/10">
-                                        <th class="px-5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-primary/70">Order</th>
-                                        <th class="px-5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-primary/70">Client</th>
-                                        <th class="px-5 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-primary/70">Wait Time</th>
+                                        <th class="px-5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-primary/70">{{ t('Order') }}</th>
+                                        <th class="px-5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-primary/70">{{ t('Client') }}</th>
+                                        <th class="px-5 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-primary/70">{{ t('Wait Time') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -365,7 +369,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
 
                         <div v-if="!unassignedOrders.length" class="flex flex-col items-center justify-center py-8 opacity-60">
                             <CheckCircle class="h-8 w-8 text-primary mb-2" />
-                            <p class="text-xs font-bold text-primary">All active orders are currently dispatched!</p>
+                            <p class="text-xs font-bold text-primary">{{ t('All active orders are currently dispatched!') }}</p>
                         </div>
                     </div>
                 </div>
@@ -374,30 +378,30 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                 <div class="rounded-xl border border-red-500/30 bg-red-50 dark:bg-red-950/20 dark:border-red-500/20">
                     <div class="flex items-center gap-2 border-b border-red-500/10 px-5 py-4">
                         <AlertTriangle class="h-4 w-4 text-red-500" />
-                        <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">Early Inventory Warnings</h3>
+                        <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">{{ t('Early Inventory Warnings') }}</h3>
                     </div>
                     <div class="p-0 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-red-500/10">
                         <!-- Finished Products -->
                         <div class="flex-1 p-5">
-                            <p class="text-xs font-bold uppercase tracking-wider text-red-500/80 mb-3">Critical Products</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-red-500/80 mb-3">{{ t('Critical Products') }}</p>
                             <div v-if="lowStockProducts.length" class="space-y-3">
                                 <div v-for="item in lowStockProducts" :key="item.id" class="flex items-center justify-between bg-white dark:bg-sidebar rounded-lg p-2 border border-red-500/20 shadow-sm">
                                     <div class="flex-1 min-w-0 pr-2">
-                                        <p class="text-[11px] font-bold text-foreground truncate">{{ t(item.name) }}</p>
+                                        <p class="text-[11px] font-bold text-foreground truncate">{{ tl(item.name) }}</p>
                                         <p class="text-[9px] font-mono text-muted-foreground mt-0.5">{{ item.sku }}</p>
                                     </div>
                                     <div class="text-right">
                                         <p class="text-xs font-black text-red-600 dark:text-red-400">{{ item.quantity }}</p>
-                                        <p class="text-[8px] uppercase tracking-wider text-red-500/60 font-medium">Qty Left</p>
+                                        <p class="text-[8px] uppercase tracking-wider text-red-500/60 font-medium">{{ t('Qty Left') }}</p>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="text-xs font-medium text-emerald-600 dark:text-emerald-500 flex items-center"><CheckCircle class="w-3 h-3 mr-1" /> All product stock is healthy.</p>
+                            <p v-else class="text-xs font-medium text-emerald-600 dark:text-emerald-500 flex items-center"><CheckCircle class="w-3 h-3 mr-1" /> {{ t('All product stock is healthy.') }}</p>
                         </div>
                         
                         <!-- Raw Materials -->
                         <div class="flex-1 p-5">
-                            <p class="text-xs font-bold uppercase tracking-wider text-amber-600/80 dark:text-amber-500/80 mb-3">Lowest Raw Materials</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-amber-600/80 dark:text-amber-500/80 mb-3">{{ t('Lowest Raw Materials') }}</p>
                             <div v-if="lowStockRawMaterials.length" class="space-y-3">
                                 <div v-for="item in lowStockRawMaterials" :key="item.id" class="flex items-center justify-between bg-white dark:bg-sidebar rounded-lg p-2 border border-amber-500/20 shadow-sm">
                                     <div class="flex-1 min-w-0 pr-2">
@@ -409,7 +413,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="text-xs font-medium text-emerald-600 dark:text-emerald-500 flex items-center"><CheckCircle class="w-3 h-3 mr-1" /> No raw materials tracked.</p>
+                            <p v-else class="text-xs font-medium text-emerald-600 dark:text-emerald-500 flex items-center"><CheckCircle class="w-3 h-3 mr-1" /> {{ t('No raw materials tracked.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -419,8 +423,8 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
             <div class="rounded-xl border border-sidebar-border/70 bg-card dark:border-sidebar-border">
                 <div class="flex items-center gap-2 border-b border-sidebar-border/70 px-5 py-4 dark:border-sidebar-border">
                     <ShoppingCart class="h-4 w-4 text-muted-foreground" />
-                    <h3 class="text-sm font-semibold text-foreground">Recent Orders</h3>
-                    <a href="/orders" class="ml-auto text-xs font-bold uppercase tracking-wider text-primary hover:underline">View All &rarr;</a>
+                    <h3 class="text-sm font-semibold text-foreground">{{ t('Recent Orders') }}</h3>
+                    <a href="/orders" class="ml-auto text-xs font-bold uppercase tracking-wider text-primary hover:underline">{{ t('View All') }} &rarr;</a>
                 </div>
                 
                 <!-- Desktop Recent Orders -->
@@ -428,12 +432,12 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-sidebar-border/70 dark:border-sidebar-border">
-                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Order #</th>
-                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Client</th>
-                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
-                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Total</th>
-                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Paid</th>
-                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Date</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Order #') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Client') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Status') }}</th>
+                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Total') }}</th>
+                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Paid') }}</th>
+                                <th class="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t('Date') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -493,7 +497,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                         </div>
                         <div class="flex items-center justify-between mt-3 pt-3 border-t border-dashed border-sidebar-border/30">
                             <div class="flex flex-col">
-                                <span class="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total</span>
+                                <span class="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{{ t('Total') }}</span>
                                 <span class="text-sm font-bold text-foreground">{{ fmtCurrency(order.total_amount) }}</span>
                             </div>
                             <div class="text-right">
@@ -503,7 +507,7 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                     </div>
                 </div>
 
-                <p v-if="!recentOrders.length" class="px-5 py-8 text-center text-sm text-muted-foreground">No orders yet.</p>
+                <p v-if="!recentOrders.length" class="px-5 py-8 text-center text-sm text-muted-foreground">{{ t('No orders yet.') }}</p>
             </div>
 
         </div>

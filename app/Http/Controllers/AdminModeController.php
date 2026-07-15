@@ -16,7 +16,7 @@ class AdminModeController extends Controller
         $user = $request->user();
 
         // Guard: client-only users cannot enter admin mode
-        if (! $user->hasAnyRole(['Admin', 'Manager', 'Operator', 'Currier'])) {
+        if (! $user->isStaff()) {
             return redirect()->route('dashboard');
         }
 

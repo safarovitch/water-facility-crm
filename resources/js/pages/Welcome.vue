@@ -37,7 +37,7 @@ function onWhereIsMyWater(event: MouseEvent) {
     window.location.href = `/auth/start?return=${ret}`;
 }
 
-const phone = '+992 17 860 50 05';
+const phone = '+992 178 60 50 05';
 const phoneHref = 'tel:+992178605005';
 const whatsappHref = 'https://wa.me/992178605005';
 const telegramHref = 'https://t.me/fannwaterbot';
