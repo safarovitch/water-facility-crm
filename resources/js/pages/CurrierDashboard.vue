@@ -3,7 +3,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
+import { useI18n } from '@/composables/useI18n';
+import { computed } from 'vue';
 import {
     ShoppingCart, Truck, DollarSign, CalendarClock,
     Clock, CheckCircle, XCircle, Factory, ArrowUpRight, MapPin
@@ -34,11 +35,11 @@ defineProps<{
     upcomingDeliveries: UpcomingDelivery[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: dashboard().url },
-];
+const { t } = useI18n();
 
-const { t } = useLocale();
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+    { title: t('Dashboard'), href: dashboard().url },
+]);
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
 const fmtCurrency = (n: number) => {
@@ -64,7 +65,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 </script>
 
 <template>
-    <Head title="My Dashboard" />
+    <Head :title="t('My Dashboard')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6">
