@@ -13,18 +13,15 @@ export const SUPPORTED_LOCALES: { code: Locale; label: string; short: string }[]
 const STORAGE_KEY = 'fann.landing.locale';
 
 function detectInitialLocale(): Locale {
-  if (typeof window === 'undefined') return 'en';
+  if (typeof window === 'undefined') return 'ru';
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY) as Locale | null;
     if (stored && SUPPORTED_LOCALES.some((l) => l.code === stored)) return stored;
   } catch {
     /* localStorage may be unavailable (private mode, SSR) */
   }
-  const browser = (navigator.language || (navigator.languages?.[0] ?? 'en')).toLowerCase();
-  if (browser.startsWith('ru')) return 'ru';
-  // Tajik auto-detect is disabled for now — visitors with tg/tj locales fall
-  // through to English. Re-enable here and in SUPPORTED_LOCALES above when ready.
-  return 'en';
+  // Russian is the default for everyone until they switch explicitly.
+  return 'ru';
 }
 
 const locale = ref<Locale>(detectInitialLocale());

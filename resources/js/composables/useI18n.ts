@@ -19,8 +19,7 @@ function isAppLocale(value: unknown): value is AppLocale {
 /**
  * Resolve the initial locale:
  *   1. explicit user choice (localStorage, incl. the legacy landing key)
- *   2. browser language — English browsers get English
- *   3. Russian (the default for everyone else: ru, tg, uz, …)
+ *   2. Russian — the default for everyone until they switch explicitly
  */
 function detectInitialLocale(): AppLocale {
     if (typeof window === 'undefined') return 'ru';
@@ -32,8 +31,6 @@ function detectInitialLocale(): AppLocale {
     } catch {
         /* localStorage unavailable (private mode, SSR) */
     }
-    const browser = (navigator.language || navigator.languages?.[0] || '').toLowerCase();
-    if (browser.startsWith('en')) return 'en';
     return 'ru';
 }
 
