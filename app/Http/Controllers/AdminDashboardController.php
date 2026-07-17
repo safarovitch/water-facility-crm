@@ -170,6 +170,23 @@ class AdminDashboardController extends Controller
                 ->get();
         });
 
+        // Per-URL web traffic recorded by the TrackPageView middleware.
+        $pageViews = Cache::remember('admin_dashboard:page_views', 60, function () {
+            $monthStart = now()->subDays(30)->toDateString();
+
+            return [
+                'today' => (int) \App\Models\PageView::where('date', today()->toDateString())->sum('views'),
+                'month' => (int) \App\Models\PageView::where('date', '>=', $monthStart)->sum('views'),
+                'topPages' => \App\Models\PageView::where('date', '>=', $monthStart)
+                    ->selectRaw('path, SUM(views) as views')
+                    ->groupBy('path')
+                    ->orderByDesc('views')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn ($row) => ['path' => $row->path, 'views' => (int) $row->views]),
+            ];
+        });
+
         return Inertia::render('AdminDashboard', [
             'stats' => $stats,
             'recentOrders' => $recentOrders,
@@ -178,6 +195,7 @@ class AdminDashboardController extends Controller
             'unassignedOrders' => $unassignedOrders,
             'lowStockProducts' => $lowStockProducts,
             'lowStockRawMaterials' => $lowStockRawMaterials,
+            'pageViews' => $pageViews,
         ]);
     }
 

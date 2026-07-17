@@ -76,6 +76,12 @@ interface LowStockRawMaterial {
     unit: string;
 }
 
+interface PageViewsStats {
+    today: number;
+    month: number;
+    topPages: { path: string; views: number }[];
+}
+
 const props = defineProps<{
     stats: Stats;
     recentOrders: RecentOrder[];
@@ -84,6 +90,7 @@ const props = defineProps<{
     unassignedOrders: UnassignedOrder[];
     lowStockProducts: LowStockProduct[];
     lowStockRawMaterials: LowStockRawMaterial[];
+    pageViews?: PageViewsStats;
 }>();
 
 const { t } = useI18n();
@@ -113,6 +120,10 @@ const statusConfig = computed((): Record<string, { label: string; color: string;
 
 const allStatuses = ['pending', 'confirmed', 'in_production', 'ready', 'accepted', 'in_transit', 'delivered', 'cancelled'];
 const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStatus[s] ?? 0), 1);
+
+const maxPageViews = computed(() =>
+    Math.max(...(props.pageViews?.topPages ?? []).map(p => p.views), 1)
+);
 </script>
 
 <template>
@@ -320,6 +331,32 @@ const maxStatusCount = Math.max(...allStatuses.map(s => props.stats.ordersByStat
                         <p v-else class="text-xs text-muted-foreground">{{ t('No sales data yet.') }}</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Website traffic: per-URL page views (recorded by TrackPageView) -->
+            <div v-if="pageViews" class="rounded-xl border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                <div class="mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <BarChart3 class="h-4 w-4 text-muted-foreground" />
+                        <h3 class="text-sm font-semibold text-foreground">{{ t('Page views') }}</h3>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        {{ fmt(pageViews.today) }} {{ t('today') }} · {{ fmt(pageViews.month) }} {{ t('last 30 days') }}
+                    </p>
+                </div>
+                <div v-if="pageViews.topPages.length" class="space-y-2.5">
+                    <div v-for="page in pageViews.topPages" :key="page.path" class="flex items-center gap-3">
+                        <span class="w-56 shrink-0 truncate font-mono text-xs text-foreground" :title="page.path">{{ page.path }}</span>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div
+                                class="h-full rounded-full bg-sky-500 transition-all duration-500"
+                                :style="{ width: `${(page.views / maxPageViews) * 100}%` }"
+                            />
+                        </div>
+                        <span class="w-14 shrink-0 text-right text-xs text-muted-foreground">{{ fmt(page.views) }}</span>
+                    </div>
+                </div>
+                <p v-else class="text-xs text-muted-foreground">{{ t('No traffic data yet.') }}</p>
             </div>
 
             <!-- Operational Alerts & Queues Row -->

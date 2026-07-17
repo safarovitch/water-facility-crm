@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
       HandleInertiaRequests::class,
       AddLinkHeadersForPreloadedAssets::class,
       EnsurePhoneVerified::class,
+      \App\Http\Middleware\TrackPageView::class,
     ]);
 
     $middleware->alias([

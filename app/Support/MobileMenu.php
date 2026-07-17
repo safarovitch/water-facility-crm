@@ -88,6 +88,15 @@ class MobileMenu
             ];
         }
 
+        if ($can['accessCalls']) {
+            $items[] = [
+                'key'     => 'calls',
+                'title'   => ['en' => 'Calls', 'ru' => 'Звонки'],
+                'icon'    => 'phone',
+                'section' => 'sales',
+            ];
+        }
+
         // ── Delivery ─────────────────────────────────────────────────────
         if ($can['assignCurriers']) {
             $items[] = [
