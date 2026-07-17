@@ -192,6 +192,15 @@ const en: Dictionary = {
     pricing: 'Pricing',
     contact: 'Contact',
   },
+  qr: {
+    title: 'Order water in one tap',
+    subtitle: 'Pure 19L mountain spring water, delivered to your door.',
+    orderPhone: 'Order via phone',
+    orderTelegram: 'Order via Telegram',
+    orderWhatsapp: 'Order via WhatsApp',
+    myOrders: 'My orders',
+    visitWebsite: 'Visit website',
+  },
 };
 
 const ru: Dictionary = {
@@ -322,6 +331,15 @@ const ru: Dictionary = {
     about: 'О нас',
     pricing: 'Цены',
     contact: 'Контакты',
+  },
+  qr: {
+    title: 'Закажите воду в одно касание',
+    subtitle: 'Чистая горная родниковая вода 19 л с доставкой до двери.',
+    orderPhone: 'Заказать по телефону',
+    orderTelegram: 'Заказать в Telegram',
+    orderWhatsapp: 'Заказать в WhatsApp',
+    myOrders: 'Мои заказы',
+    visitWebsite: 'Перейти на сайт',
   },
 };
 
@@ -454,6 +472,15 @@ const tg: Dictionary = {
     about: 'Дар бораи мо',
     pricing: 'Нархҳо',
     contact: 'Тамос',
+  },
+  qr: {
+    title: 'Обро бо як пахш фармоед',
+    subtitle: 'Оби тозаи кӯҳии чашмагии 19 л — то дари шумо.',
+    orderPhone: 'Фармоиш бо телефон',
+    orderTelegram: 'Фармоиш дар Telegram',
+    orderWhatsapp: 'Фармоиш дар WhatsApp',
+    myOrders: 'Фармоишҳои ман',
+    visitWebsite: 'Ба сомона гузаред',
   },
 };
 

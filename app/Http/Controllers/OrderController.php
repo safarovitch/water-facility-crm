@@ -145,11 +145,21 @@ class OrderController extends Controller
     }
   }
 
+  /**
+   * The admin area is reachable on two paths: the web SPA (/admin/*) and the
+   * mobile management app (/api/v1/app/admin/*). Both must apply the exact
+   * same admin-vs-client scoping rules.
+   */
+  private static function isAdminPath(): bool
+  {
+    return request()->is('admin/*') || request()->is('api/v1/app/admin/*');
+  }
+
   public function index()
   {
     // Client-facing /orders route MUST be scoped to the signed-in user.
     // Only the admin /admin/orders path may list across users.
-    $isAdminPath = request()->is('admin/*');
+    $isAdminPath = self::isAdminPath();
     $authUserId = auth()->id();
 
     // Clients now have a single-page home (/profile) that shows their orders
@@ -639,7 +649,7 @@ class OrderController extends Controller
   {
     // Non-admin path → only the order owner may view it. Staff/admin land
     // here via /admin/orders/{order} and bypass the check.
-    $isAdminPath = request()->is('admin/*');
+    $isAdminPath = self::isAdminPath();
     if (!$isAdminPath && $order->user_id !== auth()->id()) {
       abort(404);
     }
@@ -690,7 +700,7 @@ class OrderController extends Controller
   private function ensureCourierOwnsOrder(Order $order): void
   {
     $user = auth()->user();
-    if (request()->is('admin/*') && $user?->isCourierOnly() && $order->courier_id !== $user->id) {
+    if (self::isAdminPath() && $user?->isCourierOnly() && $order->courier_id !== $user->id) {
       abort(404);
     }
   }
@@ -1247,6 +1257,7 @@ class OrderController extends Controller
 
       $courierId = request()->input('courier_id');
 
+      $courier = null;
       if ($courierId) {
           $courier = User::findOrFail($courierId);
           if (!$courier->hasRole('Currier')) {
@@ -1254,7 +1265,13 @@ class OrderController extends Controller
           }
       }
 
+      $previousCourierId = $order->courier_id;
       $order->update(['courier_id' => $courierId]);
+
+      // Personal in-app alert for the courier who just got the job.
+      if ($courier && $courier->id !== $previousCourierId) {
+          \App\Support\StaffNotifier::orderAssigned($order, $courier);
+      }
 
       return back()->with('success', 'Currier updated successfully.');
   }

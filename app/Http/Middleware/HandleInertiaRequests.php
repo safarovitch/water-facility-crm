@@ -52,27 +52,10 @@ class HandleInertiaRequests extends Middleware
           'sip_extension' => $user->sip_extension,
           'sip_password' => $user->sip_password,
         ] : null,
-        // Ability flags for the UI. Every flag mirrors a server-side route /
-        // controller restriction — hiding an element here is never the only
-        // guard.
-        'can' => $user ? [
-          'accessAdmin'           => $user->isStaff(),
-          'viewAdminStats'        => $user->hasAdminAccess(),
-          'manageClients'         => $user->isStaff(),
-          'deleteClients'         => $user->hasAdminAccess(),
-          'viewForecasts'         => $user->isStaff(),
-          'assignCurriers'        => $user->hasAdminAccess() || $user->isCurrierManager(),
-          'viewCurrierActivities' => $user->hasAdminAccess() || $user->isCurrierManager(),
-          'manageOrders'          => $user->hasAdminAccess() || $user->isCurrierManager(),
-          'deleteOrders'          => $user->hasAdminAccess(),
-          'accessAccounting'      => $user->isStaff(),
-          'manageAccounting'      => $user->hasAdminAccess(),
-          'manageUsers'           => $user->hasAdminAccess(),
-          'manageProducts'        => $user->hasAdminAccess(),
-          'manageInventory'       => $user->hasAdminAccess(),
-          'manageRawMaterials'    => $user->hasAdminAccess(),
-          'manageSubscriptions'   => $user->hasAdminAccess(),
-        ] : [],
+        // Ability flags for the UI, shared with the mobile API (/api/v1/app/me).
+        // Every flag mirrors a server-side route / controller restriction —
+        // hiding an element here is never the only guard.
+        'can' => \App\Support\UserAbilities::for($user),
       ],
       'asterisk' => [
         'host' => config('services.asterisk.host'),

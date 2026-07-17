@@ -15,6 +15,9 @@ Route::middleware('throttle:60,1')->get(
     [LocationController::class, 'publicLocations']
 );
 
+// Staff management app (all roles) — see routes/mobile.php.
+require __DIR__ . '/mobile.php';
+
 Route::prefix('v1/currier')->group(function () {
   // Auth
   Route::post('/auth/login', [AuthController::class, 'login']);

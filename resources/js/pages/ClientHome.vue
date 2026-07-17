@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import FannLogo from '@/components/FannLogo.vue';
 import OrderStage from '@/components/OrderStage.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   ShoppingCart,
   Calendar,
+  LayoutDashboard,
   LogOut,
   Package,
   RotateCcw,
@@ -91,6 +92,13 @@ const totalBottles = (order: OrderSummary): number =>
 
 const logout = () => router.post('/logout');
 
+// Staff (any role beyond the plain Client role) get a shortcut into the
+// admin dashboard; /admin itself is role-gated server-side.
+const page = usePage();
+const isStaff = computed(() =>
+  ((page.props.auth as any)?.user?.roles ?? []).some((role: string) => role !== 'Client'),
+);
+
 // ── Repeat last order ─────────────────────────────────────────────────────────
 // orderHistory is latest-first across all orders, so [0] is the same order the
 // backend repeats via Order::latest()->first().
@@ -156,6 +164,14 @@ onBeforeUnmount(() => {
           <FannLogo variant="inline" class="h-8 w-auto" />
         </Link>
         <div class="flex items-center gap-2">
+          <Link
+            v-if="isStaff"
+            href="/admin"
+            class="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <LayoutDashboard class="h-4 w-4" />
+            <span class="hidden sm:inline">{{ t('Dashboard') }}</span>
+          </Link>
           <button
             type="button"
             @click="logout"
