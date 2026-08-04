@@ -43,14 +43,14 @@ const options = computed(() => [
 </script>
 
 <template>
-  <div v-if="hasLocation" ref="container" class="relative inline-flex">
+  <div v-if="hasLocation" ref="container" class="relative inline-flex min-w-0 max-w-full">
     <button
       type="button"
       @click.stop="open = !open"
-      class="inline-flex items-start gap-1.5 text-left text-blue-600 dark:text-blue-400 hover:underline"
+      class="inline-flex min-w-0 items-start gap-1.5 text-left text-blue-600 dark:text-blue-400 hover:underline"
     >
       <MapPin class="h-4 w-4 shrink-0 mt-0.5" />
-      <span class="whitespace-normal"><slot>{{ address }}</slot></span>
+      <span class="min-w-0 whitespace-normal break-words"><slot>{{ address }}</slot></span>
     </button>
 
     <div
@@ -71,5 +71,5 @@ const options = computed(() => [
       </a>
     </div>
   </div>
-  <span v-else class="text-sm text-muted-foreground">{{ address || '—' }}</span>
+  <span v-else class="text-sm text-muted-foreground break-words">{{ address || '—' }}</span>
 </template>
