@@ -183,6 +183,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($adminRoles, $ma
 
     Route::name('financial.')->prefix('financial-records')->group(function () use ($adminRoles) {
       Route::get('/', [\App\Http\Controllers\FinancialRecordController::class, 'index'])->name('index');
+      Route::get('export', [\App\Http\Controllers\FinancialRecordController::class, 'export'])->name('export');
       Route::post('/', [\App\Http\Controllers\FinancialRecordController::class, 'store'])->name('store');
       Route::post('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'update'])->name('update');
       Route::delete('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'destroy'])->middleware("role:{$adminRoles}")->name('destroy');

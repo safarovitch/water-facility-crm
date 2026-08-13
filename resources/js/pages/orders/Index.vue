@@ -138,6 +138,14 @@ const deliveryTime = (order: Order): string | null =>
     ? new Date(order.scheduled_delivery_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
     : null;
 
+// The date the order was placed — the list's default sort. Formatted like the
+// delivery column so the two dates read the same way.
+const orderDate = (order: Order): string =>
+  new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const orderTime = (order: Order): string =>
+  new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
 
 const productName = (name: Record<string, string> | string | null | undefined): string => {
   if (!name) return t('Item');
@@ -212,6 +220,9 @@ const statusLabel = computed((): Record<string, string> => ({
                             <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('order_number')">
                                 <div class="flex items-center gap-2">{{ t('Order #') }} <span class="text-xs">{{ isSorted('order_number') ? getSortIcon('order_number') : '⇅' }}</span></div>
                             </th>
+                            <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('created_at')">
+                                <div class="flex items-center gap-2">{{ t('Order date') }} <span class="text-xs">{{ isSorted('created_at') ? getSortIcon('created_at') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('client_id')">
                                 <div class="flex items-center gap-2">{{ t('Client') }} <span class="text-xs">{{ isSorted('client_id') ? getSortIcon('client_id') : '⇅' }}</span></div>
                             </th>
@@ -236,6 +247,10 @@ const statusLabel = computed((): Record<string, string> => ({
                         <tr v-for="order in orders.data" :key="order.id" class="hover:bg-muted/40 transition-colors group">
                             <td class="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">
                                 {{ order.order_number }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900 dark:text-white">{{ orderDate(order) }}</div>
+                                <div class="text-xs text-muted-foreground mt-0.5 tabular-nums">{{ orderTime(order) }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-bold text-gray-900 dark:text-white">{{ order.contact_name || order.client?.name }}</div>
@@ -302,6 +317,7 @@ const statusLabel = computed((): Record<string, string> => ({
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex flex-col">
                             <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
+                            <span class="text-[10px] text-muted-foreground tabular-nums">{{ orderDate(order) }} · {{ orderTime(order) }}</span>
                             <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.contact_name || order.client?.name }}</span>
                             <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.phone || '—' }}</span>
                         </div>

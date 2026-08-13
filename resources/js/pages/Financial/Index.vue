@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit, DollarSign } from 'lucide-vue-next';
+import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit, DollarSign, FileSpreadsheet } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
 import { useI18n } from '@/composables/useI18n';
 
@@ -60,7 +60,7 @@ const props = defineProps<{
   categories: Record<string, string>;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 // Couriers may only record expenses.
 const availableTypes = computed(() =>
@@ -159,6 +159,27 @@ const handleSort = (column: string) => {
   }, { preserveState: true });
 };
 
+/**
+ * Plain download link — the server builds the .xlsx from the same filters and
+ * sort the table is using, so the sheet matches what is on screen.
+ */
+const exportUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  Object.entries(filterForm.data()).forEach(([key, value]) => {
+    if (value) params.set(key, String(value));
+  });
+
+  if (sort.value) {
+    params.set('sort_by', sort.value.column);
+    params.set('sort_dir', sort.value.direction);
+  }
+
+  params.set('locale', locale.value);
+
+  return `/admin/financial-records/export?${params.toString()}`;
+});
+
 const categoryBadgeClass = (category: string) => {
   const classes: Record<string, string> = {
     wages: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -188,10 +209,18 @@ const formatCurrency = (value: number) => {
           <h1 class="text-3xl font-bold tracking-tight">{{ courierScoped ? t('My Expenses') : t('Accounting') }}</h1>
           <p class="text-muted-foreground mt-1 text-lg">{{ courierScoped ? t('Expenses you have recorded.') : t("Manage your facility's income and expenses.") }}</p>
         </div>
-        <Button @click="openCreateDialog" size="lg" class="w-full md:w-auto shadow-lg hover:shadow-xl transition-all">
-          <PlusCircle class="mr-2 h-5 w-5" />
-          {{ courierScoped ? t('Add Expense') : t('Add Record') }}
-        </Button>
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <Button as-child variant="outline" size="lg" class="w-full sm:w-auto">
+            <a :href="exportUrl" download>
+              <FileSpreadsheet class="mr-2 h-5 w-5" />
+              {{ t('Export to Excel') }}
+            </a>
+          </Button>
+          <Button @click="openCreateDialog" size="lg" class="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all">
+            <PlusCircle class="mr-2 h-5 w-5" />
+            {{ courierScoped ? t('Add Expense') : t('Add Record') }}
+          </Button>
+        </div>
       </div>
 
       <!-- Summary Cards (couriers only see their own expense total) -->

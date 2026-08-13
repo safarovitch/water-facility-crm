@@ -220,12 +220,13 @@ class OrderController extends Controller
       );
 
     // Whitelisted sorting. Relation/computed columns (client name, balance
-    // due) use subquery / raw ordering; everything else falls back to newest
-    // first.
+    // due) use subquery / raw ordering; everything else falls back to the
+    // default order-date sort below.
     $sorted = $this->applySort($ordersQuery, [
       'order_number'          => 'order_number',
       'status'                => 'status',
       'total_amount'          => 'total_amount',
+      'created_at'            => fn($q, $dir) => $q->orderBy('created_at', $dir)->orderBy('id', $dir),
       'scheduled_delivery_at' => 'scheduled_delivery_at',
       'client_id'             => fn($q, $dir) => $q->orderBy(
         User::select('name')->whereColumn('users.id', 'orders.user_id'),
@@ -236,8 +237,10 @@ class OrderController extends Controller
       ),
     ]);
 
+    // Default: newest order date first. The id tie-break keeps orders placed
+    // within the same second (bulk subscription runs) in a stable order.
     if (! $sorted) {
-      $ordersQuery->latest();
+      $ordersQuery->latest('created_at')->latest('id');
     }
 
     $orders = $ordersQuery

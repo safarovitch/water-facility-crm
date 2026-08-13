@@ -187,6 +187,7 @@ Route::prefix('v1/app')
 
       Route::prefix('financial-records')->group(function () use ($adminRoles) {
         Route::get('/', [\App\Http\Controllers\FinancialRecordController::class, 'index']);
+        Route::get('export', [\App\Http\Controllers\FinancialRecordController::class, 'export']);
         Route::post('/', [\App\Http\Controllers\FinancialRecordController::class, 'store']);
         Route::post('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'update']);
         Route::delete('{financialRecord}', [\App\Http\Controllers\FinancialRecordController::class, 'destroy'])->middleware("role:{$adminRoles}");

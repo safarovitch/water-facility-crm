@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Enums\FinancialTransactionCategory;
 use App\Enums\FinancialTransactionType;
 use App\Enums\OrderStatus;
+use App\Exports\FinancialRecordsExport;
 use App\Http\Controllers\Concerns\SortsQueries;
 use App\Models\FinancialRecord;
 use App\Models\Order;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use BenSampo\Enum\Rules\EnumValue;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FinancialRecordController extends Controller
 {
@@ -23,25 +26,7 @@ class FinancialRecordController extends Controller
         // company-wide revenue/income figures.
         $courierScoped = $request->user()->isCourierStaff();
 
-        $query = FinancialRecord::with('recorder');
-
-        if ($courierScoped) {
-            $query->where('recorded_by_id', $request->user()->id);
-        }
-
-        // Filtering
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-        if ($request->filled('from')) {
-            $query->whereDate('transaction_date', '>=', $request->from);
-        }
-        if ($request->filled('to')) {
-            $query->whereDate('transaction_date', '<=', $request->to);
-        }
+        $query = $this->filteredQuery($request)->with('recorder');
 
         // Clone query for totals before pagination
         $totalsQuery = clone $query;
@@ -58,14 +43,7 @@ class FinancialRecordController extends Controller
             ? null
             : (float) Order::where('status', OrderStatus::Delivered)->sum('total_amount');
 
-        // Whitelisted sorting; default to newest transaction first.
-        if (! $this->applySort($query, [
-            'transaction_date' => 'transaction_date',
-            'amount'           => 'amount',
-            'category'         => 'category',
-        ])) {
-            $query->latest('transaction_date')->latest('id');
-        }
+        $this->applyRecordSort($query);
 
         $records = $query->paginate(50)->withQueryString();
 
@@ -95,6 +73,38 @@ class FinancialRecordController extends Controller
             'types'        => FinancialTransactionType::asSelectArray(),
             'categories'   => $categories,
         ]);
+    }
+
+    /**
+     * Download the filtered records as an .xlsx sheet for the accountant.
+     *
+     * The export deliberately reuses the screen's scoping and filters, so a
+     * courier only ever exports their own expenses and what lands in the file
+     * is exactly what the user is looking at.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $courierScoped = $request->user()->isCourierStaff();
+
+        $query = $this->filteredQuery($request)->with(['recorder', 'media']);
+        $this->applyRecordSort($query);
+
+        $export = new FinancialRecordsExport(
+            records: $query,
+            filters: $request->only(['type', 'category', 'from', 'to']),
+            courierScoped: $courierScoped,
+            revenue: $courierScoped ? null : $this->deliveredOrderRevenue($request),
+            locale: $request->string('locale')->toString() === 'en' ? 'en' : 'ru',
+            currency: (string) config('app.currency'),
+        );
+
+        $path = $export->build()->writeToTempFile();
+
+        return response()
+            ->download($path, $export->filename(), [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend();
     }
 
     public function store(Request $request)
@@ -157,5 +167,69 @@ class FinancialRecordController extends Controller
         $financialRecord->delete();
 
         return back()->with('success', 'Financial record deleted.');
+    }
+
+    /**
+     * The record set behind both the Accounting screen and its export: scoped
+     * to what the current user may see, narrowed by the request's filters.
+     *
+     * @return Builder<FinancialRecord>
+     */
+    private function filteredQuery(Request $request): Builder
+    {
+        $query = FinancialRecord::query();
+
+        // Couriers only see the expenses they recorded themselves.
+        if ($request->user()->isCourierStaff()) {
+            $query->where('recorded_by_id', $request->user()->id);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('transaction_date', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('transaction_date', '<=', $request->to);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Whitelisted sorting; defaults to newest transaction first.
+     */
+    private function applyRecordSort(Builder $query): void
+    {
+        if (! $this->applySort($query, [
+            'transaction_date' => 'transaction_date',
+            'amount'           => 'amount',
+            'category'         => 'category',
+        ])) {
+            $query->latest('transaction_date')->latest('id');
+        }
+    }
+
+    /**
+     * Revenue from delivered orders. A dated report counts the orders actually
+     * delivered inside the window; without a period it matches the all-time
+     * figure shown on the screen.
+     */
+    private function deliveredOrderRevenue(Request $request): float
+    {
+        $orders = Order::where('status', OrderStatus::Delivered);
+
+        if ($request->filled('from')) {
+            $orders->whereDate('actual_delivery_at', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $orders->whereDate('actual_delivery_at', '<=', $request->to);
+        }
+
+        return (float) $orders->sum('total_amount');
     }
 }
