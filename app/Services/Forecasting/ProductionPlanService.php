@@ -60,15 +60,25 @@ class ProductionPlanService
         $predicted  = $this->predictedByDay($from, $to);
         $recorded   = $this->recordedByDay($from, $to);
 
-        $products = Product::with('rawMaterials')
-            ->whereIn('id', $this->relevantProductIds($confirmed, $predicted))
-            ->get();
+        // Only what this business actually fills. The catalogue also holds
+        // reusable containers and resold side products, and planning
+        // production for those asks staff to make things nobody makes.
+        $products = Product::with('rawMaterials')->produced()->get();
 
         $rows = [];
 
         foreach ($products as $product) {
             $rows[] = $this->planForProduct($product, $dates, $from, $confirmed, $predicted, $recorded);
         }
+
+        // Even among produced products, one with no demand, no stock and no
+        // production in the window has nothing to say. Giving it a card of its
+        // own puts "nothing to fill" directly beside the number that matters
+        // and makes the page look like it is arguing with itself. Those are
+        // listed by name instead, so nothing silently disappears.
+        [$active, $idle] = collect($rows)->partition(fn (array $r) => $this->hasActivity($r));
+
+        $rows = $active->values()->all();
 
         usort($rows, fn ($a, $b) => $b['to_fill'] <=> $a['to_fill']);
 
@@ -78,6 +88,10 @@ class ProductionPlanService
             'is_range'    => $from->ne($to),
             'day_count'   => count($dates),
             'products'    => $rows,
+            'idle'        => $idle->map(fn (array $r) => [
+                'product_id' => $r['product_id'],
+                'name'       => $r['name'],
+            ])->values()->all(),
             'totals'      => [
                 'needed'   => array_sum(array_column($rows, 'needed')),
                 'to_fill'  => array_sum(array_column($rows, 'to_fill')),
@@ -88,6 +102,19 @@ class ProductionPlanService
             // one instead of quietly assuming the warehouse is empty.
             'needs_stock_count' => collect($rows)->contains(fn ($r) => ! $r['has_count']),
         ];
+    }
+
+    /**
+     * Is there anything worth telling staff about this product?
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function hasActivity(array $row): bool
+    {
+        return $row['needed'] > 0
+            || $row['to_fill'] > 0
+            || $row['ready_now'] > 0
+            || $row['recorded'] > 0;
     }
 
     /**
@@ -407,40 +434,6 @@ class ProductionPlanService
             ],
             ['units' => max(0, $units), 'recorded_by' => $userId],
         );
-    }
-
-    /**
-     * Products worth planning for: anything with demand, plus anything that
-     * has ever been produced, so a product does not vanish from the page on a
-     * quiet day.
-     *
-     * @return int[]
-     */
-    private function relevantProductIds(array $confirmed, array $predicted): array
-    {
-        $ids = [];
-
-        foreach ([$confirmed, $predicted] as $source) {
-            foreach ($source as $byProduct) {
-                foreach (array_keys($byProduct) as $productId) {
-                    $ids[(int) $productId] = true;
-                }
-            }
-        }
-
-        foreach (ProductionRun::query()->distinct()->pluck('product_id') as $productId) {
-            $ids[(int) $productId] = true;
-        }
-
-        // Still nothing (a brand-new install): fall back to stocked products so
-        // the page has something to show rather than looking broken.
-        if (empty($ids)) {
-            foreach (Product::query()->where('status', 'active')->limit(10)->pluck('id') as $productId) {
-                $ids[(int) $productId] = true;
-            }
-        }
-
-        return array_keys($ids);
     }
 
     /**

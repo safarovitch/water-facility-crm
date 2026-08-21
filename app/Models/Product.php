@@ -29,6 +29,7 @@ class Product extends Model implements HasMedia
     'currency',
     'quantity',
     'manage_stock',
+    'is_produced',
     'low_stock_threshold',
     'low_stock_action',
     'status',
@@ -44,6 +45,7 @@ class Product extends Model implements HasMedia
     'cost' => 'decimal:2',
     'weight' => 'decimal:2',
     'manage_stock' => 'boolean',
+    'is_produced' => 'boolean',
   ];
 
   protected $appends = [
@@ -79,6 +81,16 @@ class Product extends Model implements HasMedia
         return array_values((array) $name)[0] ?? 'product';
       })
       ->saveSlugsTo('slug');
+  }
+
+  /**
+   * Products this business actually manufactures, as opposed to resold side
+   * products and reusable containers that merely live in the same catalogue.
+   * Drives the daily production plan.
+   */
+  public function scopeProduced($query)
+  {
+    return $query->where('is_produced', true);
   }
 
   public function orderItems(): HasMany

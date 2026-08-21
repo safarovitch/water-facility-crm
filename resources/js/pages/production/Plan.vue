@@ -64,6 +64,7 @@ const props = defineProps<{
         is_range: boolean;
         day_count: number;
         products: ProductPlan[];
+        idle: { product_id: number; name: Record<string, string> | string | null }[];
         totals: { needed: number; to_fill: number; recorded: number; ready: number };
         needs_stock_count: boolean;
     };
@@ -202,9 +203,20 @@ const toggle = (id: number) => (expanded.value = expanded.value === id ? null : 
                 </div>
             </div>
 
-            <p v-if="!plan.products.length" class="py-12 text-center text-sm text-muted-foreground">
-                {{ t('No products to plan for yet.') }}
-            </p>
+            <!--
+              One calm empty state for the whole page. Previously every idle
+              product rendered its own "nothing to fill" hero card, so a quiet
+              day looked like a page full of contradictory answers.
+            -->
+            <Card v-if="!plan.products.length" class="shadow-sm">
+                <CardContent class="px-6 py-12 text-center">
+                    <Check class="mx-auto mb-3 h-12 w-12 text-emerald-600 dark:text-emerald-400" />
+                    <div class="text-xl font-bold text-foreground">{{ t('Nothing to fill') }}</div>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {{ plan.is_range ? t('No deliveries are due in this period.') : t('No deliveries are due on this day.') }}
+                    </p>
+                </CardContent>
+            </Card>
 
             <div v-for="product in plan.products" :key="product.product_id" class="space-y-3">
                 <!-- The answer. -->
@@ -392,6 +404,10 @@ const toggle = (id: number) => (expanded.value = expanded.value === id ? null : 
                     </CardContent>
                 </Card>
             </div>
+
+            <p v-if="plan.idle.length" class="pt-2 text-center text-xs text-muted-foreground">
+                {{ t('Not shown, nothing due') }}: {{ plan.idle.map((p) => productName(p.name)).join(', ') }}
+            </p>
         </div>
     </AppLayout>
 </template>

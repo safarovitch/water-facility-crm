@@ -194,6 +194,13 @@ because two are facts and one is an estimate: orders already placed for that
 date, subscription schedules not yet turned into orders, and the statistical
 forecast for everyone else.
 
+Only products flagged `is_produced` are planned. The catalogue also holds
+reusable containers and resold side products, and looping over all of them gave
+every one its own card — so a page whose whole point is a single number instead
+showed "fill 240" next to "nothing to fill". The flag is backfilled from the
+bill of materials (a product that consumes raw materials is manufactured; one
+that does not is resold) and is editable on the product form.
+
 `production_runs` is a small ledger with two row types — `production` (staff
 filled this many) and `count` (staff physically counted this many, which
 becomes the new anchor and supersedes all earlier arithmetic). Ready stock is
@@ -222,6 +229,8 @@ Gotchas:
 - The materials figure ("covers N more bottles") is stock left *beyond orders
   already taken*, because raw materials are decremented when an order is
   placed, not when a bottle is filled
+- A produced product with no demand, no stock and no production in the window
+  is listed by name under the plan rather than given a card of its own
 
 ### Other subsystems
 

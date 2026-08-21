@@ -23,8 +23,9 @@ beforeEach(function () {
         'cost'       => 10,
         'weight'     => 1.5,
         'dimensions' => ['h' => 40],
-        'currency'   => 'TJS',
-        'quantity'   => 0,
+        'currency'    => 'TJS',
+        'quantity'    => 0,
+        'is_produced' => true,
     ]);
 
     Carbon::setTestNow('2026-08-21');
@@ -222,14 +223,21 @@ it('includes a subscription delivery that has no order yet', function () {
     expect(planFor('2026-08-24')['needed'])->toBe(12);
 });
 
-it('rounds a fractional forecast up, never down', function () {
+it('reports whole bottles, never fractions', function () {
     countStock('2026-08-21', 0);
+    dueOn('2026-08-22', 100);
 
-    // Nobody fills 6.4 bottles, and rounding down would guarantee a shortfall.
+    // The forecast contributes fractional units; nobody fills 6.4 bottles, so
+    // everything reaching the page is a whole number.
     $plan = planFor('2026-08-22');
 
     expect($plan['needed'])->toBeInt()
-        ->and($plan['to_fill'])->toBeInt();
+        ->and($plan['to_fill'])->toBeInt()
+        ->and($plan['ready_now'])->toBeInt();
+
+    foreach ($plan['days'] as $day) {
+        expect($day['needed'])->toBeInt()->and($day['to_fill'])->toBeInt();
+    }
 });
 
 it('puts an open order with no delivery date on the first day rather than nowhere', function () {
@@ -250,4 +258,83 @@ it('puts an open order with no delivery date on the first day rather than nowher
     ]);
 
     expect(planFor('2026-08-21')['needed'])->toBe(20);
+});
+
+it('leaves out a produced product with no demand, no stock and no production', function () {
+    $quiet = Product::create([
+        'name'        => ['en' => 'Bottle 5L'],
+        'sku'         => 'B5PR',
+        'price'       => 8,
+        'sale_price'  => 0,
+        'cost'        => 4,
+        'weight'      => 0.5,
+        'dimensions'  => ['h' => 25],
+        'currency'    => 'TJS',
+        'quantity'    => 0,
+        'is_produced' => true,
+    ]);
+
+    countStock('2026-08-21', 0);
+    dueOn('2026-08-22', 100);
+
+    $plan = app(ProductionPlanService::class)->plan(Carbon::parse('2026-08-22'), Carbon::parse('2026-08-22'));
+
+    // A "nothing to fill" hero card sitting next to a "fill 100" one reads as
+    // the page contradicting itself. The quiet product is listed by name
+    // instead, so it is never silently dropped.
+    expect(collect($plan['products'])->pluck('product_id')->all())->toBe([$this->product->id])
+        ->and(collect($plan['idle'])->pluck('product_id')->all())->toBe([$quiet->id]);
+});
+
+it('shows one calm empty state when no product needs anything', function () {
+    countStock('2026-08-21', 0);
+
+    $plan = app(ProductionPlanService::class)->plan(Carbon::parse('2026-09-15'), Carbon::parse('2026-09-15'));
+
+    expect($plan['products'])->toBeEmpty();
+});
+
+it('keeps a product that has stock but no demand, so its stock stays visible', function () {
+    countStock('2026-08-21', 40);
+
+    $plan = app(ProductionPlanService::class)->plan(Carbon::parse('2026-09-15'), Carbon::parse('2026-09-15'));
+
+    expect(collect($plan['products'])->pluck('product_id')->all())->toBe([$this->product->id])
+        ->and($plan['products'][0]['to_fill'])->toBe(0);
+});
+
+it('ignores products the business does not make', function () {
+    // Resold side products and reusable containers share the catalogue. They
+    // are not filled on the line, so planning production for them would ask
+    // staff to make things nobody makes.
+    $resold = Product::create([
+        'name'        => ['en' => 'Water dispenser'],
+        'sku'         => 'DISP-1',
+        'price'       => 400,
+        'sale_price'  => 0,
+        'cost'        => 300,
+        'weight'      => 12,
+        'dimensions'  => ['h' => 100],
+        'currency'    => 'TJS',
+        'quantity'    => 5,
+        'is_produced' => false,
+    ]);
+
+    countStock('2026-08-21', 0);
+
+    $order = dueOn('2026-08-22', 50);
+    $order->items()->create([
+        'product_id' => $resold->id,
+        'quantity'   => 3,
+        'unit_price' => 400,
+        'subtotal'   => 1200,
+        'is_gift'    => false,
+    ]);
+
+    $plan = app(ProductionPlanService::class)->plan(Carbon::parse('2026-08-22'), Carbon::parse('2026-08-22'));
+
+    // The dispenser sells but is never filled, so it appears nowhere in the
+    // plan — not even as an idle row.
+    expect(collect($plan['products'])->pluck('product_id')->all())->toBe([$this->product->id])
+        ->and(collect($plan['idle'])->pluck('product_id')->all())->not->toContain($resold->id);
 });

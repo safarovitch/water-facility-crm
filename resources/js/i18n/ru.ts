@@ -1083,4 +1083,10 @@ export const ru: Record<string, string> = {
     'Where this number comes from': 'Откуда это число',
     'more bottles': 'бутылей',
     'not enough for this plan': 'на этот план не хватит',
+    'No deliveries are due in this period.': 'За этот период доставок нет.',
+    'No deliveries are due on this day.': 'На этот день доставок нет.',
+    'Not shown, nothing due': 'Не показаны, нет спроса',
+    'Only these products appear in the daily production plan. Leave off for resold or side products.':
+        'Только такие товары попадают в план производства. Не отмечайте перепродажу и сопутствующие товары.',
+    'We produce this ourselves': 'Мы производим это сами',
 };

@@ -31,6 +31,7 @@ interface Product {
   weight: string;
   quantity: number;
   manage_stock: boolean;
+  is_produced: boolean;
   low_stock_threshold: number;
   low_stock_action: string;
   status: string;
@@ -64,6 +65,7 @@ const form = useForm({
   weight: props.product.weight,
   quantity: props.product.quantity,
   manage_stock: props.product.manage_stock,
+  is_produced: props.product.is_produced,
   low_stock_threshold: props.product.low_stock_threshold,
   low_stock_action: props.product.low_stock_action,
   status: props.product.status,
@@ -235,6 +237,15 @@ const selectClass = cn(
               <Label for="weight">{{ t('Weight (kg)') }}</Label>
               <Input id="weight" type="number" step="0.01" min="0" v-model="form.weight" />
             </div>
+            <!-- Production plan opt-in -->
+            <div class="flex items-center gap-3">
+              <input id="is_produced" type="checkbox" v-model="form.is_produced" class="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-600" />
+              <Label for="is_produced" class="mb-0 cursor-pointer">{{ t('We produce this ourselves') }}</Label>
+            </div>
+            <p class="-mt-2 text-xs text-muted-foreground">
+              {{ t('Only these products appear in the daily production plan. Leave off for resold or side products.') }}
+            </p>
+
             <div class="flex items-center gap-3">
               <input id="manage_stock" type="checkbox" v-model="form.manage_stock" class="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-600" />
               <Label for="manage_stock" class="mb-0 cursor-pointer">{{ t('Track stock levels') }}</Label>
