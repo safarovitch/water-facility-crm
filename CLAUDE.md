@@ -180,71 +180,18 @@ Gotchas:
 - Over a horizon, **variances add, standard deviations do not**. Summing daily
   P10s overstates a 30-day band by roughly 5x
 
-#### The production plan
-
-`/admin/production` is the one page non-technical staff use every morning, so
-it deliberately shows one big number and no statistics vocabulary. It is also
-where the forecast stops being advice and becomes a decision, which makes its
-arithmetic worth understanding:
-
-    fill = needed that day − what is already filled and ready
-
-Demand for a day comes from three sources, and they are kept visibly separate
-because two are facts and one is an estimate: orders already placed for that
-date, subscription schedules not yet turned into orders, and the statistical
-forecast for everyone else.
-
-Only products flagged `is_produced` are planned. The catalogue also holds
-reusable containers and resold side products, and looping over all of them gave
-every one its own card — so a page whose whole point is a single number instead
-showed "fill 240" next to "nothing to fill". The flag is backfilled from the
-bill of materials (a product that consumes raw materials is manufactured; one
-that does not is resold) and is editable on the product form.
-
-`production_runs` is a small ledger with two row types — `production` (staff
-filled this many) and `count` (staff physically counted this many, which
-becomes the new anchor and supersedes all earlier arithmetic). Ready stock is
-*derived* from it rather than stored, because a warehouse balance always
-drifts and re-counting must be the easy fix. This exists because the app had no
-production step at all: `OrderController` decrements `products.quantity` when
-an order is placed and nothing ever puts it back, and on the 19L product
-`manage_stock` is off, so that column is stale and unusable.
-
-Gotchas:
-
-- **Round to nearest, never up.** Rounding the forecast tail up turns 0.2
-  predicted bottles into a whole bottle every day, telling staff to "fill 1"
-  all week and over-producing the thing the page exists to prevent. The
-  fractional deficit carries forward in stock until it is a real bottle
-- Gifts **are** counted here, unlike everywhere else in the app: a free bottle
-  is still a bottle somebody has to fill
-- Short deliveries subtract `delivered_quantity`, not `quantity` — bottles that
-  came back on the van never left stock
-- `Subscription::occurrencesBetween()` is shared with the demand forecast on
-  purpose. The generator advances `next_delivery_at` **past** the delivery it
-  just created, so an order and a schedule date never describe the same
-  delivery — filtering out subscription-generated orders would silently drop
-  them. Both services include the orders and skip schedule dates that already
-  have one
-- The materials figure ("covers N more bottles") is stock left *beyond orders
-  already taken*, because raw materials are decremented when an order is
-  placed, not when a bottle is filled
-- A produced product with no demand, no stock and no production in the window
-  is listed by name under the plan rather than given a card of its own
-
 ### Other subsystems
 
 - **Subscriptions** — `SubscriptionService` + `subscriptions:generate` command, scheduled every 5 min (`routes/console.php`); frequency weekly/biweekly/monthly/custom with a time slot
-- **Production plan** — `/admin/production`, `ProductionPlanService`. The daily
-  operational page: pick a date or range, get one number ("fill 240"). See
-  **Demand forecasting** above
 - **Forecasts** — two views over one model, under `/admin/forecasts/*`:
   - `ForecastController` — the per-client calendar: who is likely to order on a
     given day, and what basket (trend, churn flags, expected value). Can create
     the order.
   - `DemandForecastController` + `App\Services\Forecasting\*` — the aggregate
     volume view: expected bottles per day/segment/product with a P10–P90 band,
-    plus what to buy. `RoutePlanController` turns a day's demand into vehicle
+    plus what to buy. The date picker at the top reads a single day out of
+    `forecast.days` client-side — it is a lens on data the horizon already
+    fetched, not another request. `RoutePlanController` turns a day's demand into vehicle
     runs. See **Demand forecasting** above.
 - **Financial records** — polymorphic income/expense ledger; `/admin/financial-records/export` uses the dependency-free `App\Support\XlsxWriter`
 - **Notifications** — `OrderCreated` / `OrderDelivered` / `OrderStatusUpdated` events → Telegram group broadcast (`TelegramNotifier`) + per-user inbox fan-out (`StaffNotifier`) readable at `/api/v1/app/notifications`

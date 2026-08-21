@@ -173,19 +173,6 @@ Route::middleware(['auth', 'verified'])->group(function () use ($adminRoles, $ma
     });
 
     /*
-     * Production planning — the daily "how many do we fill today" page.
-     *
-     * Deliberately outside the forecasts group: it is used every morning by
-     * production staff, while everything under /forecasts is analysis. Viewing
-     * is open to the staff tier; recording output is a manager action.
-     */
-    Route::name('production.')->prefix('production')->group(function () use ($managerRoles) {
-      Route::get('/', [\App\Http\Controllers\ProductionPlanController::class, 'index'])->name('index');
-      Route::post('record', [\App\Http\Controllers\ProductionPlanController::class, 'record'])->middleware("role:{$managerRoles}")->name('record');
-      Route::post('count', [\App\Http\Controllers\ProductionPlanController::class, 'count'])->middleware("role:{$managerRoles}")->name('count');
-    });
-
-    /*
      * Forecasting.
      *
      * `index` is the per-client calendar (who is likely to order, and when).

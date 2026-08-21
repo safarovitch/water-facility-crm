@@ -79,14 +79,6 @@ class MobileMenu
                 'section' => 'sales',
             ];
         }
-        if ($can['viewProduction']) {
-            $items[] = [
-                'key'     => 'production',
-                'title'   => ['en' => 'Production', 'ru' => 'Производство'],
-                'icon'    => 'factory',
-                'section' => 'sales',
-            ];
-        }
         if ($can['viewDemandForecast']) {
             $items[] = [
                 'key'     => 'forecasts-demand',

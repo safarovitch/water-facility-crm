@@ -176,13 +176,6 @@ Route::prefix('v1/app')
         Route::delete('{order}',         [OrderController::class, 'destroy'])->middleware("role:{$adminRoles}");
       });
 
-      // Mirrors the production group in web.php.
-      Route::prefix('production')->group(function () use ($managerRoles) {
-        Route::get('/', [\App\Http\Controllers\ProductionPlanController::class, 'index']);
-        Route::post('record', [\App\Http\Controllers\ProductionPlanController::class, 'record'])->middleware("role:{$managerRoles}");
-        Route::post('count', [\App\Http\Controllers\ProductionPlanController::class, 'count'])->middleware("role:{$managerRoles}");
-      });
-
       // Mirrors the forecasts group in web.php. A route added there is
       // invisible to the mobile app until it is mirrored here.
       Route::prefix('forecasts')->group(function () use ($managerRoles, $adminRoles) {

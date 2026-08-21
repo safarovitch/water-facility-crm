@@ -44,7 +44,6 @@ const form = useForm({
   weight: '',
   quantity: 0,
   manage_stock: false,
-  is_produced: false,
   low_stock_threshold: 0,
   low_stock_action: 'none',
   status: 'active',
@@ -223,14 +222,6 @@ const selectClass = cn(
               <Input id="weight" type="number" step="0.01" min="0" v-model="form.weight" placeholder="0.00" />
             </div>
 
-            <!-- Production plan opt-in -->
-            <div class="flex items-center gap-3">
-              <input id="is_produced" type="checkbox" v-model="form.is_produced" class="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-600" />
-              <Label for="is_produced" class="mb-0 cursor-pointer">{{ t('We produce this ourselves') }}</Label>
-            </div>
-            <p class="-mt-2 text-xs text-muted-foreground">
-              {{ t('Only these products appear in the daily production plan. Leave off for resold or side products.') }}
-            </p>
 
             <!-- Manage stock toggle -->
             <div class="flex items-center gap-3">

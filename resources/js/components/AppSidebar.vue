@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw, CalendarClock, TrendingUp, Target, Route as RouteIcon, Tags, Factory, LineChart } from 'lucide-vue-next';
+import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw, CalendarClock, TrendingUp, Target, Route as RouteIcon, Tags, LineChart } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Use route() helper where possible or update hardcoded paths
@@ -24,7 +24,6 @@ const routeForecastsAccuracy = () => '/admin/forecasts/accuracy';
 const routeForecastsSeasonality = () => '/admin/forecasts/seasonality';
 const routeForecastsSegments = () => '/admin/forecasts/segments';
 const routeForecastsRoutes = () => '/admin/forecasts/routes';
-const routeProduction = () => '/admin/production';
 const routeCurriersActivities = () => '/admin/curriers/activities';
 const routeFinancialIndex = () => '/admin/financial-records';
 const routeInventoryIndex = () => '/admin/inventory-items';
@@ -66,13 +65,6 @@ const mainNavItems = computed((): NavItem[] => {
       href: adminDashboard(),
       icon: LayoutGrid,
     });
-
-    // Production is the one page used every single morning, by staff who do
-    // not otherwise use the CRM. It gets a top-level entry rather than being
-    // buried under Sales alongside the analysis pages.
-    if (can.value.viewProduction) {
-      items.push({ title: t('Production'), href: routeProduction(), icon: Factory });
-    }
 
     const salesChildren: NavItem[] = [];
     if (can.value.manageProducts) {

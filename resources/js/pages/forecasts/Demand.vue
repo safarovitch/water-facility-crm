@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, Info, PackageSearch, Route as RouteIcon, Sparkles, Target } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Day {
     date: string;
@@ -108,6 +108,33 @@ const toggleSegment = (value: string) => {
     router.get('/admin/forecasts/demand', { horizon: props.horizon, segments: next }, { preserveState: true, preserveScroll: true });
 };
 
+/*
+ * Bottles for one chosen day.
+ *
+ * Read straight out of `forecast.days`, which the horizon already fetched —
+ * picking a date is a lens on data that is on the page, not another request.
+ * Dates outside the horizon simply have no row; the input is clamped to the
+ * window rather than silently showing zero.
+ */
+const selectedDate = ref(props.forecast.from);
+
+const selectedDay = computed(() => props.forecast.days.find((d) => d.date === selectedDate.value) ?? null);
+
+// Narrowing the horizon can strand the chosen date outside it; snap back
+// rather than leaving the card empty.
+watch(
+    () => [props.forecast.from, props.forecast.to],
+    () => {
+        if (selectedDate.value < props.forecast.from || selectedDate.value > props.forecast.to) {
+            selectedDate.value = props.forecast.from;
+        }
+    },
+);
+
+const dateLabel = computed(() =>
+    new Date(`${selectedDate.value}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'long', weekday: 'long' }),
+);
+
 /** Widest segment bar, for scaling the inline share bars. */
 const maxSegmentUnits = computed(() => Math.max(1, ...props.forecast.segments.map((s) => s.units)));
 
@@ -174,6 +201,43 @@ const coverClass = (days: number | null) => {
                         >
                             {{ t('Review seasonality curves') }}
                         </Link>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!--
+        Bottles for a single day. The headline cards below cover the whole
+        horizon; this answers the only question the warehouse asks in the
+        morning — how many go out today.
+      -->
+            <Card class="border-sky-200 shadow-sm dark:border-sky-900/60">
+                <CardContent class="flex flex-wrap items-center justify-between gap-4 p-4">
+                    <div>
+                        <label for="forecast-date" class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            {{ t('Bottles to sell on') }}
+                        </label>
+                        <input
+                            id="forecast-date"
+                            v-model="selectedDate"
+                            type="date"
+                            :min="forecast.from"
+                            :max="forecast.to"
+                            class="mt-1 block rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground"
+                        />
+                    </div>
+
+                    <div v-if="selectedDay" class="text-right">
+                        <div class="text-4xl font-bold text-foreground">{{ Math.round(selectedDay.units).toLocaleString() }}</div>
+                        <div class="text-xs text-muted-foreground">
+                            {{ dateLabel }} · {{ Math.round(selectedDay.units_p10).toLocaleString() }} –
+                            {{ Math.round(selectedDay.units_p90).toLocaleString() }}
+                        </div>
+                        <div class="text-xs text-muted-foreground">
+                            {{ Math.round(selectedDay.committed_units).toLocaleString() }} {{ t('already ordered') }}
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-muted-foreground">
+                        {{ t('Pick a date inside the forecast window, or widen the horizon.') }}
                     </div>
                 </CardContent>
             </Card>

@@ -29,11 +29,6 @@ class UserAbilities
             'manageClients'         => $user->isStaff(),
             'deleteClients'         => $user->hasAdminAccess(),
             'viewForecasts'         => $user->isStaff(),
-            // The daily production plan. Visible to the whole staff tier —
-            // the person filling bottles needs it — but only managers may
-            // record output or re-count stock.
-            'viewProduction'        => $user->isStaff(),
-            'recordProduction'      => $user->hasAdminAccess() || $user->isCurrierManager(),
             // Aggregate volume, procurement and accuracy views. Kept to the
             // manager tier: a plain courier must never see company-wide totals.
             'viewDemandForecast'    => $user->hasAdminAccess() || $user->isCurrierManager(),
