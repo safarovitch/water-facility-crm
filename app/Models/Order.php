@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Order extends Model
 {
@@ -68,7 +69,10 @@ class Order extends Model
     parent::boot();
 
     static::creating(function (Order $order) {
-      $order->order_number = static::generateOrderNumber();
+      // created_at may have been backdated before save (admin recording an
+      // order taken earlier), so the number must follow the effective
+      // creation date rather than "now".
+      $order->order_number = static::generateOrderNumber($order->created_at);
     });
 
     static::created(function (Order $order) {
@@ -76,12 +80,22 @@ class Order extends Model
     });
   }
 
-  public static function generateOrderNumber(): string
+  /**
+   * Per-year sequential order number, e.g. WF-2026-00042.
+   *
+   * The sequence continues from the highest number already issued for that
+   * year (the fixed-width padding makes the string maximum the numeric one),
+   * so a backdated order slots into its own year without colliding with the
+   * numbers that year already handed out.
+   */
+  public static function generateOrderNumber(?\DateTimeInterface $createdAt = null): string
   {
-    $year   = now()->format('Y');
-    $latest = static::whereYear('created_at', $year)->max('id') ?? 0;
+    $year = ($createdAt ? Carbon::instance($createdAt) : now())->format('Y');
 
-    return 'WF-' . $year . '-' . str_pad($latest + 1, 5, '0', STR_PAD_LEFT);
+    $latest   = static::where('order_number', 'like', "WF-{$year}-%")->max('order_number');
+    $sequence = $latest ? (int) substr($latest, -5) : 0;
+
+    return 'WF-' . $year . '-' . str_pad($sequence + 1, 5, '0', STR_PAD_LEFT);
   }
 
   public function getGrandTotalAttribute(): float

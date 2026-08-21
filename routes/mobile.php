@@ -176,9 +176,29 @@ Route::prefix('v1/app')
         Route::delete('{order}',         [OrderController::class, 'destroy'])->middleware("role:{$adminRoles}");
       });
 
-      Route::prefix('forecasts')->group(function () use ($managerRoles) {
+      // Mirrors the production group in web.php.
+      Route::prefix('production')->group(function () use ($managerRoles) {
+        Route::get('/', [\App\Http\Controllers\ProductionPlanController::class, 'index']);
+        Route::post('record', [\App\Http\Controllers\ProductionPlanController::class, 'record'])->middleware("role:{$managerRoles}");
+        Route::post('count', [\App\Http\Controllers\ProductionPlanController::class, 'count'])->middleware("role:{$managerRoles}");
+      });
+
+      // Mirrors the forecasts group in web.php. A route added there is
+      // invisible to the mobile app until it is mirrored here.
+      Route::prefix('forecasts')->group(function () use ($managerRoles, $adminRoles) {
         Route::get('index', [\App\Http\Controllers\ForecastController::class, 'index']);
         Route::post('order', [\App\Http\Controllers\ForecastController::class, 'createOrder'])->middleware("role:{$managerRoles}");
+
+        Route::get('demand', [\App\Http\Controllers\DemandForecastController::class, 'index']);
+        Route::get('accuracy', [\App\Http\Controllers\DemandForecastController::class, 'accuracy']);
+
+        Route::get('seasonality', [\App\Http\Controllers\DemandForecastController::class, 'seasonality']);
+        Route::post('seasonality', [\App\Http\Controllers\DemandForecastController::class, 'updateSeasonality'])->middleware("role:{$adminRoles}");
+
+        Route::get('segments', [\App\Http\Controllers\DemandForecastController::class, 'segments']);
+        Route::post('segments/{user}', [\App\Http\Controllers\DemandForecastController::class, 'updateSegment'])->middleware("role:{$managerRoles}");
+
+        Route::get('routes', [\App\Http\Controllers\RoutePlanController::class, 'index'])->middleware("role:{$managerRoles}");
       });
 
       Route::prefix('curriers')->middleware("role:{$managerRoles}")->group(function () {

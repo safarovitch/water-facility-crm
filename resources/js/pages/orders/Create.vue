@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
@@ -30,6 +30,7 @@ const SELF_PICKUP_LABEL = 'Self Pickup';
 
 const form = useForm({
   user_id: null as number | null,
+  created_at: '',
   scheduled_delivery_at: '',
   delivery_address: '',
   new_address: '',
@@ -39,6 +40,20 @@ const form = useForm({
   custom_total: null as number | null,
   new_contact: null as null | { name: string; phone: string; email: string },
 });
+
+// Recording an order under an earlier date is a full-admin action; Currier
+// managers can create orders but never backdate them (server enforces it too).
+const canBackdate = computed(() => !!(usePage().props.auth.can as Record<string, boolean> | undefined)?.backdateOrders);
+
+// datetime-local needs a `YYYY-MM-DDTHH:mm` string; used as the max so the
+// picker itself refuses a future order date.
+const pad = (n: number) => String(n).padStart(2, '0');
+const nowLocal = computed(() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+});
+
+const clearCreatedAt = () => { form.created_at = ''; };
 
 const isNewContact = ref(false);
 
@@ -194,6 +209,29 @@ const toggleNewAddress = () => {
               </div>
 
               <InputError :message="form.errors.user_id" />
+            </div>
+            <div v-if="canBackdate" class="grid gap-2">
+              <div class="flex items-center justify-between">
+                <Label for="created_at">{{ t('Order date') }}</Label>
+                <button
+                  v-if="form.created_at"
+                  type="button"
+                  @click="clearCreatedAt"
+                  class="text-xs font-medium text-gray-400 hover:text-red-500"
+                >{{ t('Reset to now') }}</button>
+              </div>
+              <Input
+                id="created_at"
+                type="datetime-local"
+                v-model="form.created_at"
+                :max="nowLocal"
+              />
+              <p class="text-xs text-gray-400">
+                {{ form.created_at
+                  ? t('The order will be recorded under this date in reports and statistics.')
+                  : t('Leave blank to record the order as of now. Set it to log an order taken earlier.') }}
+              </p>
+              <InputError :message="(form.errors as any)['created_at']" />
             </div>
             <div class="grid gap-2">
               <Label for="scheduled_delivery_at">{{ t('Scheduled Delivery Date & Time') }} <span class="text-gray-400 font-normal text-xs">({{ t('slots 09:00–20:00') }})</span></Label>

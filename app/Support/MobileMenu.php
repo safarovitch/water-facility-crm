@@ -79,6 +79,30 @@ class MobileMenu
                 'section' => 'sales',
             ];
         }
+        if ($can['viewProduction']) {
+            $items[] = [
+                'key'     => 'production',
+                'title'   => ['en' => 'Production', 'ru' => 'Производство'],
+                'icon'    => 'factory',
+                'section' => 'sales',
+            ];
+        }
+        if ($can['viewDemandForecast']) {
+            $items[] = [
+                'key'     => 'forecasts-demand',
+                'title'   => ['en' => 'Demand', 'ru' => 'Спрос'],
+                'icon'    => 'trending-up',
+                'section' => 'sales',
+            ];
+        }
+        if ($can['planRoutes']) {
+            $items[] = [
+                'key'     => 'forecasts-routes',
+                'title'   => ['en' => 'Route plan', 'ru' => 'План маршрутов'],
+                'icon'    => 'route',
+                'section' => 'sales',
+            ];
+        }
         if ($can['manageSubscriptions']) {
             $items[] = [
                 'key'     => 'subscriptions',

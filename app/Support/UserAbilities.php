@@ -29,9 +29,25 @@ class UserAbilities
             'manageClients'         => $user->isStaff(),
             'deleteClients'         => $user->hasAdminAccess(),
             'viewForecasts'         => $user->isStaff(),
+            // The daily production plan. Visible to the whole staff tier —
+            // the person filling bottles needs it — but only managers may
+            // record output or re-count stock.
+            'viewProduction'        => $user->isStaff(),
+            'recordProduction'      => $user->hasAdminAccess() || $user->isCurrierManager(),
+            // Aggregate volume, procurement and accuracy views. Kept to the
+            // manager tier: a plain courier must never see company-wide totals.
+            'viewDemandForecast'    => $user->hasAdminAccess() || $user->isCurrierManager(),
+            'planRoutes'            => $user->hasAdminAccess() || $user->isCurrierManager(),
+            'manageSegments'        => $user->hasAdminAccess() || $user->isCurrierManager(),
+            // Editing a seasonality curve changes every forecast the business
+            // makes, so it stays with the full-admin tier.
+            'manageSeasonality'     => $user->hasAdminAccess(),
             'assignCurriers'        => $user->hasAdminAccess() || $user->isCurrierManager(),
             'viewCurrierActivities' => $user->hasAdminAccess() || $user->isCurrierManager(),
             'manageOrders'          => $user->hasAdminAccess() || $user->isCurrierManager(),
+            // Recording an order under an earlier date rewrites history for
+            // the reports, so it stays with the full-admin tier.
+            'backdateOrders'        => $user->hasAdminAccess(),
             'deleteOrders'          => $user->hasAdminAccess(),
             'accessAccounting'      => $user->isStaff(),
             'manageAccounting'      => $user->hasAdminAccess(),

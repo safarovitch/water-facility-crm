@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import { adminDashboard } from '@/lib/admin-routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw, CalendarClock } from 'lucide-vue-next';
+import { UserX, UsersIcon, UserCheck2, Package, Users2, ClipboardList, Activity, Truck, Box, LayoutGrid, ShoppingCart, Wallet, Wrench, Phone, RotateCcw, CalendarClock, TrendingUp, Target, Route as RouteIcon, Tags, Factory, LineChart } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Use route() helper where possible or update hardcoded paths
@@ -19,6 +19,12 @@ const routeClientsIndex = () => '/admin/clients/index';
 const routeOrdersIndexAdmin = () => '/admin/orders/index';
 const routeOrdersAssignments = () => '/admin/orders/assignments';
 const routeForecastsIndex = () => '/admin/forecasts/index';
+const routeForecastsDemand = () => '/admin/forecasts/demand';
+const routeForecastsAccuracy = () => '/admin/forecasts/accuracy';
+const routeForecastsSeasonality = () => '/admin/forecasts/seasonality';
+const routeForecastsSegments = () => '/admin/forecasts/segments';
+const routeForecastsRoutes = () => '/admin/forecasts/routes';
+const routeProduction = () => '/admin/production';
 const routeCurriersActivities = () => '/admin/curriers/activities';
 const routeFinancialIndex = () => '/admin/financial-records';
 const routeInventoryIndex = () => '/admin/inventory-items';
@@ -61,6 +67,13 @@ const mainNavItems = computed((): NavItem[] => {
       icon: LayoutGrid,
     });
 
+    // Production is the one page used every single morning, by staff who do
+    // not otherwise use the CRM. It gets a top-level entry rather than being
+    // buried under Sales alongside the analysis pages.
+    if (can.value.viewProduction) {
+      items.push({ title: t('Production'), href: routeProduction(), icon: Factory });
+    }
+
     const salesChildren: NavItem[] = [];
     if (can.value.manageProducts) {
       salesChildren.push({ title: t('Products'), href: routeProductsIndex(), icon: Package });
@@ -87,10 +100,36 @@ const mainNavItems = computed((): NavItem[] => {
       children: salesChildren,
     });
 
+    // Analysis, kept in its own group so the day-to-day menus stay short.
+    // Gated above the courier tier: a plain courier must never see
+    // company-wide totals.
+    const planningChildren: NavItem[] = [];
+    if (can.value.viewDemandForecast) {
+      planningChildren.push({ title: t('Demand'), href: routeForecastsDemand(), icon: TrendingUp });
+      planningChildren.push({ title: t('Accuracy'), href: routeForecastsAccuracy(), icon: Target });
+    }
+    if (can.value.manageSegments) {
+      planningChildren.push({ title: t('Client segments'), href: routeForecastsSegments(), icon: Tags });
+    }
+    if (can.value.manageSeasonality) {
+      planningChildren.push({ title: t('Seasonality'), href: routeForecastsSeasonality(), icon: CalendarClock });
+    }
+    if (planningChildren.length) {
+      items.push({
+        title: t('Planning'),
+        href: '#',
+        icon: LineChart,
+        children: planningChildren,
+      });
+    }
+
     if (can.value.assignCurriers || can.value.viewCurrierActivities) {
       const deliveryChildren: NavItem[] = [];
       if (can.value.assignCurriers) {
         deliveryChildren.push({ title: t('Currier Assignments'), href: routeOrdersAssignments(), icon: ClipboardList });
+      }
+      if (can.value.planRoutes) {
+        deliveryChildren.push({ title: t('Route plan'), href: routeForecastsRoutes(), icon: RouteIcon });
       }
       if (can.value.viewCurrierActivities) {
         deliveryChildren.push({ title: t('Currier Activities'), href: routeCurriersActivities(), icon: Activity });

@@ -9,6 +9,7 @@ use App\Traits\HasHumanTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Subscription extends Model
 {
@@ -70,5 +71,60 @@ class Subscription extends Model
         return $this->isActive()
             && $this->next_delivery_at
             && $this->next_delivery_at->isPast();
+    }
+
+    /**
+     * Days in the window this subscription is due to deliver on.
+     *
+     * Lives on the model because both the demand forecast and the production
+     * plan have to answer "what is already committed on Tuesday", and a
+     * subscription due next week has no order row yet — only a schedule. Two
+     * copies of this arithmetic would eventually disagree, and the production
+     * plan would quietly under-fill.
+     *
+     * @return Carbon[]
+     */
+    public function occurrencesBetween(Carbon $from, Carbon $to): array
+    {
+        if (! $this->isActive()) {
+            return [];
+        }
+
+        $step = $this->intervalDays();
+
+        $cursor = $this->next_delivery_at
+            ? $this->next_delivery_at->copy()->startOfDay()
+            : $from->copy()->startOfDay();
+
+        // A schedule the generator has not caught up with still has real
+        // upcoming dates; roll it forward rather than reporting none.
+        $guard = 0;
+        while ($cursor->lt($from) && $guard++ < 400) {
+            $cursor->addDays($step);
+        }
+
+        $dates = [];
+        $guard = 0;
+
+        while ($cursor->lte($to) && $guard++ < 400) {
+            $dates[] = $cursor->copy();
+            $cursor->addDays($step);
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Whole days between deliveries. Monthly is treated as 30 days so the
+     * schedule stays a simple repeating step.
+     */
+    public function intervalDays(): int
+    {
+        return match ($this->frequency) {
+            SubscriptionFrequency::Weekly   => 7,
+            SubscriptionFrequency::Biweekly => 14,
+            SubscriptionFrequency::Monthly  => 30,
+            default                         => max(1, (int) ($this->interval_days ?: 7)),
+        };
     }
 }

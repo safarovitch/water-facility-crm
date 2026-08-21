@@ -19,6 +19,10 @@ class StoreOrderRequest extends FormRequest
       // primary identifier; email is optional.
       'user_id'                 => ['nullable', 'required_without:new_contact.phone', 'exists:users,id'],
       'scheduled_delivery_at'   => ['nullable', 'date'],
+      // Optional backdate for an order entered after the fact. Only full
+      // admins may set it (enforced in OrderController::store); it can
+      // never point at the future.
+      'created_at'              => ['nullable', 'date', 'before_or_equal:now'],
       'delivery_address'        => ['nullable', 'string'],
       'notes'                   => ['nullable', 'string'],
       'custom_total'            => ['nullable', 'numeric', 'min:0'],
@@ -33,6 +37,13 @@ class StoreOrderRequest extends FormRequest
       'new_contact.name'        => ['required_with:new_contact.phone', 'string', 'max:255'],
       'new_contact.phone'       => ['nullable', 'string', 'max:32'],
       'new_contact.email'       => ['nullable', 'email', 'max:255'],
+    ];
+  }
+
+  public function messages(): array
+  {
+    return [
+      'created_at.before_or_equal' => 'The order date cannot be in the future.',
     ];
   }
 }

@@ -12,6 +12,12 @@ export interface Abilities {
     manageClients?: boolean;
     deleteClients?: boolean;
     viewForecasts?: boolean;
+    viewProduction?: boolean;
+    recordProduction?: boolean;
+    viewDemandForecast?: boolean;
+    planRoutes?: boolean;
+    manageSegments?: boolean;
+    manageSeasonality?: boolean;
     assignCurriers?: boolean;
     viewCurrierActivities?: boolean;
     manageOrders?: boolean;

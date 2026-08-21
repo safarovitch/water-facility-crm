@@ -580,12 +580,34 @@ class OrderController extends Controller
     return $user->id;
   }
 
+  /**
+   * Effective creation timestamp for a new admin order.
+   *
+   * Full admins may record an order under an earlier date — a phone order
+   * taken yesterday, a delivery entered after the fact — so it lands in the
+   * right period for the dashboard and the accounting reports. Currier
+   * managers reach this action too but never see the field, so any value
+   * they post is ignored rather than trusted. Null means "stamp it now".
+   */
+  private function resolveCreatedAt(StoreOrderRequest $request): ?\Illuminate\Support\Carbon
+  {
+    if (!$request->filled('created_at') || !auth()->user()?->hasAdminAccess()) {
+      return null;
+    }
+
+    // Validation already rejects future dates; clamp anyway so a clock skew
+    // between the browser and the server can't produce an order from tomorrow.
+    return \Illuminate\Support\Carbon::parse($request->input('created_at'))->min(now());
+  }
+
   public function store(StoreOrderRequest $request)
   {
     $userId = $this->resolveOrderUserId($request);
     $request->merge(['user_id' => $userId]);
 
-    $order = DB::transaction(function () use ($request) {
+    $createdAt = $this->resolveCreatedAt($request);
+
+    $order = DB::transaction(function () use ($request, $createdAt) {
       $items = collect($request->items)->map(function ($item) {
         $product   = Product::findOrFail($item['product_id']);
         $unitPrice = $this->resolveItemUnitPrice($item, $product);
@@ -623,7 +645,7 @@ class OrderController extends Controller
       $contactName = $contact['name']  ?? null;
       $contactPhone = $contact['phone'] ?? null;
 
-      $order = Order::create([
+      $order = new Order([
         'user_id'               => $request->user_id,
         'contact_name'          => $contactName,
         'contact_phone'         => $contactPhone,
@@ -635,6 +657,16 @@ class OrderController extends Controller
         'payment_status'        => $finalTotal <= 0 ? PaymentStatus::Paid : PaymentStatus::Unpaid,
         'created_by'            => auth()->id(),
       ]);
+
+      // Timestamps set before save() survive: Eloquent only stamps
+      // created_at/updated_at when they are not already dirty. Both move
+      // together so a backdated order doesn't look edited after the fact.
+      if ($createdAt) {
+        $order->created_at = $createdAt;
+        $order->updated_at = $createdAt;
+      }
+
+      $order->save();
 
       $order->items()->createMany($items->toArray());
 

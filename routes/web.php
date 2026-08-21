@@ -172,9 +172,43 @@ Route::middleware(['auth', 'verified'])->group(function () use ($adminRoles, $ma
       Route::delete('{order}',         [OrderController::class, 'destroy'])->middleware("role:{$adminRoles}")->name('destroy');
     });
 
-    Route::name('forecasts.')->prefix('forecasts')->group(function () use ($managerRoles) {
+    /*
+     * Production planning — the daily "how many do we fill today" page.
+     *
+     * Deliberately outside the forecasts group: it is used every morning by
+     * production staff, while everything under /forecasts is analysis. Viewing
+     * is open to the staff tier; recording output is a manager action.
+     */
+    Route::name('production.')->prefix('production')->group(function () use ($managerRoles) {
+      Route::get('/', [\App\Http\Controllers\ProductionPlanController::class, 'index'])->name('index');
+      Route::post('record', [\App\Http\Controllers\ProductionPlanController::class, 'record'])->middleware("role:{$managerRoles}")->name('record');
+      Route::post('count', [\App\Http\Controllers\ProductionPlanController::class, 'count'])->middleware("role:{$managerRoles}")->name('count');
+    });
+
+    /*
+     * Forecasting.
+     *
+     * `index` is the per-client calendar (who is likely to order, and when).
+     * `demand` is the aggregate volume view (how many bottles, and what has to
+     * be bought to serve them) — same model, different question. Seasonality
+     * and segments are the two inputs the model rests on, so both are
+     * editable by managers rather than being buried in config; every write
+     * there is marked `manual` and survives the nightly recompute.
+     */
+    Route::name('forecasts.')->prefix('forecasts')->group(function () use ($managerRoles, $adminRoles) {
       Route::get('index', [\App\Http\Controllers\ForecastController::class, 'index'])->name('index');
       Route::post('order', [\App\Http\Controllers\ForecastController::class, 'createOrder'])->middleware("role:{$managerRoles}")->name('order');
+
+      Route::get('demand', [\App\Http\Controllers\DemandForecastController::class, 'index'])->name('demand');
+      Route::get('accuracy', [\App\Http\Controllers\DemandForecastController::class, 'accuracy'])->name('accuracy');
+
+      Route::get('seasonality', [\App\Http\Controllers\DemandForecastController::class, 'seasonality'])->name('seasonality');
+      Route::post('seasonality', [\App\Http\Controllers\DemandForecastController::class, 'updateSeasonality'])->middleware("role:{$adminRoles}")->name('seasonality.update');
+
+      Route::get('segments', [\App\Http\Controllers\DemandForecastController::class, 'segments'])->name('segments');
+      Route::post('segments/{user}', [\App\Http\Controllers\DemandForecastController::class, 'updateSegment'])->middleware("role:{$managerRoles}")->name('segments.update');
+
+      Route::get('routes', [\App\Http\Controllers\RoutePlanController::class, 'index'])->middleware("role:{$managerRoles}")->name('routes');
     });
 
     Route::name('curriers.')->prefix('curriers')->middleware("role:{$managerRoles}")->group(function () {
