@@ -3,9 +3,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
-import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import NumberField from '@/components/NumberField.vue';
 import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { index, show, update } from '@/routes/admin/orders';
@@ -236,7 +236,7 @@ const clientLabel = (c: Client) =>
           <div v-for="(item, idx) in form.items" :key="idx" class="mb-3 border-b border-gray-100 dark:border-gray-700 pb-3">
             <div class="grid grid-cols-12 gap-3 items-end">
               <!-- Product -->
-              <div class="col-span-5 grid gap-1">
+              <div class="col-span-4 grid gap-1">
                 <Label>{{ t('Product') }}</Label>
                 <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
                   <option :value="null">{{ t('Select product...') }}</option>
@@ -245,19 +245,19 @@ const clientLabel = (c: Client) =>
                 <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
               </div>
               <!-- Qty -->
-              <div class="col-span-2 grid gap-1">
+              <div class="col-span-3 grid gap-1">
                 <Label>{{ t('Qty') }}</Label>
-                <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" />
+                <NumberField v-model="item.quantity" :min="1" @update:model-value="onQtyChange(item)" />
               </div>
               <!-- Unit price -->
               <div class="col-span-2 grid gap-1">
                 <Label>{{ t('Unit Price') }}</Label>
-                <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" />
+                <NumberField v-model="item.unit_price" :min="0" :step="0.01" :controls="false" :disabled="item.is_gift" @update:model-value="onQtyChange(item)" />
               </div>
               <!-- Subtotal -->
               <div class="col-span-2 grid gap-1">
                 <Label>{{ t('Subtotal') }}</Label>
-                <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700" />
+                <NumberField :model-value="item.subtotal.toFixed(2)" readonly input-class="bg-gray-50 dark:bg-gray-700" />
               </div>
               <!-- Remove -->
               <div class="col-span-1 flex items-end pb-0.5">
@@ -294,14 +294,14 @@ const clientLabel = (c: Client) =>
                 <span class="text-[10px] text-gray-400 ml-1">({{ t('leave blank to use calculated') }})</span>
               </Label>
               <div class="flex items-center gap-1 w-32">
-                <Input
+                <NumberField
                   id="custom_total"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  v-model.number="form.custom_total"
+                  :step="0.01"
+                  :min="0"
+                  :controls="false"
+                  v-model="form.custom_total"
                   :placeholder="total.toFixed(2)"
-                  class="text-right font-mono"
+                  input-class="text-right font-mono"
                 />
                 <button
                   v-if="form.custom_total !== null && form.custom_total !== undefined"

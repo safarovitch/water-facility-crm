@@ -5,19 +5,19 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { index as guestIndex, show as guestShow } from '@/routes/orders';
-import { index as adminIndex, show as adminShow, create as adminCreate } from '@/routes/admin/orders';
+import { index as adminIndex, show as adminShow, create as adminCreate, exportMethod as adminExport } from '@/routes/admin/orders';
 import { computed, ref } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown } from 'lucide-vue-next';
+import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, FileSpreadsheet } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
 import MapChooser from '@/components/MapChooser.vue';
 import { useI18n } from '@/composables/useI18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const adminMode = computed(() => !!usePage().props.adminMode);
 const can = computed(() => usePage().props.auth.can ?? {});
 
@@ -92,6 +92,28 @@ const handleSort = (column: string) => {
     ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
   }, { preserveState: true, preserveScroll: true });
 };
+
+/**
+ * Plain download link — the server builds the .xlsx from the same filters and
+ * sort the table is using, so the sheet matches what is on screen. Admin path
+ * only: the client-facing order list has no export.
+ */
+const exportUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (statusFilter.value) params.set('status', statusFilter.value);
+  if (paymentFilter.value) params.set('payment', paymentFilter.value);
+  if (search.value) params.set('search', search.value);
+
+  if (sort.value) {
+    params.set('sort_by', sort.value.column);
+    params.set('sort_dir', sort.value.direction);
+  }
+
+  params.set('locale', locale.value);
+
+  return `${adminExport().url}?${params.toString()}`;
+});
 
 const statusBadge: Record<string, string> = {
   pending: 'secondary',
@@ -177,11 +199,18 @@ const statusLabel = computed((): Record<string, string> => ({
           <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{{ t('Orders') }}</h1>
           <p class="text-sm text-muted-foreground mt-1">{{ t('Manage processing, ready, and delivered orders.') }}</p>
         </div>
-        <Link v-if="createRoute" :href="createRoute().url" class="w-full md:w-auto">
-          <Button class="w-full md:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
-            <PlusCircle class="h-4 w-4" /> {{ t('New Order') }}
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <Button v-if="adminMode" as-child variant="outline" class="w-full sm:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
+            <a :href="exportUrl" download>
+              <FileSpreadsheet class="h-4 w-4" /> {{ t('Export to Excel') }}
+            </a>
           </Button>
-        </Link>
+          <Link v-if="createRoute" :href="createRoute().url" class="w-full sm:w-auto">
+            <Button class="w-full sm:w-auto gap-2 shadow-sm font-semibold rounded-xl h-11 md:h-10">
+              <PlusCircle class="h-4 w-4" /> {{ t('New Order') }}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card class="shadow-sm">

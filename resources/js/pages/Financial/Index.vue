@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import NumberField from '@/components/NumberField.vue';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, TrendingUp, TrendingDown, Wallet, Calendar, Tag, Trash2, Edit, DollarSign, FileSpreadsheet } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
@@ -460,7 +461,7 @@ const formatCurrency = (value: number) => {
               <Label for="amount">{{ t('Amount') }}</Label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-[10px] font-bold text-muted-foreground uppercase opacity-70">{{ (usePage().props.currency as string) || '$' }}</span>
-                <Input v-model="form.amount" id="amount" type="number" step="0.01" min="0" class="pl-12" placeholder="0.00" required />
+                <NumberField v-model="form.amount" id="amount" :step="0.01" :min="0" :controls="false" input-class="pl-12 text-left" placeholder="0.00" required />
               </div>
             </div>
 

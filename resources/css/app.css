@@ -189,3 +189,22 @@
         @apply bg-background text-foreground;
     }
 }
+/*
+ * Hold the viewport scale. iOS Safari zooms the whole page in whenever a
+ * focused form control renders below 16px — the delivery-window date field and
+ * its time-slot select were doing exactly that — and it never zooms back out
+ * afterwards. Every control therefore keeps a 16px font on phones; from md up
+ * the components' own `md:text-sm` takes over again.
+ *
+ * This block is deliberately unlayered: Tailwind's utilities layer outranks
+ * @layer base, so a rule living inside base would lose to every `text-sm` and
+ * fix nothing. Checkboxes and radios are excluded — their box is sized, not
+ * typeset.
+ */
+@media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}

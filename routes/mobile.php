@@ -159,6 +159,7 @@ Route::prefix('v1/app')
 
       Route::prefix('orders')->group(function () use ($adminRoles, $managerRoles) {
         Route::get('index',              [OrderController::class, 'index']);
+        Route::get('export',             [OrderController::class, 'export']);
         Route::get('assignments',        [OrderController::class, 'assignments'])->middleware("role:{$managerRoles}");
         Route::get('create',             [OrderController::class, 'create'])->middleware("role:{$managerRoles}");
         Route::post('store',             [OrderController::class, 'store'])->middleware("role:{$managerRoles}");

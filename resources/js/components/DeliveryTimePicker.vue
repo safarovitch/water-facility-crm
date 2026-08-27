@@ -112,12 +112,12 @@ watch([datePart, timePart], () => {
       type="date"
       :min="minDate ?? undefined"
       v-model="datePart"
-      class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-gray-600 dark:bg-input/30 dark:text-white"
+      class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-gray-600 dark:bg-input/30 dark:text-white"
     />
     <select
       v-model="timePart"
       :aria-label="t('Delivery time slot')"
-      class="flex h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-gray-600 dark:bg-input/30 dark:text-white"
+      class="flex h-9 rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-gray-600 dark:bg-input/30 dark:text-white"
     >
       <option v-for="slot in slots" :key="slot" :value="slot">{{ slot }}</option>
     </select>

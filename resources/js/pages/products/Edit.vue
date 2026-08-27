@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import NumberField from '@/components/NumberField.vue';
 import { cn } from '@/lib/utils';
 import { index, update } from '@/routes/admin/products';
 import { computed, ref } from 'vue';
@@ -208,16 +209,16 @@ const selectClass = cn(
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div class="grid gap-2">
               <Label for="price">{{ t('Price') }} *</Label>
-              <Input id="price" type="number" step="0.01" min="0" v-model="form.price" required />
+              <NumberField id="price" :step="0.01" :min="0" :controls="false" v-model="form.price" required />
               <InputError :message="form.errors.price" />
             </div>
             <div class="grid gap-2">
               <Label for="sale_price">{{ t('Sale Price') }}</Label>
-              <Input id="sale_price" type="number" step="0.01" min="0" v-model="form.sale_price" />
+              <NumberField id="sale_price" :step="0.01" :min="0" :controls="false" v-model="form.sale_price" />
             </div>
             <div class="grid gap-2">
               <Label for="cost">{{ t('Cost') }}</Label>
-              <Input id="cost" type="number" step="0.01" min="0" v-model="form.cost" />
+              <NumberField id="cost" :step="0.01" :min="0" :controls="false" v-model="form.cost" />
             </div>
           </div>
         </div>
@@ -228,12 +229,12 @@ const selectClass = cn(
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div class="grid gap-2">
               <Label for="quantity">{{ t('Stock Quantity') }} *</Label>
-              <Input id="quantity" type="number" min="0" v-model.number="form.quantity" required />
+              <NumberField id="quantity" :min="0" v-model="form.quantity" required />
               <InputError :message="form.errors.quantity" />
             </div>
             <div class="grid gap-2">
               <Label for="weight">{{ t('Weight (kg)') }}</Label>
-              <Input id="weight" type="number" step="0.01" min="0" v-model="form.weight" />
+              <NumberField id="weight" :step="0.01" :min="0" :controls="false" v-model="form.weight" />
             </div>
 
             <div class="flex items-center gap-3">
@@ -243,7 +244,7 @@ const selectClass = cn(
             <template v-if="form.manage_stock">
               <div class="grid gap-2">
                 <Label for="low_stock_threshold">{{ t('Low Stock Threshold') }}</Label>
-                <Input id="low_stock_threshold" type="number" min="0" v-model.number="form.low_stock_threshold" />
+                <NumberField id="low_stock_threshold" :min="0" v-model="form.low_stock_threshold" />
               </div>
               <div class="grid gap-2">
                 <Label for="low_stock_action">{{ t('Low Stock Action') }}</Label>
@@ -285,7 +286,7 @@ const selectClass = cn(
               </div>
               <div class="w-40 space-y-1">
                 <Label>{{ t('Quantity Consumed') }}</Label>
-                <Input v-model="rm.quantity" type="number" step="0.0001" min="0" required class="bg-white dark:bg-gray-800" />
+                <NumberField v-model="rm.quantity" :step="0.0001" :min="0" :controls="false" required input-class="bg-white dark:bg-gray-800" />
               </div>
               <Button type="button" @click="removeRawMaterial(index)" variant="ghost" size="icon" class="h-9 w-9 text-red-500 hover:text-red-700 dark:hover:bg-red-900/30">
                 <Trash2 class="w-4 h-4" />

@@ -12,6 +12,7 @@ import { useIntersectionObserver, onClickOutside } from '@vueuse/core';
 import axios from 'axios';
 import { Phone, Edit, MapPin, Building, User as UserIcon, Calendar, Clock, Wallet, Plus, X, RotateCcw, ShoppingBag, Package, Loader2 } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
+import NumberField from '@/components/NumberField.vue';
 import { useI18n } from '@/composables/useI18n';
 
 const { t } = useI18n();
@@ -532,7 +533,12 @@ const formatDate = (dateString: string) => {
             <div class="p-6 space-y-4 text-left">
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Amount') }} ({{ client.wallet?.currency ?? 'TJS' }})</label>
-                    <input v-model="depositForm.amount" type="number" step="1" min="1" class="w-full text-3xl font-black p-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-xl focus:border-blue-500 outline-none transition-all dark:text-white" />
+                    <NumberField
+                        v-model="depositForm.amount"
+                        :min="1"
+                        :controls="false"
+                        input-class="h-auto text-3xl md:text-3xl font-black p-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-xl focus:border-blue-500 focus:ring-0 dark:text-white"
+                    />
                 </div>
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('Internal Notes') }}</label>

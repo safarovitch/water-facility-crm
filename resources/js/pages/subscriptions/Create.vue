@@ -3,9 +3,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import Button from '@/components/ui/button/Button.vue';
-import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import NumberField from '@/components/NumberField.vue';
 import { computed, ref } from 'vue';
 import { useLocale } from '@/composables/useLocale';
 import { useI18n } from '@/composables/useI18n';
@@ -157,12 +157,12 @@ const submitForm = () => {
 
             <div v-if="showDayOfMonth" class="grid gap-2">
               <Label>{{ t('Day of Month') }}</Label>
-              <Input type="number" min="1" max="31" v-model.number="form.day_of_month" :placeholder="t('e.g. 15')" class="h-10" />
+              <NumberField :min="1" :max="31" v-model="form.day_of_month" :placeholder="t('e.g. 15')" size="lg" />
             </div>
 
             <div v-if="showCustomInterval" class="grid gap-2">
               <Label>{{ t('Every X Days') }} *</Label>
-              <Input type="number" min="1" max="365" v-model.number="form.interval_days" class="h-10" />
+              <NumberField :min="1" :max="365" v-model="form.interval_days" size="lg" />
               <InputError :message="form.errors.interval_days" />
             </div>
 
@@ -197,9 +197,9 @@ const submitForm = () => {
                   <option v-for="p in props.products" :key="p.id" :value="p.id">{{ resolveProductName(p) }}</option>
                 </select>
               </div>
-              <div class="w-24 grid gap-1">
+              <div class="w-36 grid gap-1">
                 <Label>{{ t('Qty') }}</Label>
-                <Input type="number" min="1" v-model.number="item.quantity" class="h-10" />
+                <NumberField :min="1" v-model="item.quantity" size="lg" />
               </div>
               <button type="button" @click="removeItem(idx)" class="text-red-500 hover:text-red-700 h-10 w-10 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800 shrink-0">✕</button>
             </div>

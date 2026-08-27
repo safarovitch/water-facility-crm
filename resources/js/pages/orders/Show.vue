@@ -18,6 +18,7 @@ import {
 import { edit as editProduct } from '@/routes/admin/products';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RepeatOrderModal from '@/components/RepeatOrderModal.vue';
+import NumberField from '@/components/NumberField.vue';
 import MapChooser from '@/components/MapChooser.vue';
 import { Wallet, Check, ChevronDown, Loader2, Box, Trash2, Phone, RotateCcw } from 'lucide-vue-next';
 import { useI18n } from '@/composables/useI18n';
@@ -1122,12 +1123,13 @@ const statusButtonClass = (s: string) => {
                     <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ productName(props.order.items[idx]?.product?.name) }}</p>
                     <p class="text-[11px] text-gray-500">{{ t('Ordered') }} {{ props.order.items[idx]?.quantity }}</p>
                   </div>
-                  <input
-                    type="number"
-                    min="0"
+                  <NumberField
+                    :min="0"
                     :max="props.order.items[idx]?.quantity"
-                    v-model.number="line.delivered_quantity"
-                    class="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm text-right outline-none focus:ring-2 focus:ring-blue-500"
+                    v-model="line.delivered_quantity"
+                    size="sm"
+                    class="w-[7.5rem] shrink-0"
+                    :aria-label="t('Delivered quantity')"
                   />
                 </div>
                 <div
@@ -1186,18 +1188,19 @@ const statusButtonClass = (s: string) => {
                   <div class="grid grid-cols-2 gap-2">
                     <label class="flex flex-col gap-1">
                       <span class="text-[11px] font-semibold text-gray-500 uppercase">{{ t('Collected now') }}</span>
-                      <input
-                        type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
-                        v-model.number="rm.quantity"
-                        class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      <NumberField
+                        :min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
+                        v-model="rm.quantity"
+                        size="sm"
                       />
                     </label>
                     <label class="flex flex-col gap-1">
                       <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase">{{ t('Collect later') }}</span>
-                      <input
-                        type="number" min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
-                        v-model.number="rm.deferred_quantity"
-                        class="bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-900/50 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                      <NumberField
+                        :min="0" :max="reusableSummaryById[rm.raw_material_id]?.expected"
+                        v-model="rm.deferred_quantity"
+                        size="sm"
+                        input-class="border-amber-300 focus:border-amber-400 focus:ring-amber-400 dark:border-amber-900/50"
                       />
                     </label>
                   </div>

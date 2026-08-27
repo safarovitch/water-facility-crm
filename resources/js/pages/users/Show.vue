@@ -19,6 +19,7 @@ import {
     MapPin, Building, Plus, X, RotateCcw, ShoppingBag, Loader2, Edit
 } from 'lucide-vue-next';
 import { useI18n } from '@/composables/useI18n';
+import NumberField from '@/components/NumberField.vue';
 
 interface UserAddress {
     id: number;
@@ -692,7 +693,12 @@ const maxDeliveries = props.staffStats
                             <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{{ t('Deposit Amount') }} ({{ profileUser.wallet?.currency || ($page.props.currency as string) || 'TJS' }})</label>
                             <div class="relative">
                                 <Plus class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <input v-model="depositForm.amount" type="number" step="1" min="1" class="w-full text-4xl font-black p-6 pl-12 bg-muted/30 border-2 border-sidebar-border rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all" />
+                                <NumberField
+                                    v-model="depositForm.amount"
+                                    :min="1"
+                                    :controls="false"
+                                    input-class="h-auto text-4xl md:text-4xl text-left font-black p-6 pl-12 bg-muted/30 dark:bg-muted/30 border-2 border-sidebar-border dark:border-sidebar-border rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5"
+                                />
                             </div>
                         </div>
                         <div class="space-y-2.5">

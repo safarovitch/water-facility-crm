@@ -3,7 +3,8 @@ import { ref, watch, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
-import { Minus, Plus, Loader2, RotateCcw } from 'lucide-vue-next';
+import NumberField from '@/components/NumberField.vue';
+import { Loader2, RotateCcw } from 'lucide-vue-next';
 import { useI18n } from '@/composables/useI18n';
 
 interface RepeatItem {
@@ -39,13 +40,6 @@ watch(
 );
 
 const totalBottles = computed(() => lines.value.reduce((sum, l) => sum + (Number(l.quantity) || 0), 0));
-
-const dec = (line: RepeatItem) => {
-  if (line.quantity > 1) line.quantity--;
-};
-const inc = (line: RepeatItem) => {
-  line.quantity++;
-};
 
 const close = () => emit('update:open', false);
 
@@ -89,29 +83,13 @@ const submit = () => {
               <p class="text-sm font-medium truncate text-slate-900 dark:text-slate-100">{{ line.name }}</p>
               <span v-if="line.is_gift" class="text-[10px] font-bold uppercase tracking-wide text-pink-600">{{ t('Gift') }}</span>
             </div>
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                @click="dec(line)"
-                :disabled="line.quantity <= 1"
-                class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                <Minus class="h-4 w-4" />
-              </button>
-              <input
-                type="number"
-                min="1"
-                v-model.number="line.quantity"
-                class="w-12 rounded-lg border border-slate-200 py-1 text-center text-sm font-semibold text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-              <button
-                type="button"
-                @click="inc(line)"
-                class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                <Plus class="h-4 w-4" />
-              </button>
-            </div>
+            <NumberField
+              v-model="line.quantity"
+              :min="1"
+              size="sm"
+              class="w-[7.5rem]"
+              :aria-label="t('Quantity')"
+            />
           </li>
           <li v-if="!lines.length" class="px-3 py-3 text-xs italic text-slate-500">{{ t('No items to repeat.') }}</li>
         </ul>

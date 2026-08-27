@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import NumberField from '@/components/NumberField.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PlusCircle, Search, Edit, Trash2, Box } from 'lucide-vue-next';
 import { useI18n } from '@/composables/useI18n';
@@ -261,7 +262,7 @@ const deleteRecord = (id: number) => {
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label for="current_stock">{{ t('Current Stock') }}</Label>
-                <Input v-model="form.current_stock" type="number" step="0.01" id="current_stock" required />
+                <NumberField v-model="form.current_stock" :step="0.01" :controls="false" id="current_stock" required />
               </div>
               <div class="space-y-2">
                 <Label for="unit">{{ t('Unit') }} <span class="text-red-500">*</span></Label>
@@ -272,7 +273,7 @@ const deleteRecord = (id: number) => {
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                  <Label for="cost_per_unit">{{ t('Cost Per Unit') }}</Label>
-                 <Input v-model="form.cost_per_unit" type="number" step="0.01" min="0" id="cost_per_unit" placeholder="0.00" />
+                 <NumberField v-model="form.cost_per_unit" :step="0.01" :min="0" :controls="false" id="cost_per_unit" placeholder="0.00" />
               </div>
               <div class="space-y-2">
                 <Label for="status">{{ t('Status') }}</Label>
@@ -292,7 +293,7 @@ const deleteRecord = (id: number) => {
 
             <div v-if="form.is_reusable" class="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 dark:border-blue-900/40 dark:bg-blue-900/10 p-3">
               <Label for="deposit_price" class="font-semibold">{{ t('Deposit Price') }} <span class="text-xs text-muted-foreground font-normal">({{ t('charged when not returned') }})</span></Label>
-              <Input v-model="form.deposit_price" type="number" step="0.01" min="0" id="deposit_price" placeholder="0.00" />
+              <NumberField v-model="form.deposit_price" :step="0.01" :min="0" :controls="false" id="deposit_price" placeholder="0.00" />
               <p class="text-xs text-muted-foreground">
                 {{ t("What the client pays per unit when they don't return this container with their next order. This is the replacement price you quote — typically your cost plus a small fee — and is separate from") }} <span class="font-medium">{{ t('Cost Per Unit') }}</span>.
               </p>

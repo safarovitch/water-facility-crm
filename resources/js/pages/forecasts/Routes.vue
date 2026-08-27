@@ -2,7 +2,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import NumberField from '@/components/NumberField.vue';
 import { useI18n } from '@/composables/useI18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -157,13 +157,13 @@ const toggle = (n: number) => (expanded.value = expanded.value === n ? null : n)
                     <label class="mb-1 block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         {{ t('Vehicle capacity') }}
                     </label>
-                    <Input v-model.number="capacity" type="number" min="1" class="h-9 w-32" @keyup.enter="reload({})" />
+                    <NumberField v-model="capacity" :min="1" class="w-40" @keyup.enter="reload({})" />
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         {{ t('Min. confidence') }}
                     </label>
-                    <Input v-model.number="minProbability" type="number" min="0" max="1" step="0.05" class="h-9 w-32" @keyup.enter="reload({})" />
+                    <NumberField v-model="minProbability" :min="0" :max="1" :step="0.05" class="w-40" @keyup.enter="reload({})" />
                 </div>
                 <Button size="sm" @click="reload({})">{{ t('Recalculate') }}</Button>
             </div>

@@ -634,6 +634,7 @@ export const ru: Record<string, string> = {
     'Qty Left': 'Осталось',
     Quantity: 'Количество',
     'Quantity Consumed': 'Израсходовано',
+    'Delivered quantity': 'Доставленное количество',
     'Raw Material': 'Сырьё',
     'Raw Materials': 'Сырьё',
     Ready: 'Готов',

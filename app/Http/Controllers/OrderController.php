@@ -160,7 +160,6 @@ class OrderController extends Controller
     // Client-facing /orders route MUST be scoped to the signed-in user.
     // Only the admin /admin/orders path may list across users.
     $isAdminPath = self::isAdminPath();
-    $authUserId = auth()->id();
 
     // Clients now have a single-page home (/profile) that shows their orders
     // inline. Redirect them there if they hit /orders directly.
@@ -169,7 +168,35 @@ class OrderController extends Controller
       return redirect()->route('dashboard');
     }
 
-    $ordersQuery = Order::with(['client.phones', 'creator', 'items.product:id,name', 'returnedMaterials'])
+    $ordersQuery = $this->filteredOrdersQuery($isAdminPath, [
+      'client.phones', 'creator', 'items.product:id,name', 'returnedMaterials',
+    ]);
+
+    $this->applyOrderSort($ordersQuery);
+
+    $orders = $ordersQuery
+      ->paginate(request()->integer('per_page', 50))
+      ->withQueryString();
+
+    return Inertia::render('orders/Index')->with([
+      'orders'   => $orders,
+      'statuses' => OrderStatus::getValues(),
+    ]);
+  }
+
+  /**
+   * The order set behind both the Orders screen and its export: scoped to
+   * what the current user may see, narrowed by the request's filters.
+   *
+   * @param  list<string>  $with  Relations to eager load. The screen and the
+   *                              export need different depths, so the caller
+   *                              decides rather than paying for both.
+   */
+  private function filteredOrdersQuery(bool $isAdminPath, array $with = []): \Illuminate\Database\Eloquent\Builder
+  {
+    $authUserId = auth()->id();
+
+    return Order::with($with)
       ->when(
         !$isAdminPath && $authUserId,
         fn($q) => $q->where('user_id', $authUserId)
@@ -218,11 +245,17 @@ class OrderController extends Controller
         fn($q, $to) =>
         $q->whereDate('created_at', '<=', $to)
       );
+  }
 
-    // Whitelisted sorting. Relation/computed columns (client name, balance
-    // due) use subquery / raw ordering; everything else falls back to the
-    // default order-date sort below.
-    $sorted = $this->applySort($ordersQuery, [
+  /**
+   * Whitelisted sorting. Relation/computed columns (client name, balance
+   * due) use subquery / raw ordering; anything else falls back to newest
+   * order date first. The id tie-break keeps orders placed within the same
+   * second (bulk subscription runs) in a stable order.
+   */
+  private function applyOrderSort($query): void
+  {
+    $sorted = $this->applySort($query, [
       'order_number'          => 'order_number',
       'status'                => 'status',
       'total_amount'          => 'total_amount',
@@ -237,20 +270,54 @@ class OrderController extends Controller
       ),
     ]);
 
-    // Default: newest order date first. The id tie-break keeps orders placed
-    // within the same second (bulk subscription runs) in a stable order.
     if (! $sorted) {
-      $ordersQuery->latest('created_at')->latest('id');
+      $query->latest('created_at')->latest('id');
+
+      return;
     }
 
-    $orders = $ordersQuery
-      ->paginate(request()->integer('per_page', 50))
-      ->withQueryString();
+    // Every whitelisted sort above is on a non-unique column, so add the id
+    // as a final tie-break: the export walks the result set in chunks and
+    // needs a total order, otherwise rows can repeat or go missing between
+    // pages.
+    $query->orderBy('id', 'desc');
+  }
 
-    return Inertia::render('orders/Index')->with([
-      'orders'   => $orders,
-      'statuses' => OrderStatus::getValues(),
+  /**
+   * Download the listed orders as an .xlsx sheet — same scoping, filters and
+   * sort as the screen, one row per order with the full detail (line items,
+   * returned empties, money breakdown) spelled out.
+   */
+  public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+  {
+    $query = $this->filteredOrdersQuery(self::isAdminPath(), [
+      'client.phones',
+      'client.userProfile',
+      'courier',
+      'creator',
+      'canceller',
+      'subscription',
+      'parentOrder:id,order_number',
+      'items.product.rawMaterials',
+      'returnedMaterials',
     ]);
+
+    $this->applyOrderSort($query);
+
+    $export = new \App\Exports\OrdersExport(
+      orders: $query,
+      filters: request()->only(['status', 'payment', 'search', 'user_id', 'from', 'to']),
+      locale: request()->string('locale')->toString() === 'en' ? 'en' : 'ru',
+      currency: (string) config('app.currency'),
+    );
+
+    $path = $export->build()->writeToTempFile();
+
+    return response()
+      ->download($path, $export->filename(), [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ])
+      ->deleteFileAfterSend();
   }
 
   public function assignments(): Response

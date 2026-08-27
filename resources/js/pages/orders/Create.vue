@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputError from '@/components/InputError.vue';
 import Label from '@/components/ui/label/Label.vue';
+import NumberField from '@/components/NumberField.vue';
 import DeliveryTimePicker from '@/components/DeliveryTimePicker.vue';
 import ClientCombobox from '@/components/ClientCombobox.vue';
 import { index, store } from '@/routes/admin/orders';
@@ -322,7 +323,7 @@ const toggleNewAddress = () => {
           <div v-for="(item, idx) in form.items" :key="idx" class="mb-3 border-b border-gray-100 dark:border-gray-700 pb-3">
             <!-- Desktop: 12-col grid -->
             <div class="hidden md:grid grid-cols-12 gap-3 items-end">
-              <div class="col-span-5 grid gap-1">
+              <div class="col-span-4 grid gap-1">
                 <Label>{{ t('Product') }}</Label>
                 <select v-model="item.product_id" @change="onProductChange(item)" class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm dark:bg-input/30 dark:border-gray-600 dark:text-white">
                   <option :value="null">{{ t('Select product...') }}</option>
@@ -330,17 +331,17 @@ const toggleNewAddress = () => {
                 </select>
                 <InputError :message="(form.errors as any)[`items.${idx}.product_id`]" />
               </div>
-              <div class="col-span-2 grid gap-1">
+              <div class="col-span-3 grid gap-1">
                 <Label>{{ t('Qty') }}</Label>
-                <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" />
+                <NumberField v-model="item.quantity" :min="1" @update:model-value="onQtyChange(item)" />
               </div>
               <div class="col-span-2 grid gap-1">
                 <Label>{{ t('Unit Price') }}</Label>
-                <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" />
+                <NumberField v-model="item.unit_price" :min="0" :step="0.01" :controls="false" :disabled="item.is_gift" @update:model-value="onQtyChange(item)" />
               </div>
               <div class="col-span-2 grid gap-1">
                 <Label>{{ t('Subtotal') }}</Label>
-                <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700" />
+                <NumberField :model-value="item.subtotal.toFixed(2)" readonly input-class="bg-gray-50 dark:bg-gray-700" />
               </div>
               <div class="col-span-1 flex items-end pb-0.5">
                 <button type="button" @click="removeItem(idx)" class="text-red-500 hover:text-red-700 text-lg font-bold">✕</button>
@@ -360,18 +361,18 @@ const toggleNewAddress = () => {
                 </div>
                 <button type="button" @click="removeItem(idx)" class="mt-6 text-red-500 hover:text-red-700 h-10 w-10 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800">✕</button>
               </div>
-              <div class="grid grid-cols-3 gap-3">
-                <div class="grid gap-1">
-                  <Label>{{ t('Qty') }}</Label>
-                  <Input type="number" min="1" v-model.number="item.quantity" @input="onQtyChange(item)" class="h-10" />
-                </div>
+              <div class="grid gap-1">
+                <Label>{{ t('Qty') }}</Label>
+                <NumberField v-model="item.quantity" :min="1" size="lg" @update:model-value="onQtyChange(item)" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
                 <div class="grid gap-1">
                   <Label>{{ t('Price') }}</Label>
-                  <Input type="number" step="0.01" v-model.number="item.unit_price" @input="onQtyChange(item)" :disabled="item.is_gift" class="h-10" />
+                  <NumberField v-model="item.unit_price" :min="0" :step="0.01" size="lg" :controls="false" :disabled="item.is_gift" @update:model-value="onQtyChange(item)" />
                 </div>
                 <div class="grid gap-1">
                   <Label>{{ t('Subtotal') }}</Label>
-                  <Input type="number" :value="item.subtotal.toFixed(2)" readonly class="bg-gray-50 dark:bg-gray-700 h-10" />
+                  <NumberField :model-value="item.subtotal.toFixed(2)" readonly size="lg" input-class="bg-gray-50 dark:bg-gray-700" />
                 </div>
               </div>
             </div>
@@ -406,14 +407,14 @@ const toggleNewAddress = () => {
                 <span class="text-[10px] text-gray-400 ml-1">({{ t('leave blank to use calculated') }})</span>
               </Label>
               <div class="flex items-center gap-1 w-32">
-                <Input
+                <NumberField
                   id="custom_total"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  v-model.number="form.custom_total"
+                  :step="0.01"
+                  :min="0"
+                  :controls="false"
+                  v-model="form.custom_total"
                   :placeholder="total.toFixed(2)"
-                  class="text-right font-mono"
+                  input-class="text-right font-mono"
                 />
                 <button
                   v-if="form.custom_total !== null && form.custom_total !== undefined"

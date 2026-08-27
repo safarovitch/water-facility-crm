@@ -155,6 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($adminRoles, $ma
 
     Route::name('orders.')->prefix('orders')->group(function () use ($adminRoles, $managerRoles) {
       Route::get('index',              [OrderController::class, 'index'])->name('index');
+      Route::get('export',             [OrderController::class, 'export'])->name('export');
       Route::get('assignments',        [OrderController::class, 'assignments'])->middleware("role:{$managerRoles}")->name('assignments');
       Route::get('create',             [OrderController::class, 'create'])->middleware("role:{$managerRoles}")->name('create');
       Route::post('store',             [OrderController::class, 'store'])->middleware("role:{$managerRoles}")->name('store');

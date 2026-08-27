@@ -3,7 +3,7 @@ import SeasonalityCurve from '@/components/forecasting/SeasonalityCurve.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import NumberField from '@/components/NumberField.vue';
 import { useI18n } from '@/composables/useI18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -156,14 +156,15 @@ const swing = (curve: Curve) => {
                                 </span>
 
                                 <template v-if="canEdit">
-                                    <Input
+                                    <NumberField
                                         :model-value="draft[key(curve.segment, month.month)] ?? month.index.toFixed(2)"
-                                        type="number"
                                         :min="limits.floor"
                                         :max="limits.ceiling"
-                                        step="0.01"
-                                        class="h-8 w-24"
-                                        @update:model-value="(v: string | number) => (draft[key(curve.segment, month.month)] = String(v))"
+                                        :step="0.01"
+                                        :step-by="0.05"
+                                        size="sm"
+                                        class="w-32"
+                                        @update:model-value="(v: number | null) => (draft[key(curve.segment, month.month)] = v === null ? '' : String(v))"
                                         @keyup.enter="save(curve.segment, month.month)"
                                     />
                                     <Button

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import NumberField from '@/components/NumberField.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle, Search, Edit, Trash2, Camera, MapPin, Database, Wrench } from 'lucide-vue-next';
@@ -388,7 +389,7 @@ const statusLabel = computed((): Record<string, string> => ({
             <div class="grid grid-cols-3 gap-4">
               <div class="space-y-2">
                 <Label for="quantity">{{ t('Quantity') }} <span class="text-red-500">*</span></Label>
-                <Input v-model="form.quantity" type="number" step="0.01" min="0" id="quantity" required />
+                <NumberField v-model="form.quantity" :step="0.01" :min="0" :controls="false" id="quantity" required />
               </div>
 
               <div class="space-y-2">
@@ -424,7 +425,7 @@ const statusLabel = computed((): Record<string, string> => ({
 
               <div class="space-y-2">
                  <Label for="purchase_price">{{ t('Purchase Value') }} ({{ ($page.props.currency as string) || 'USD' }})</Label>
-                 <Input v-model="form.purchase_price" type="number" step="0.01" min="0" id="purchase_price" placeholder="0.00" />
+                 <NumberField v-model="form.purchase_price" :step="0.01" :min="0" :controls="false" id="purchase_price" placeholder="0.00" />
               </div>
             </div>
 
