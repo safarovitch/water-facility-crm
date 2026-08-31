@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, FileSpreadsheet } from 'lucide-vue-next';
+import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, FileSpreadsheet, Package } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
 import MapChooser from '@/components/MapChooser.vue';
 import { useI18n } from '@/composables/useI18n';
@@ -63,9 +63,15 @@ interface Paginated<T> {
   meta: Record<string, any>;
 }
 
+interface ItemTotals {
+  total: number;
+  products: { id: number; name: Record<string, string> | string; quantity: number }[];
+}
+
 const props = defineProps<{
   orders: Paginated<Order>;
   statuses: string[];
+  itemTotals?: ItemTotals;
 }>();
 
 const statusFilter = ref('');
@@ -178,6 +184,14 @@ const productName = (name: Record<string, string> | string | null | undefined): 
   return Object.values(name)[0] || t('Item');
 };
 
+// Unit totals for the whole filtered result set, not just this page — the
+// server aggregates them so the badges stay honest across pagination.
+const totalUnits = computed(() => props.itemTotals?.total ?? 0);
+
+const productTotals = computed(() => props.itemTotals?.products ?? []);
+
+const formatCount = (value: number): string => value.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US');
+
 const statusLabel = computed((): Record<string, string> => ({
   pending: t('Pending'),
   confirmed: t('Confirmed'),
@@ -211,6 +225,25 @@ const statusLabel = computed((): Record<string, string> => ({
             </Button>
           </Link>
         </div>
+      </div>
+
+      <!-- Unit totals for the filter in effect. Aggregated server-side over
+           every matching order, so the numbers do not change as you page. -->
+      <div v-if="totalUnits > 0" class="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" class="h-7 gap-1.5 rounded-lg border-transparent bg-primary/10 px-3 text-primary">
+          <Package />
+          <span class="font-medium">{{ t('Total units') }}</span>
+          <span class="font-bold tabular-nums">{{ formatCount(totalUnits) }}</span>
+        </Badge>
+        <Badge
+          v-for="product in productTotals"
+          :key="product.id"
+          variant="outline"
+          class="h-7 gap-1.5 rounded-lg px-3"
+        >
+          <span class="max-w-[10rem] truncate font-medium text-foreground" :title="productName(product.name)">{{ productName(product.name) }}</span>
+          <span class="font-bold tabular-nums text-muted-foreground">×{{ formatCount(product.quantity) }}</span>
+        </Badge>
       </div>
 
       <Card class="shadow-sm">

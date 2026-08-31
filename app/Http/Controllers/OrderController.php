@@ -179,9 +179,50 @@ class OrderController extends Controller
       ->withQueryString();
 
     return Inertia::render('orders/Index')->with([
-      'orders'   => $orders,
-      'statuses' => OrderStatus::getValues(),
+      'orders'     => $orders,
+      'statuses'   => OrderStatus::getValues(),
+      'itemTotals' => $this->itemTotals($isAdminPath),
     ]);
+  }
+
+  /**
+   * Per-product unit totals across the *whole* filtered result set, not just
+   * the page on screen — the point of the badges is to answer "how many
+   * bottles is this list?" without paging through it.
+   *
+   * Counted on ordered quantity (not delivered), so the figure means the same
+   * thing for a pending order as for a delivered one. Gifts are included:
+   * they still leave the warehouse, even though they are free.
+   */
+  private function itemTotals(bool $isAdminPath): array
+  {
+    // A second build of the same filtered query — cheap, and it keeps the
+    // aggregate away from the paginated query's eager loads and sort.
+    $orderIds = $this->filteredOrdersQuery($isAdminPath)->select('orders.id');
+
+    $quantities = \App\Models\OrderItem::query()
+      ->whereIn('order_id', $orderIds)
+      ->selectRaw('product_id, SUM(quantity) as total_quantity')
+      ->groupBy('product_id')
+      ->pluck('total_quantity', 'product_id');
+
+    // Names come from the models so the JSON name cast applies; anything
+    // whose product has since been deleted still counts toward the total but
+    // has no badge of its own.
+    $products = Product::whereIn('id', $quantities->keys())->get(['id', 'name']);
+
+    return [
+      'total'    => (int) $quantities->sum(),
+      'products' => $products
+        ->map(fn(Product $product) => [
+          'id'       => $product->id,
+          'name'     => $product->name,
+          'quantity' => (int) $quantities[$product->id],
+        ])
+        ->sortByDesc('quantity')
+        ->values()
+        ->all(),
+    ];
   }
 
   /**

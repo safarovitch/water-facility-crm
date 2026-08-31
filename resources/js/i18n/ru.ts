@@ -809,6 +809,7 @@ export const ru: Record<string, string> = {
     'Total Orders': 'Всего заказов',
     'Total Revenue': 'Общая выручка',
     'Total revenue collected': 'Собрано выручки',
+    'Total units': 'Всего единиц',
     'Track stock levels': 'Отслеживайте уровни запасов',
     'Transaction Note': 'Заметка к транзакции',
     Transactions: 'Транзакции',
