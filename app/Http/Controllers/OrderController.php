@@ -26,6 +26,16 @@ class OrderController extends Controller
   use SortsQueries;
 
   /**
+   * Every query-string key `filteredOrdersQuery()` reads. Shared by the screen
+   * (which echoes them back to the inputs) and the export (which prints them
+   * in the sheet's header), so the three cannot drift apart.
+   */
+  private const FILTER_KEYS = [
+    'status', 'payment', 'search', 'user_id',
+    'from', 'to', 'delivery_from', 'delivery_to',
+  ];
+
+  /**
    * Given the calculated item total and an optional admin-supplied custom
    * total, return [final_total, discount]. If custom is unset or equal to
    * the calculated total, discount is 0. If custom is lower, the gap is the
@@ -182,6 +192,9 @@ class OrderController extends Controller
       'orders'     => $orders,
       'statuses'   => OrderStatus::getValues(),
       'itemTotals' => $this->itemTotals($isAdminPath),
+      // Echoed back so the filter inputs still show what is being filtered
+      // on after a reload or a sort — the query string is the only state.
+      'filters'    => request()->only(self::FILTER_KEYS),
     ]);
   }
 
@@ -276,6 +289,10 @@ class OrderController extends Controller
               ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%{$search}%"));
         })
       )
+      // Two independent date ranges: `from`/`to` narrow when the order was
+      // placed, `delivery_from`/`delivery_to` when it is due. An order with
+      // no scheduled delivery drops out of the delivery range by design —
+      // "due this week" cannot include something that is not due at all.
       ->when(
         request('from'),
         fn($q, $from) =>
@@ -285,6 +302,16 @@ class OrderController extends Controller
         request('to'),
         fn($q, $to) =>
         $q->whereDate('created_at', '<=', $to)
+      )
+      ->when(
+        request('delivery_from'),
+        fn($q, $from) =>
+        $q->whereDate('scheduled_delivery_at', '>=', $from)
+      )
+      ->when(
+        request('delivery_to'),
+        fn($q, $to) =>
+        $q->whereDate('scheduled_delivery_at', '<=', $to)
       );
   }
 
@@ -347,7 +374,7 @@ class OrderController extends Controller
 
     $export = new \App\Exports\OrdersExport(
       orders: $query,
-      filters: request()->only(['status', 'payment', 'search', 'user_id', 'from', 'to']),
+      filters: request()->only(self::FILTER_KEYS),
       locale: request()->string('locale')->toString() === 'en' ? 'en' : 'ru',
       currency: (string) config('app.currency'),
     );

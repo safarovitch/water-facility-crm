@@ -36,6 +36,7 @@ class OrdersExport
     private const RU = [
         'Orders report' => 'Отчёт по заказам',
         'Period' => 'Период',
+        'Delivery date' => 'Дата доставки',
         'All time' => 'За всё время',
         'Generated' => 'Сформирован',
         'Filters' => 'Фильтры',
@@ -112,7 +113,15 @@ class OrdersExport
     {
         $xlsx = new XlsxWriter($this->t('Orders'), $this->currency);
         $xlsx->addTitle($this->t('Orders report'));
-        $xlsx->addTextRow([$this->t('Period').': '.$this->periodLabel()]);
+        $xlsx->addTextRow([$this->t('Period').': '.$this->periodLabel('from', 'to')]);
+
+        // The delivery window is a separate filter from the order date, so it
+        // gets its own line rather than being folded into "Period".
+        if (($this->filters['delivery_from'] ?? null) || ($this->filters['delivery_to'] ?? null)) {
+            $xlsx->addTextRow([
+                $this->t('Delivery date').': '.$this->periodLabel('delivery_from', 'delivery_to'),
+            ]);
+        }
 
         if ($describedFilters = $this->filterLabel()) {
             $xlsx->addTextRow([$this->t('Filters').': '.$describedFilters]);
@@ -427,10 +436,10 @@ class OrdersExport
         return (string) (array_values($name)[0] ?? $this->t('Unknown'));
     }
 
-    private function periodLabel(): string
+    private function periodLabel(string $fromKey, string $toKey): string
     {
-        $from = $this->filters['from'] ?? null;
-        $to = $this->filters['to'] ?? null;
+        $from = $this->filters[$fromKey] ?? null;
+        $to = $this->filters[$toKey] ?? null;
 
         return match (true) {
             $from && $to => $this->date($from).' — '.$this->date($to),

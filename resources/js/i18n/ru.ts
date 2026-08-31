@@ -259,6 +259,7 @@ export const ru: Record<string, string> = {
     'Delivery address': 'Адрес доставки',
     'Delivery Address': 'Адрес доставки',
     'Delivery Addresses': 'Адреса доставки',
+    'Delivery date': 'Дата доставки',
     'Delivery time': 'Время доставки',
     'Delivery time slot': 'Интервал доставки',
     'Delivery Trend (6M)': 'Динамика доставок (6 мес.)',
@@ -790,7 +791,7 @@ export const ru: Record<string, string> = {
     'to confirm': 'для подтверждения',
     'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app':
         'Чтобы завершить включение двухфакторной аутентификации, отсканируйте QR-код или введите код настройки в приложении аутентификации',
-    'to pickup': 'на самовывоз',
+    'to pickup': 'забрать позже',
     today: 'сегодня',
     'Top Products': 'Топ товаров',
     'Top up & pay in full': 'Пополнить и оплатить полностью',

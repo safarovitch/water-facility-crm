@@ -68,33 +68,79 @@ interface ItemTotals {
   products: { id: number; name: Record<string, string> | string; quantity: number }[];
 }
 
+interface Filters {
+  status?: string;
+  payment?: string;
+  search?: string;
+  user_id?: string;
+  from?: string;
+  to?: string;
+  delivery_from?: string;
+  delivery_to?: string;
+}
+
 const props = defineProps<{
   orders: Paginated<Order>;
   statuses: string[];
   itemTotals?: ItemTotals;
+  filters?: Filters;
 }>();
 
-const statusFilter = ref('');
-const paymentFilter = ref('');
-const search = ref('');
+// Seeded from the server's echo of the query string: the URL is the only
+// filter state, so without this a reload or a sort leaves the inputs looking
+// empty while the list stays filtered.
+const statusFilter = ref(props.filters?.status ?? '');
+const paymentFilter = ref(props.filters?.payment ?? '');
+const search = ref(props.filters?.search ?? '');
+const orderFrom = ref(props.filters?.from ?? '');
+const orderTo = ref(props.filters?.to ?? '');
+const deliveryFrom = ref(props.filters?.delivery_from ?? '');
+const deliveryTo = ref(props.filters?.delivery_to ?? '');
+
 const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
+
+/**
+ * The filter set as query params. Built in one place because three callers
+ * need exactly the same thing — applying, re-sorting, and the export link.
+ * `user_id` has no input of its own; it arrives from the client page and is
+ * carried through so filtering does not silently widen the list.
+ */
+const filterParams = (): Record<string, string | undefined> => ({
+  status: statusFilter.value || undefined,
+  payment: paymentFilter.value || undefined,
+  search: search.value || undefined,
+  user_id: props.filters?.user_id || undefined,
+  from: orderFrom.value || undefined,
+  to: orderTo.value || undefined,
+  delivery_from: deliveryFrom.value || undefined,
+  delivery_to: deliveryTo.value || undefined,
+});
+
+const hasFilters = computed(() => Object.values(filterParams()).some((value) => value !== undefined));
 
 const applyFilter = () => {
   router.get(indexRoute.value().url, {
-    status: statusFilter.value || undefined,
-    payment: paymentFilter.value || undefined,
-    search: search.value || undefined,
+    ...filterParams(),
     ...(sort.value && { sort_by: sort.value.column, sort_dir: sort.value.direction }),
   }, { preserveState: true, preserveScroll: true });
+};
+
+const resetFilters = () => {
+  statusFilter.value = '';
+  paymentFilter.value = '';
+  search.value = '';
+  orderFrom.value = '';
+  orderTo.value = '';
+  deliveryFrom.value = '';
+  deliveryTo.value = '';
+  applyFilter();
 };
 
 const handleSort = (column: string) => {
   toggleSort(column);
   const newSort = isSorted(column) ? sort.value : null;
   router.get(indexRoute.value().url, {
-    status: statusFilter.value || undefined,
-    payment: paymentFilter.value || undefined,
-    search: search.value || undefined,
+    ...filterParams(),
     ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
   }, { preserveState: true, preserveScroll: true });
 };
@@ -107,9 +153,9 @@ const handleSort = (column: string) => {
 const exportUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (statusFilter.value) params.set('status', statusFilter.value);
-  if (paymentFilter.value) params.set('payment', paymentFilter.value);
-  if (search.value) params.set('search', search.value);
+  Object.entries(filterParams()).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
 
   if (sort.value) {
     params.set('sort_by', sort.value.column);
@@ -269,8 +315,25 @@ const statusLabel = computed((): Record<string, string> => ({
                         <option value="unpaid">{{ t('Unpaid') }}</option>
                     </select>
                 </div>
+                <div class="space-y-1 w-full md:w-auto">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Order date') }}</Label>
+                    <div class="flex items-center gap-2">
+                        <Input v-model="orderFrom" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
+                        <span class="text-muted-foreground text-sm">—</span>
+                        <Input v-model="orderTo" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
+                    </div>
+                </div>
+                <div class="space-y-1 w-full md:w-auto">
+                    <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Delivery date') }}</Label>
+                    <div class="flex items-center gap-2">
+                        <Input v-model="deliveryFrom" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
+                        <span class="text-muted-foreground text-sm">—</span>
+                        <Input v-model="deliveryTo" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
+                    </div>
+                </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">{{ t('Apply Filters') }}</Button>
+                    <Button v-if="hasFilters" @click="resetFilters" variant="ghost" size="sm" class="h-10 md:h-9 flex-1 md:flex-none text-muted-foreground">{{ t('Reset') }}</Button>
                 </div>
             </div>
 
