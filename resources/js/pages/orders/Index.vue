@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Eye, ShoppingCart, ChevronUp, ChevronDown, FileSpreadsheet, Package } from 'lucide-vue-next';
 import { useTableSort } from '@/composables/useTableSort';
 import MapChooser from '@/components/MapChooser.vue';
+import DateRangePicker from '@/components/DateRangePicker.vue';
 import { useI18n } from '@/composables/useI18n';
 
 const { t, locale } = useI18n();
@@ -317,19 +318,11 @@ const statusLabel = computed((): Record<string, string> => ({
                 </div>
                 <div class="space-y-1 w-full md:w-auto">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Order date') }}</Label>
-                    <div class="flex items-center gap-2">
-                        <Input v-model="orderFrom" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
-                        <span class="text-muted-foreground text-sm">—</span>
-                        <Input v-model="orderTo" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
-                    </div>
+                    <DateRangePicker v-model:from="orderFrom" v-model:to="orderTo" :placeholder="t('Any date')" @change="applyFilter" />
                 </div>
                 <div class="space-y-1 w-full md:w-auto">
                     <Label class="text-xs uppercase tracking-wider text-muted-foreground">{{ t('Delivery date') }}</Label>
-                    <div class="flex items-center gap-2">
-                        <Input v-model="deliveryFrom" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
-                        <span class="text-muted-foreground text-sm">—</span>
-                        <Input v-model="deliveryTo" type="date" class="h-10 md:h-9 w-full md:w-40 bg-white dark:bg-gray-900 border-input shadow-sm" @change="applyFilter" />
-                    </div>
+                    <DateRangePicker v-model:from="deliveryFrom" v-model:to="deliveryTo" :placeholder="t('Any date')" @change="applyFilter" />
                 </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="applyFilter" variant="secondary" size="sm" class="h-10 md:h-9 flex-1 md:flex-none">{{ t('Apply Filters') }}</Button>

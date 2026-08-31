@@ -83,6 +83,7 @@ export const ru: Record<string, string> = {
     'All users': 'Все пользователи',
     Amount: 'Сумма',
     'An error occurred during passkey registration.': 'Произошла ошибка при регистрации ключа доступа.',
+    'Any date': 'Любая дата',
     'Any day': 'Любой день',
     'Anything we should know? (gate code, floor, etc.)': 'Что нам нужно знать? (код домофона, этаж и т.д.)',
     Appearance: 'Оформление',
@@ -150,6 +151,7 @@ export const ru: Record<string, string> = {
     'Choose your preferred language': 'Выберите предпочитаемый язык',
     Churned: 'Отток',
     City: 'Город',
+    Clear: 'Очистить',
     'Clear All': 'Очистить всё',
     'Clear custom total': 'Сбросить произвольную сумму',
     'Click here to resend the verification email.': 'Нажмите здесь, чтобы отправить письмо подтверждения повторно.',
@@ -395,7 +397,10 @@ export const ru: Record<string, string> = {
     Light: 'Светлая',
     Dark: 'Тёмная',
     last: 'последний',
+    'Last 7 days': 'Последние 7 дней',
+    'Last 30 days': 'Последние 30 дней',
     'Last Activity': 'Последняя активность',
+    'Last month': 'Прошлый месяц',
     'Last used': 'Последнее использование',
     'Leave blank to record the order as of now. Set it to log an order taken earlier.':
         'Оставьте пустым, чтобы записать заказ текущей датой. Укажите дату, чтобы внести заказ, принятый ранее.',
@@ -779,6 +784,7 @@ export const ru: Record<string, string> = {
     "This client profile will be linked to them.": 'Этот профиль клиента будет привязан к нему.',
     'This email is already registered as a client.': 'Этот email уже зарегистрирован как клиент.',
     'this month': 'в этом месяце',
+    'This month': 'Этот месяц',
     'This Month': 'Этот месяц',
     'This order has {count} backorder(s). They will remain but lose their link back to this order.':
         'У этого заказа есть {count} довозов. Они останутся, но потеряют связь с этим заказом.',
@@ -793,6 +799,7 @@ export const ru: Record<string, string> = {
         'Чтобы завершить включение двухфакторной аутентификации, отсканируйте QR-код или введите код настройки в приложении аутентификации',
     'to pickup': 'забрать позже',
     today: 'сегодня',
+    Today: 'Сегодня',
     'Top Products': 'Топ товаров',
     'Top up & pay in full': 'Пополнить и оплатить полностью',
     'Tops the wallet up for the full balance and immediately applies it — use this when the client already paid you directly (cash, transfer) and you just need to record it.':
