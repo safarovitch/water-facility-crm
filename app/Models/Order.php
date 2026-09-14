@@ -23,6 +23,7 @@ class Order extends Model
     'contact_phone',
     'status',
     'scheduled_delivery_at',
+    'delivery_sort_order',
     'actual_delivery_at',
     'delivery_address',
     'total_amount',
@@ -51,6 +52,7 @@ class Order extends Model
     'discount_amount'       => 'decimal:2',
     'deposit_charge'        => 'decimal:2',
     'paid_amount'           => 'decimal:2',
+    'delivery_sort_order'   => 'integer',
     'lat'                   => 'float',
     'lng'                   => 'float',
   ];

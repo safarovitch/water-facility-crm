@@ -5,7 +5,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { index as guestIndex, show as guestShow } from '@/routes/orders';
-import { index as adminIndex, show as adminShow, create as adminCreate, exportMethod as adminExport } from '@/routes/admin/orders';
+import { index as adminIndex, show as adminShow, create as adminCreate, exportMethod as adminExport, reorderDelivery } from '@/routes/admin/orders';
 import { computed, ref } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ interface Order {
   lat?: number | null;
   lng?: number | null;
   scheduled_delivery_at: string | null;
+  delivery_sort_order: number | null;
   scheduled_delivery_at_human: string | null;
   scheduled_delivery_at_formatted: string | null;
   created_at: string;
@@ -98,7 +99,16 @@ const orderTo = ref(props.filters?.to ?? '');
 const deliveryFrom = ref(props.filters?.delivery_from ?? '');
 const deliveryTo = ref(props.filters?.delivery_to ?? '');
 
-const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort();
+// The query string is the only sort state the server knows about, so seed the
+// composable from it — otherwise a reload leaves the header icons blank and
+// `isDeliverySorted` below lies about what the list is showing.
+const initialSortParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+const initialSortBy = initialSortParams.get('sort_by');
+const { sort, isSorted, getSortDirection, toggleSort, getSortIcon } = useTableSort(
+  initialSortBy
+    ? { column: initialSortBy, direction: initialSortParams.get('sort_dir') === 'desc' ? 'desc' : 'asc' }
+    : undefined,
+);
 
 /**
  * The filter set as query params. Built in one place because three callers
@@ -144,6 +154,58 @@ const handleSort = (column: string) => {
     ...filterParams(),
     ...(newSort && { sort_by: newSort.column, sort_dir: newSort.direction }),
   }, { preserveState: true, preserveScroll: true });
+};
+
+/*
+ * Manual delivery sequence.
+ *
+ * The arrows rearrange the run the courier drives, so they only mean anything
+ * while the list is actually showing that run — ascending by delivery order.
+ * Pressing one on a differently-sorted list switches the sort instead of
+ * moving anything, which is the only reading that does not silently rewrite
+ * the sequence to match whatever column happened to be sorted.
+ *
+ * The move is page-local: the whole visible page is posted in its new order
+ * and the rows swap the slots they already hold, so a reorder here can never
+ * disturb the numbering on another page.
+ */
+const DELIVERY_SORT = 'delivery_sort_order';
+
+const canReorder = computed(() => adminMode.value && !!can.value.manageOrders);
+
+const isDeliverySorted = computed(
+  () => sort.value?.column === DELIVERY_SORT && sort.value.direction === 'asc',
+);
+
+const reordering = ref(false);
+
+const canMove = (index: number, direction: -1 | 1): boolean => {
+  if (!isDeliverySorted.value) return true; // the click switches the sort instead
+  const target = index + direction;
+  return target >= 0 && target < props.orders.data.length;
+};
+
+const moveOrder = (index: number, direction: -1 | 1) => {
+  if (reordering.value) return;
+
+  if (!isDeliverySorted.value) {
+    sort.value = { column: DELIVERY_SORT, direction: 'asc' };
+    applyFilter();
+    return;
+  }
+
+  const target = index + direction;
+  if (target < 0 || target >= props.orders.data.length) return;
+
+  const ids = props.orders.data.map((order) => order.id);
+  [ids[index], ids[target]] = [ids[target], ids[index]];
+
+  reordering.value = true;
+  router.patch(reorderDelivery().url, { ids }, {
+    preserveScroll: true,
+    preserveState: true,
+    onFinish: () => { reordering.value = false; },
+  });
 };
 
 /**
@@ -358,11 +420,14 @@ const statusLabel = computed((): Record<string, string> => ({
                             <th class="px-6 py-4 font-semibold cursor-pointer hover:text-foreground transition-colors" @click="handleSort('scheduled_delivery_at')">
                                 <div class="flex items-center gap-2">{{ t('Delivery') }} <span class="text-xs">{{ isSorted('scheduled_delivery_at') ? getSortIcon('scheduled_delivery_at') : '⇅' }}</span></div>
                             </th>
+                            <th class="px-3 py-4 font-semibold text-center cursor-pointer hover:text-foreground transition-colors" @click="handleSort('delivery_sort_order')">
+                                <div class="flex items-center justify-center gap-2" :title="t('Delivery order')">{{ t('Seq.') }} <span class="text-xs">{{ isSorted('delivery_sort_order') ? getSortIcon('delivery_sort_order') : '⇅' }}</span></div>
+                            </th>
                             <th class="px-6 py-4 font-semibold text-right">{{ t('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-border/60 bg-white dark:bg-background">
-                        <tr v-for="order in orders.data" :key="order.id" class="hover:bg-muted/40 transition-colors group">
+                        <tr v-for="(order, index) in orders.data" :key="order.id" class="hover:bg-muted/40 transition-colors group">
                             <td class="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">
                                 {{ order.order_number }}
                             </td>
@@ -415,13 +480,39 @@ const statusLabel = computed((): Record<string, string> => ({
                                 </template>
                                 <div v-else class="text-xs text-muted-foreground">{{ order.delivery_date ?? '—' }}</div>
                             </td>
+                            <td class="px-3 py-4 text-center">
+                                <span v-if="order.delivery_sort_order != null" class="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-md bg-muted px-1.5 text-xs font-bold tabular-nums text-foreground">
+                                    {{ order.delivery_sort_order }}
+                                </span>
+                                <span v-else class="text-xs text-muted-foreground">—</span>
+                            </td>
                             <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Link :href="showRoute(order.id).url">
+                                <div class="flex items-center justify-end gap-2">
+                                    <Link :href="showRoute(order.id).url" class="opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Button variant="ghost" size="icon" class="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/40" :title="t('View Order')">
                                           <Eye class="h-4 w-4" />
                                       </Button>
                                     </Link>
+                                    <div v-if="canReorder" class="flex flex-col rounded-md border border-border/60 overflow-hidden shrink-0">
+                                        <button
+                                            type="button"
+                                            class="h-4 w-7 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                            :disabled="reordering || !canMove(index, -1)"
+                                            :title="isDeliverySorted ? t('Move up') : t('Sort by delivery order to reorder')"
+                                            @click="moveOrder(index, -1)"
+                                        >
+                                            <ChevronUp class="h-3 w-3" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="h-4 w-7 flex items-center justify-center border-t border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                            :disabled="reordering || !canMove(index, 1)"
+                                            :title="isDeliverySorted ? t('Move down') : t('Sort by delivery order to reorder')"
+                                            @click="moveOrder(index, 1)"
+                                        >
+                                            <ChevronDown class="h-3 w-3" />
+                                        </button>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -431,10 +522,38 @@ const statusLabel = computed((): Record<string, string> => ({
 
             <!-- Card View (Mobile) -->
             <div class="md:hidden divide-y divide-border/60">
-                <div v-for="order in orders.data" :key="order.id" class="p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
-                    <div class="flex items-start justify-between mb-3">
+                <div v-for="(order, index) in orders.data" :key="order.id" class="relative p-4 bg-white dark:bg-background active:bg-muted/30 transition-colors">
+                    <!-- Reorder handles hug the right edge of the card, the same
+                         place they sit on the desktop row. -->
+                    <div v-if="canReorder" class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col rounded-md border border-border/60 overflow-hidden bg-background/80 backdrop-blur-sm">
+                        <button
+                            type="button"
+                            class="h-8 w-8 flex items-center justify-center text-muted-foreground active:bg-muted disabled:opacity-30"
+                            :disabled="reordering || !canMove(index, -1)"
+                            :title="isDeliverySorted ? t('Move up') : t('Sort by delivery order to reorder')"
+                            @click="moveOrder(index, -1)"
+                        >
+                            <ChevronUp class="h-4 w-4" />
+                        </button>
+                        <button
+                            type="button"
+                            class="h-8 w-8 flex items-center justify-center border-t border-border/60 text-muted-foreground active:bg-muted disabled:opacity-30"
+                            :disabled="reordering || !canMove(index, 1)"
+                            :title="isDeliverySorted ? t('Move down') : t('Sort by delivery order to reorder')"
+                            @click="moveOrder(index, 1)"
+                        >
+                            <ChevronDown class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div class="flex items-start justify-between mb-3" :class="canReorder ? 'pr-10' : ''">
                         <div class="flex flex-col">
-                            <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
+                            <span class="flex items-center gap-1.5">
+                                <span v-if="order.delivery_sort_order != null" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-muted px-1 text-[10px] font-bold tabular-nums text-foreground" :title="t('Delivery order')">
+                                    {{ order.delivery_sort_order }}
+                                </span>
+                                <span class="font-mono font-bold text-primary">{{ order.order_number }}</span>
+                            </span>
                             <span class="text-[10px] text-muted-foreground tabular-nums">{{ orderDate(order) }} · {{ orderTime(order) }}</span>
                             <span class="text-sm font-bold text-gray-900 dark:text-white mt-1">{{ order.contact_name || order.client?.name }}</span>
                             <span class="text-[10px] text-muted-foreground">{{ order.contact_phone || order.client?.phone || '—' }}</span>
@@ -444,7 +563,7 @@ const statusLabel = computed((): Record<string, string> => ({
                         </Badge>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 mb-4" :class="canReorder ? 'pr-10' : ''">
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ t('Total') }}</span>
                             <span class="font-bold text-sm text-gray-900 dark:text-white">{{ formatAmount(orderGrandTotal(order)) }} <span class="text-[10px] font-normal">{{ $page.props.currency }}</span></span>
@@ -464,7 +583,7 @@ const statusLabel = computed((): Record<string, string> => ({
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-dashed border-border/60 space-y-3">
+                    <div class="pt-3 border-t border-dashed border-border/60 space-y-3" :class="canReorder ? 'pr-10' : ''">
                         <div v-if="order.items && order.items.length" class="flex flex-col">
                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{{ t('Items') }} ({{ totalItemCount(order) }})</span>
                             <div class="text-xs text-gray-700 dark:text-gray-300 space-y-0.5 mt-0.5">

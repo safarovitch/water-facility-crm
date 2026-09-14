@@ -329,6 +329,11 @@ class OrderController extends Controller
       'total_amount'          => 'total_amount',
       'created_at'            => fn($q, $dir) => $q->orderBy('created_at', $dir)->orderBy('id', $dir),
       'scheduled_delivery_at' => 'scheduled_delivery_at',
+      // Unsequenced orders (NULL) always land at the end of the run, in both
+      // directions — "not placed in the route yet" is not the same as "first".
+      'delivery_sort_order'   => fn($q, $dir) => $q->orderByRaw(
+        "delivery_sort_order IS NULL, delivery_sort_order {$dir}"
+      ),
       'client_id'             => fn($q, $dir) => $q->orderBy(
         User::select('name')->whereColumn('users.id', 'orders.user_id'),
         $dir
@@ -349,6 +354,72 @@ class OrderController extends Controller
     // needs a total order, otherwise rows can repeat or go missing between
     // pages.
     $query->orderBy('id', 'desc');
+  }
+
+  /**
+   * Rewrite the manual delivery sequence for one page of the orders list.
+   *
+   * The client posts the ids in the order they should end up in — the whole
+   * visible page, not just the row that moved — and the rows swap seats
+   * among the slots they already occupy. Nothing outside `ids` shifts, so a
+   * reorder on one page can never collide with the numbering on another.
+   *
+   * Orders that were never sequenced have no slot to donate, so the
+   * shortfall is minted above the global maximum: an unsequenced row joins
+   * the end of the run unless the posted order puts it somewhere else.
+   */
+  public function reorderDelivery(\Illuminate\Http\Request $request)
+  {
+    $data = $request->validate([
+      'ids'   => ['required', 'array', 'min:1', 'max:1000'],
+      'ids.*' => ['integer'],
+    ]);
+
+    $posted = array_values(array_unique(array_map('intval', $data['ids'])));
+
+    DB::transaction(function () use ($posted) {
+      $current = Order::whereIn('id', $posted)->pluck('delivery_sort_order', 'id');
+
+      // A per-id `exists` rule would cost one query per row; the fetch below
+      // is the same check for free. Ids that have since been deleted just
+      // drop out, keeping the rest of the posted sequence intact.
+      $ids = array_values(array_filter($posted, fn($id) => $current->has($id)));
+
+      if (! $ids) {
+        return;
+      }
+
+      $slots = $current
+        ->filter(fn($value) => $value !== null)
+        ->map(fn($value) => (int) $value)
+        ->values()
+        ->all();
+
+      if (count($slots) < count($ids)) {
+        $next = max(
+          (int) (Order::max('delivery_sort_order') ?? 0),
+          $slots ? max($slots) : 0
+        );
+
+        for ($i = count($slots); $i < count($ids); $i++) {
+          $slots[] = ++$next;
+        }
+      }
+
+      sort($slots);
+
+      foreach ($ids as $position => $id) {
+        if ($current[$id] !== null && (int) $current[$id] === $slots[$position]) {
+          continue;
+        }
+
+        Order::whereKey($id)->update(['delivery_sort_order' => $slots[$position]]);
+      }
+    });
+
+    // No flash: the rows visibly swap places, and a toast on every arrow
+    // press would drown the list in notifications.
+    return back();
   }
 
   /**

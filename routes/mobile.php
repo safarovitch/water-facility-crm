@@ -161,6 +161,7 @@ Route::prefix('v1/app')
         Route::get('index',              [OrderController::class, 'index']);
         Route::get('export',             [OrderController::class, 'export']);
         Route::get('assignments',        [OrderController::class, 'assignments'])->middleware("role:{$managerRoles}");
+        Route::patch('reorder-delivery', [OrderController::class, 'reorderDelivery'])->middleware("role:{$managerRoles}");
         Route::get('create',             [OrderController::class, 'create'])->middleware("role:{$managerRoles}");
         Route::post('store',             [OrderController::class, 'store'])->middleware("role:{$managerRoles}");
         Route::get('{order}',            [OrderController::class, 'show'])->whereNumber('order');
