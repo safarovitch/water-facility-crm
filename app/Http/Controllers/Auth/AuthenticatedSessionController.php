@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -33,6 +34,12 @@ class AuthenticatedSessionController extends Controller
     {
         $user = $request->validateCredentials();
 
+        if (! $user->canLogIn()) {
+            throw ValidationException::withMessages([
+                'email' => __('This account does not have access.'),
+            ]);
+        }
+
         if (! $user->status->is(UserStatus::Active())) {
             $request->session()->flash('status', __('Sorry. Your account is not active.'));
 
@@ -52,7 +59,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 
     /**
@@ -65,6 +72,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

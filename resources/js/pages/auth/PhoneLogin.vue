@@ -108,10 +108,6 @@ const backToPin = () => {
         </Button>
       </form>
 
-      <div class="text-center text-sm text-muted-foreground">
-        New here?
-        <TextLink href="/register" class="ml-1">Create an account</TextLink>
-      </div>
       <div class="text-center text-xs text-muted-foreground">
         <TextLink href="/login/email">Sign in with email instead →</TextLink>
       </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BrandLogo from '@/components/BrandLogo.vue';
-import { home } from '@/routes';
+import { login } from '@/routes';
 import { Link, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -17,7 +17,7 @@ defineProps<{
     <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
         <div class="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
             <div class="absolute inset-0 bg-zinc-900" />
-            <Link :href="home()" class="relative z-20 flex items-center text-lg font-medium">
+            <Link :href="login()" class="relative z-20 flex items-center text-lg font-medium">
                 <BrandLogo light class="mr-2 h-9 w-auto" />
                 {{ name }}
             </Link>

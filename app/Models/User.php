@@ -246,6 +246,15 @@ class User extends Authenticatable implements HasPasskeys
     return $this->hasAdminAccess() || $this->hasAnyRole(self::COURIER_ROLES);
   }
 
+  /**
+   * Who may sign in to the CRM web app: full admins and Currier managers.
+   * Clients and plain couriers are rejected at login.
+   */
+  public function canLogIn(): bool
+  {
+    return $this->hasAdminAccess() || $this->isCurrierManager();
+  }
+
   public function locations(): HasMany
   {
       return $this->hasMany(CurrierLocation::class);

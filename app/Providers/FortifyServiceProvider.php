@@ -43,7 +43,7 @@ class FortifyServiceProvider extends ServiceProvider
                 ->orWhere('email', $identifier)
                 ->first();
 
-            if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            if ($user && $user->canLogIn() && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
                 return $user;
             }
         });

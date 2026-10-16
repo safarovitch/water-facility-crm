@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BrandLogo from '@/components/BrandLogo.vue';
-import { home } from '@/routes';
+import { login } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 
 defineProps<{
@@ -14,7 +14,7 @@ defineProps<{
         <div class="w-full max-w-sm">
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col items-center gap-4">
-                    <Link :href="home()" class="flex flex-col items-center gap-2 font-medium">
+                    <Link :href="login()" class="flex flex-col items-center gap-2 font-medium">
                         <BrandLogo class="mb-1 h-11 w-auto dark:brightness-0 dark:invert" />
                         <span class="sr-only">{{ title }}</span>
                     </Link>

@@ -6,11 +6,6 @@ use Inertia\Inertia;
 
 class HomeController extends Controller
 {
-    public function index()
-    {
-        return Inertia::render('Welcome');
-    }
-
     public function qr()
     {
         return Inertia::render('Qr');

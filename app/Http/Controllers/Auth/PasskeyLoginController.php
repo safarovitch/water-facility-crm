@@ -64,6 +64,12 @@ class PasskeyLoginController extends Controller
             ]);
         }
 
+        if (! $passkey->authenticatable->canLogIn()) {
+            return back()->withErrors([
+                'passkey' => 'This account does not have access.',
+            ]);
+        }
+
         auth()->login($passkey->authenticatable, $request->boolean('remember'));
         Session::regenerate();
 

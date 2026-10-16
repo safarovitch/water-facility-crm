@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { LoaderCircle, Fingerprint } from 'lucide-vue-next';
@@ -161,11 +160,6 @@ const loginWithPasskey = async () => {
                     <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
                     Log in
                 </Button>
-            </div>
-
-            <div class="text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
             </div>
         </Form>
     </AuthBase>

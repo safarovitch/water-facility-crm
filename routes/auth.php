@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\PhoneAuthController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,11 +18,6 @@ Route::middleware('guest')->group(function () {
     Route::post('login/otp/request', [PhoneAuthController::class, 'requestLoginOtp'])->name('login.otp.request');
     Route::post('login/otp/verify', [PhoneAuthController::class, 'verifyLoginOtp'])->name('login.otp.verify');
 
-    // Registration: name + phone + PIN, no Telegram OTP. Phone verification is
-    // deferred until the first order.
-    Route::get('register', [PhoneAuthController::class, 'showRegister'])->name('register');
-    Route::post('register', [PhoneAuthController::class, 'register'])->name('register.store');
-
     // Reset PIN via Telegram OTP.
     Route::post('login/pin/reset', [PhoneAuthController::class, 'resetPin'])->name('login.pin.reset');
 
@@ -31,8 +25,6 @@ Route::middleware('guest')->group(function () {
     // period). Will be retired once all clients have a phone-linked Telegram.
     Route::get('login/email', [AuthenticatedSessionController::class, 'create'])->name('login.email');
     Route::post('login/email', [AuthenticatedSessionController::class, 'store'])->name('login.email.store');
-    Route::get('register/email', [RegisteredUserController::class, 'create'])->name('register.email');
-    Route::post('register/email', [RegisteredUserController::class, 'store'])->name('register.email.store');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
