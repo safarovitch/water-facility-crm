@@ -15,6 +15,14 @@ return [
      */
     'default_parse_mode' => Telegraph::PARSE_HTML,
 
+    /*
+     * When false, the client bot refuses new orders and replies with
+     * the out-of-service message instead.
+     */
+    'orders_enabled' => env('TELEGRAM_BOT_ORDERS_ENABLED', false),
+
+    'out_of_service_message' => env('TELEGRAM_BOT_OUT_OF_SERVICE_MESSAGE', 'We are out of service!'),
+
     'webhook' => [
         /*
          * Sets a custom webhook domain to be used,

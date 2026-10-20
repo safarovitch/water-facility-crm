@@ -28,6 +28,10 @@ class WebhookHandler extends DefStudioWebhookHandler
         $state = $this->chat->current_state;
         
         if ($state && Str::startsWith($state, 'order_')) {
+            if ($this->rejectIfOutOfService()) {
+                return;
+            }
+
             $orderHandler = new OrderHandler($this->chat, $this->bot);
             
             if ($state === 'order_waiting_quantity') {
@@ -192,21 +196,42 @@ class WebhookHandler extends DefStudioWebhookHandler
             ->keyboard(MainMenuKeyboard::make())->send();
     }
 
+    /**
+     * Dismisses any in-progress order and tells the client we are out of
+     * service. Returns true when ordering is disabled.
+     */
+    protected function rejectIfOutOfService(): bool
+    {
+        if (config('telegraph.orders_enabled')) {
+            return false;
+        }
+
+        $this->chat->clearState();
+        if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
+        $this->chat->message(config('telegraph.out_of_service_message'))
+            ->keyboard(MainMenuKeyboard::make())->send();
+
+        return true;
+    }
+
     // --- Action Router Layer ---
     public function actionNewOrder(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleNewOrder();
     }
 
     public function actionSelectProduct(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleSelectProduct((int) $this->data->get('id'));
     }
 
     public function actionConfirmOrder(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         $stateData = $this->chat->state_data;
         if ($this->chat->current_state !== 'order_confirming' || !$stateData) {
             $this->reply("Срок действия сессии истек.");
@@ -220,6 +245,7 @@ class WebhookHandler extends DefStudioWebhookHandler
 
     public function actionSelectQuantity(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->applyQuantity(
             (int) $this->data->get('id'),
@@ -229,6 +255,7 @@ class WebhookHandler extends DefStudioWebhookHandler
 
     public function actionCustomQuantity(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->promptCustomQuantity((int) $this->data->get('id'));
     }
@@ -253,6 +280,7 @@ class WebhookHandler extends DefStudioWebhookHandler
 
     public function actionRepeatOrder(): void
     {
+        if ($this->rejectIfOutOfService()) { return; }
         if (isset($this->callbackQueryId)) { try { $this->deleteKeyboard(); } catch (\Exception $e) {} }
         (new OrderHandler($this->chat, $this->bot))->handleRepeatOrder();
     }
